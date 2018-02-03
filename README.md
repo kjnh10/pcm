@@ -1,1 +1,1 @@
-# CPP
+# Competitive programming environment for python

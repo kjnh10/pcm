@@ -3,9 +3,9 @@
 
 import os
 import shutil
+import subprocess
 import pathlib
 import requests
-import subprocess
 from bs4 import BeautifulSoup
 
 ALPHABETS = {chr(i) for i in range(65, 65+26)}

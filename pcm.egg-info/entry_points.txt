@@ -1,0 +1,3 @@
+[console_scripts]
+pcm = pcm.__main__:cli
+

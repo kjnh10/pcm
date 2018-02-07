@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
 IN = 'sample-1.in'  # this script's input
-try:  # {{{
-    from test import set_stdin
+try:# {{{
+    from pcm.utils import set_stdin
     import sys
     import os
-    if len(sys.argv) != 1:  # when stdin is not refered to file
-        IN = sys.argv[1]
-    set_stdin(os.path.dirname(__file__) + '/test/' + IN)
+    print('hi')
+    if len(sys.argv) == 1:  # not called by pcm test
+        set_stdin(os.path.dirname(__file__) + '/test/' + IN)
 except:
     pass  # }}}
 
@@ -47,9 +48,9 @@ def DP3(N, M, L, first): return [[[first] * L for n in range(M)] for _ in range(
 
 def solve():
     a = input()
-    b = input()
     print(a)
     print(135)
+
 
 if __name__ == "__main__":
     solve()

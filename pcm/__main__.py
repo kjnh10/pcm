@@ -3,6 +3,7 @@ import os
 import shutil
 import pathlib
 import requests
+import fnmatch
 import subprocess
 from bs4 import BeautifulSoup
 ALPHABETS = {chr(i) for i in range(65, 65+26)}
@@ -46,6 +47,15 @@ def sample(config, string, repeat, out):
         click.echo('Hello %s!' % string, file=out)  # }}}
 
 
+# init{{{
+@cli.command()
+@pass_config
+def init(config):
+    """This command will make current dir pcm work-space"""
+    os.makedirs('./.pcm')
+# }}}
+
+
 # prepare{{{
 @cli.command()
 @click.argument('task_list_url', type=str)
@@ -67,6 +77,8 @@ def prepare(config, task_list_url, contest_dir, force):
     root = os.getcwd()
     tasks = getAtcoderURL(task_list_url)
     base_url = 'https://beta.atcoder.jp'
+    config_dir = root + '/' + '.pcm'
+    os.makedirs(config_dir)
     for url, description in tasks.items():
         task_dir = root + '/' + description[0]
         os.makedirs(task_dir)
@@ -97,8 +109,72 @@ def getAtcoderURL(task_list_url):
 
     return tasks  # }}}
 
+
 # test{{{
 @cli.command()
+@click.argument('filename', type=str)
 @pass_config
-def test(config):
-    pass
+def test(config, filename):
+    while True:
+        if sum([1 if f == '.pcm' else 0 for f in os.listdir('./')]):
+            contest_dir = os.getcwd()
+            break
+        else:
+            try:
+                os.chdir('../')
+                if os.getcwd() == '/':
+                    print("it seems you aren't in directory maintained by pcm")
+                    return
+            except:
+                print("it seems you aren't in directory maintained by pcm")
+                return
+    for root, dirs, files in os.walk(contest_dir):
+        for f in files:
+            if f == filename:
+                os.chdir(root)
+                # subprocess.call(['oj', 'test', '-c', tmp])
+                test_core(root, root + '/' + 'test/', filename)
+
+
+def test_core(exedir, testdir, code):
+    os.chdir(exedir)
+    files = os.listdir(testdir)
+    files.sort()
+    for filename in files:
+        if not fnmatch.fnmatch(filename, '*.in'):
+            continue
+        case = filename[:-3]
+        # infile = testdir + case + '.in'
+        resfile = testdir + case + '.res'
+        expfile = testdir + case + '.out'
+        click.secho('-'*10 + case + '-'*10, fg='blue')
+        with open(resfile, 'w') as f:
+            subprocess.call(' '.join([exedir + '/' + code,
+                                      'pcm',  # tell pcm is calling
+                                      '<',
+                                      testdir + case + '.in'],
+                                     ),
+                            stdout=f,
+                            stderr=subprocess.STDOUT, shell=True)
+        with open(resfile, 'r') as f:
+            res = f.read()
+            print('*'*7 + ' output ' + '*'*7)
+            print(res)
+            res = res.split('\n')
+        with open(expfile, 'r') as f:
+            print('*'*7 + ' expected ' + '*'*7)
+            exp = f.read()
+            print(exp)
+            exp = exp.split('\n')
+
+        if len(res) != len(exp):
+            click.secho('result:WA\n\n', fg='red')
+            continue
+        else:
+            for i in range(len(res)):
+                if res[i] != exp[i]:
+                    click.secho('result:WA\n\n', fg='red')
+                    break
+            else:
+                click.secho('result:AC\n\n', fg='green')
+# }}}

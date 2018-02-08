@@ -6,7 +6,7 @@ import requests
 import fnmatch
 import subprocess
 from bs4 import BeautifulSoup
-from pcm.atcoder_tools.core.AtCoder import AtCoder
+# from pcm.atcoder_tools.core.AtCoder import AtCoder
 ALPHABETS = {chr(i) for i in range(65, 65+26)}
 script_path = os.path.abspath(os.path.dirname(__file__))  # script path
 

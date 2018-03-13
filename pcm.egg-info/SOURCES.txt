@@ -1,6 +1,0 @@
-pcm.egg-info/PKG-INFO
-pcm.egg-info/SOURCES.txt
-pcm.egg-info/dependency_links.txt
-pcm.egg-info/entry_points.txt
-pcm.egg-info/requires.txt
-pcm.egg-info/top_level.txt

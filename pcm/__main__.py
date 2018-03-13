@@ -47,7 +47,6 @@ def sample(config, string, repeat, out):
     for x in range(repeat):
         click.echo('Hello %s!' % string, file=out)  # }}}
 
-
 # init{{{
 @cli.command()
 @pass_config
@@ -56,11 +55,10 @@ def init(config):
     os.makedirs('./.pcm')
 # }}}
 
-
 # prepare{{{
 @cli.command()
-@click.argument('task_list_url', type=str)
-@click.argument('contest_dir', type=str)
+@click.argument('task_list_url', type=str, default='https://beta.atcoder.jp/contests/arc002/tasks')
+@click.argument('contest_dir', type=str, default='tmp')
 @click.option('--force/--no-force', default=False)
 @pass_config
 def prepare(config, task_list_url, contest_dir, force):
@@ -109,7 +107,6 @@ def getAtcoderURL(task_list_url):
         tasks[url] = (alphabet, title)
 
     return tasks  # }}}
-
 
 # test{{{
 @cli.command()

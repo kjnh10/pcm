@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-IN = 'sample-1.in'  # this script's input
-try:# {{{
+IN = 'sample-1.in'
+try: # this script's input{{{
     from pcm.utils import set_stdin
     import sys
     import os
-    print('hi')
     if len(sys.argv) == 1:  # not called by pcm test
         set_stdin(os.path.dirname(__file__) + '/test/' + IN)
 except:
@@ -47,11 +46,10 @@ def DP3(N, M, L, first): return [[[first] * L for n in range(M)] for _ in range(
 
 
 def solve():
-    a = input()
-    print(a)
-    print(135)
+    pass
 
 
 if __name__ == "__main__":
     solve()
+
 

@@ -57,11 +57,15 @@ def init(config):
 
 # prepare{{{
 @cli.command()
-@click.argument('task_list_url', type=str, default='https://beta.atcoder.jp/contests/arc002/tasks')
-@click.argument('contest_dir', type=str, default='tmp')
+@click.argument('task_list_url', type=str, default='')
+@click.argument('contest_dir', type=str, default='')
 @click.option('--force/--no-force', default=False)
 @pass_config
 def prepare(config, task_list_url, contest_dir, force):
+    if task_list_url == '':
+        _prepare_template()
+        return
+
     try:
         os.makedirs(contest_dir)
     except OSError:
@@ -72,22 +76,36 @@ def prepare(config, task_list_url, contest_dir, force):
             print('The specified direcotry already exists.')
             return
 
+    _getAtcoderTask(task_list_url, contest_dir)
+
+def _prepare_template():
+    shutil.copytree(script_path+'/template/', './tmp/prob1/')
+    shutil.copytree(script_path+'/template/', './tmp/prob2/')
+
+def _getAtcoderTask(task_list_url, contest_dir):
+    atcoder_base_url = task_list_url[:task_list_url.rfind("/")]
     os.chdir(contest_dir)
     root = os.getcwd()
-    tasks = getAtcoderURL(task_list_url)
-    base_url = 'https://beta.atcoder.jp'
+    tasks = _getAtcoderTasksURL(task_list_url)
+    if tasks == {}:
+        print("There seems to be no problems. Check that the url is correct task list url")
+        return
+
     config_dir = root + '/' + '.pcm'
     os.makedirs(config_dir)
-    for url, description in tasks.items():
+    for task_url, description in tasks.items():
         task_dir = root + '/' + description[0]
         os.makedirs(task_dir)
         os.chdir(task_dir)
-        subprocess.call(['oj', 'download', base_url + url])  # get test cases
         shutil.copy(script_path+'/template.py', './' + description[0] + '.py')
-        pathlib.Path(description[1]).touch()
+        try:
+            subprocess.call(['oj', 'download', atcoder_base_url + task_url]) # get test cases
+            pathlib.Path(description[1].replace("/", "-")).touch()
+        except:
+            pass
 
-
-def getAtcoderURL(task_list_url):
+def _getAtcoderTasksURL(task_list_url):
+    subprocess.call(['oj', 'login', task_list_url])
     task_page_html = requests.get(task_list_url)
     task_page = BeautifulSoup(task_page_html.content, 'lxml')
     links = task_page.findAll('a')

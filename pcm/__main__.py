@@ -63,6 +63,9 @@ def prepare(config, task_list_url, contest_dir, force):
         _prepare_template()
         return
 
+    if contest_dir == '':
+        contest_dir = task_list_url[task_list_url.find('//')+2:task_list_url.find('.')]
+
     try:
         os.makedirs(contest_dir)
     except OSError:

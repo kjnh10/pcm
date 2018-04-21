@@ -5,19 +5,16 @@ import pathlib
 import requests
 import fnmatch
 import subprocess
+import ipdb
 from bs4 import BeautifulSoup
 # from pcm.atcoder_tools.core.AtCoder import AtCoder
 ALPHABETS = {chr(i) for i in range(65, 65+26)}
 script_path = os.path.abspath(os.path.dirname(__file__))  # script path
-
-
 class Config(object):
     def __init__(self):
         self.verbose = False
 
-
 pass_config = click.make_pass_decorator(Config, ensure=True)
-
 
 @click.group()
 @click.option('--verbose', is_flag=True)
@@ -150,6 +147,9 @@ def test(config, filename):
                 os.chdir(root)
                 # subprocess.call(['oj', 'test', '-c', tmp])
                 test_core(root, root + '/' + 'test/', filename)
+                return
+    else:
+        print("not found: " + filename + " in " + contest_dir)
 
 
 def test_core(exedir, testdir, code):

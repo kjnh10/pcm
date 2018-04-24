@@ -2,12 +2,13 @@ import click
 import os
 import shutil
 import pathlib
-import requests
 import fnmatch
 import subprocess
-import ipdb
 from bs4 import BeautifulSoup
 # from pcm.atcoder_tools.core.AtCoder import AtCoder
+from pcm.online_judge_tools.onlinejudge.implementation.main import main as oj
+import pcm.online_judge_tools.onlinejudge.implementation.utils as oj_utils
+
 ALPHABETS = {chr(i) for i in range(65, 65+26)}
 script_path = os.path.abspath(os.path.dirname(__file__))  # script path
 class Config(object):
@@ -99,14 +100,15 @@ def _getAtcoderTask(task_list_url, contest_dir):
         os.chdir(task_dir)
         shutil.copy(script_path+'/template.py', './' + description[0] + '.py')
         try:
-            subprocess.call(['oj', 'download', atcoder_base_url + task_url]) # get test cases
+            oj(['download', atcoder_base_url + task_url]) # get test cases
             pathlib.Path(description[1].replace("/", "-")).touch()
         except:
             pass
 
 def _getAtcoderTasksURL(task_list_url):
-    subprocess.call(['oj', 'login', task_list_url])
-    task_page_html = requests.get(task_list_url)
+    oj(['login', task_list_url])
+    with oj_utils.with_cookiejar(oj_utils.new_default_session(), path=oj_utils.default_cookie_path) as session:
+        task_page_html = oj_utils.request('GET', task_list_url, session, allow_redirects=True)
     task_page = BeautifulSoup(task_page_html.content, 'lxml')
     links = task_page.findAll('a')
     task_urls = []
@@ -148,7 +150,6 @@ def test(config, filename):
         for f in files:
             if f == filename:
                 os.chdir(root)
-                # subprocess.call(['oj', 'test', '-c', tmp])
                 test_core(root, root + '/' + 'test/', filename)
                 return
     else:

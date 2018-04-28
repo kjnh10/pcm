@@ -1,6 +1,0 @@
-#!/usr/bin/env python3
-import onlinejudge.implementation.main
-import sys
-
-if __name__ == '__main__':
-    onlinejudge.implementation.main.main(args=sys.argv[1:])

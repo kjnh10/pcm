@@ -6,8 +6,8 @@ import fnmatch
 import subprocess
 from bs4 import BeautifulSoup
 # from pcm.atcoder_tools.core.AtCoder import AtCoder
-from pcm.online_judge_tools.onlinejudge.implementation.main import main as oj
-import pcm.online_judge_tools.onlinejudge.implementation.utils as oj_utils
+from onlinejudge.implementation.main import main as oj
+import onlinejudge.implementation.utils as oj_utils
 
 ALPHABETS = {chr(i) for i in range(65, 65+26)}
 script_path = os.path.abspath(os.path.dirname(__file__))  # script path

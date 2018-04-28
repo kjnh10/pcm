@@ -28,14 +28,10 @@ def cli(config, verbose, home_directory):
     config.home_directory = home_directory
 
 
-# subcommand sample{{{
 @cli.command()
-@click.option('--string', default='World',
-              help='This is  the thing that is greeted.')
-@click.option('--repeat', default=1,
-              help='How many times you should be greeted.')
-@click.argument('out', type=click.File('w'), default='-',
-                required=False)
+@click.option('--string', default='World', help='This is  the thing that is greeted.')
+@click.option('--repeat', default=1, help='How many times you should be greeted.')
+@click.argument('out', type=click.File('w'), default='-', required=False)
 @pass_config
 def sample(config, string, repeat, out):
     """This script greets you."""
@@ -43,17 +39,16 @@ def sample(config, string, repeat, out):
         click.echo('We are in verbose mode')
     click.echo('Home directory is %s' % config.home_directory)
     for x in range(repeat):
-        click.echo('Hello %s!' % string, file=out)  # }}}
+        click.echo('Hello %s!' % string, file=out)
 
-# init{{{
+
 @cli.command()
 @pass_config
 def init(config):
     """This command will make current dir pcm work-space"""
     os.makedirs('./.pcm')
-# }}}
 
-# prepare{{{
+
 @cli.command()
 @click.argument('task_list_url', type=str, default='')
 @click.argument('contest_dir', type=str, default='')
@@ -78,11 +73,9 @@ def prepare(config, task_list_url, contest_dir, force):
             return
 
     _getAtcoderTask(task_list_url, contest_dir)
-
 def _prepare_template():
     shutil.copytree(script_path+'/template/', './tmp/prob1/')
     shutil.copytree(script_path+'/template/', './tmp/prob2/')
-
 def _getAtcoderTask(task_list_url, contest_dir):
     atcoder_base_url = task_list_url[:task_list_url.rfind("/")]
     os.chdir(contest_dir)
@@ -104,7 +97,6 @@ def _getAtcoderTask(task_list_url, contest_dir):
             pathlib.Path(description[1].replace("/", "-")).touch()
         except:
             pass
-
 def _getAtcoderTasksURL(task_list_url):
     oj(['login', task_list_url])
     with oj_utils.with_cookiejar(oj_utils.new_default_session(), path=oj_utils.default_cookie_path) as session:
@@ -128,7 +120,7 @@ def _getAtcoderTasksURL(task_list_url):
 
     return tasks  # }}}
 
-# test{{{
+
 @cli.command()
 @click.argument('filename', type=str)
 @pass_config
@@ -154,9 +146,7 @@ def test(config, filename):
                 return
     else:
         print("not found: " + filename + " in " + contest_dir)
-
-
-def test_core(exedir, testdir, code):
+def test_core(exedir, testdir, code_filename):
     os.chdir(exedir)
     files = os.listdir(testdir)
     files.sort()
@@ -168,6 +158,8 @@ def test_core(exedir, testdir, code):
         resfile = testdir + case + '.res'
         expfile = testdir + case + '.out'
         click.secho('-'*10 + case + '-'*10, fg='blue')
+
+        # run program and write to resfile
         with open(resfile, 'w') as f:
             subprocess.call(' '.join([exedir + '/' + code,
                                       'pcm',  # tell pcm is calling
@@ -181,12 +173,21 @@ def test_core(exedir, testdir, code):
             print('*'*7 + ' output ' + '*'*7)
             print(res)
             res = res.split('\n')
+        # print expected
         with open(expfile, 'r') as f:
             print('*'*7 + ' expected ' + '*'*7)
             exp = f.read()
             print(exp)
             exp = exp.split('\n')
 
+        # print result
+        with open(resfile, 'r') as f:
+            res = f.read()
+            print('*'*7 + ' output ' + '*'*7)
+            print(res)
+            res = res.split('\n')
+
+        # compare result and expected
         if len(res) != len(exp):
             click.secho('result:WA\n\n', fg='red')
             continue

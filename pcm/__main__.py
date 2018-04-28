@@ -91,7 +91,8 @@ def _getAtcoderTask(task_list_url, contest_dir):
         task_dir = root + '/' + description[0]
         os.makedirs(task_dir)
         os.chdir(task_dir)
-        shutil.copy(script_path+'/template.py', './' + description[0] + '.py')
+        shutil.copy(script_path+'/template/solve.py', './' + description[0] + '.py')
+        shutil.copy(script_path+'/template/solve.cpp', './' + description[0] + '.cpp')
         try:
             oj(['download', atcoder_base_url + task_url]) # get test cases
             pathlib.Path(description[1].replace("/", "-")).touch()
@@ -150,29 +151,35 @@ def test_core(exedir, testdir, code_filename):
     os.chdir(exedir)
     files = os.listdir(testdir)
     files.sort()
+    extension = code_filename[code_filename.rfind('.') + 1:]
     for filename in files:
         if not fnmatch.fnmatch(filename, '*.in'):
             continue
         case = filename[:-3]
-        # infile = testdir + case + '.in'
         resfile = testdir + case + '.res'
         expfile = testdir + case + '.out'
         click.secho('-'*10 + case + '-'*10, fg='blue')
 
         # run program and write to resfile
         with open(resfile, 'w') as f:
-            subprocess.call(' '.join([exedir + '/' + code,
-                                      'pcm',  # tell pcm is calling
-                                      '<',
-                                      testdir + case + '.in'],
-                                     ),
-                            stdout=f,
-                            stderr=subprocess.STDOUT, shell=True)
-        with open(resfile, 'r') as f:
-            res = f.read()
-            print('*'*7 + ' output ' + '*'*7)
-            print(res)
-            res = res.split('\n')
+            if extension == "py":
+                subprocess.call(' '.join([exedir + '/' + code_filename,
+                                          'pcm',  # tell pcm is calling
+                                          '<',
+                                          testdir + case + '.in'],
+                                         ),
+                                stdout=f,
+                                stderr=subprocess.STDOUT, shell=True)
+            elif extension == "cpp":
+                subprocess.call(' '.join(['g++', "-o", exedir + '/a.out' , exedir + '/' + code_filename]), stderr=subprocess.STDOUT, shell=True)
+                subprocess.call(' '.join([exedir + '/a.out',
+                                          'pcm',  # tell pcm is calling
+                                          '<',
+                                          testdir + case + '.in'],
+                                         ),
+                                stdout=f,
+                                stderr=subprocess.STDOUT, shell=True)
+
         # print expected
         with open(expfile, 'r') as f:
             print('*'*7 + ' expected ' + '*'*7)
@@ -198,4 +205,3 @@ def test_core(exedir, testdir, code_filename):
                     break
             else:
                 click.secho('result:AC\n\n', fg='green')
-# }}}

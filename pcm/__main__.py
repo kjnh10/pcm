@@ -141,46 +141,24 @@ def test_core(code_dir, code_filename, testdir):
         case = filename[:-3]
         codefile = code_dir + '/' + code_filename
         infile = testdir + case + '.in'
-        resfile = testdir + case + '.res'
-        expfile = testdir + case + '.out'
-        click.secho('-'*10 + case + '-'*10, fg='blue')
+        expfile = testdir + case + '.out'  # 拡張子をexpにしたいが。。
 
-        # run program and write to resfile
-        with open(resfile, 'w') as resf:
-            if extension == "py":
-                try:
-                    subprocess.run(  # TODO:関数化する。
-                        [
-                            codefile,
-                            "pcm"  # tell pcm is calling
-                        ],
-                        stdin=open(infile, "r"),
-                        stdout=resf,
-                        stderr=subprocess.STDOUT,  # TODO:標準出力とは分けると見やすそう
-                        timeout=2,
-                    )
-                except subprocess.TimeoutExpired:
-                    print('時間ぎれだよー')
-            elif extension == "cpp":
-                try:
-                    subprocess.run(['g++', "-o", code_dir + '/a.out' , codefile], stderr=subprocess.STDOUT)
-                except:
-                    "compile error"
-                    return
-                else:
-                    try:
-                        subprocess.run(
-                            [
-                                code_dir + '/a.out',
-                                'pcm',  # tell pcm is calling
-                            ],
-                            stdin=open(infile, "r"),
-                            stdout=resf,
-                            stderr=subprocess.STDOUT,
-                            timeout=2,
-                        )
-                except subprocess.TimeoutExpired:
-                    print('時間ぎれだよー')
+        # run program
+        click.secho('-'*10 + case + '-'*10, fg='blue')
+        if extension == "py":
+            outs, errs, TLE_flag = _run_code(codefile, open(infile, "r"))
+
+        elif extension == "cpp":
+            try:
+                subprocess.run(
+                    ['g++', "-o", code_dir + '/a.out' , codefile],
+                    stderr=subprocess.STDOUT,
+                )
+            except:
+                print("compile error")
+                return
+
+            outs, errs, TLE_flag = _run_code(code_dir + '/a.out', open(infile, "r"))
 
         # print expected
         with open(expfile, 'r') as f:
@@ -190,25 +168,57 @@ def test_core(code_dir, code_filename, testdir):
             exp = exp.split('\n')
 
         # print result
-        with open(resfile, 'r') as resf:
-            res = resf.read()
-            print('*'*7 + ' output ' + '*'*7)
-            print(res)
-            res = res.split('\n')
+        print('*'*7 + ' result ' + '*'*7)
+        print(outs)
+        res = outs.split('\n')
+
+        # print error message
+        if errs != "":
+            print("-"*35)
+            print(errs)
+            err = errs.split('\n')
+        else:
+            err = None
 
         # compare result and expected
+        if err is not None:
+            click.secho('RE\n\n', fg='red')
+            continue
+
+        if TLE_flag:
+            click.secho('TLE\n\n', fg='red')
+            continue
+
         if len(res) != len(exp):
-            click.secho('result:WA\n\n', fg='red')
+            click.secho('WA\n\n', fg='red')
             continue
         else:
             for i in range(len(res)):
                 if res[i] != exp[i]:
-                    click.secho('result:WA\n\n', fg='red')
+                    click.secho('WA\n\n', fg='red')
                     break
             else:
-                click.secho('result:AC\n\n', fg='green')
+                click.secho('AC\n\n', fg='green')
+def _run_code(code_filename, input_file):
+    proc = subprocess.Popen(
+        [
+            code_filename,
+            "pcm"  # tell the sctipt that pcm is calling
+        ],
+        stdin=input_file,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    try:
+        outs, errs = proc.communicate(timeout=2)
+        TLE_flag = False
+    except subprocess.TimeoutExpired as e:
+        proc.kill()
+        outs, errs = proc.communicate()
+        TLE_flag = True
+    return outs.decode('utf-8'), errs.decode('utf-8'), TLE_flag
 
-
+# submit
 @cli.command()
 @click.argument('code_filename', type=str)
 @pass_config

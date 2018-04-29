@@ -216,3 +216,28 @@ def test_core(code_dir, code_filename, testdir):
                     break
             else:
                 click.secho('result:AC\n\n', fg='green')
+# private functions
+def _seach_file(code_filename):
+    contest_dir = _pcm_root_dir()
+    if contest_dir is None:
+        return None
+
+    for dir_name, _sub_dirs, files in os.walk(contest_dir):
+        for f in files:
+            if f == code_filename:
+                os.chdir(dir_name)
+                return [dir_name, code_filename]
+    else:
+        print("not found: " + code_filename + " in " + contest_dir)
+        return None
+def _pcm_root_dir():
+    while True:
+        if sum([1 if f == '.pcm' else 0 for f in os.listdir('./')]):
+            return os.getcwd()
+        else:
+            try:
+                os.chdir('../')
+            except:
+                print("it seems you aren't in directory maintained by pcm")
+                return None
+

@@ -143,12 +143,12 @@ def test(config, filename):
         for f in files:
             if f == filename:
                 os.chdir(root)
-                test_core(root, root + '/' + 'test/', filename)
+                test_core(root, filename, root + '/' + 'test/')
                 return
     else:
         print("not found: " + filename + " in " + contest_dir)
-def test_core(exedir, testdir, code_filename):
-    os.chdir(exedir)
+def test_core(code_dir, code_filename, testdir):
+    os.chdir(code_dir)
     files = os.listdir(testdir)
     files.sort()
     extension = code_filename[code_filename.rfind('.') + 1:]
@@ -156,29 +156,40 @@ def test_core(exedir, testdir, code_filename):
         if not fnmatch.fnmatch(filename, '*.in'):
             continue
         case = filename[:-3]
+        codefile = code_dir + '/' + code_filename
+        infile = testdir + case + '.in'
         resfile = testdir + case + '.res'
         expfile = testdir + case + '.out'
         click.secho('-'*10 + case + '-'*10, fg='blue')
 
         # run program and write to resfile
-        with open(resfile, 'w') as f:
+        with open(resfile, 'w') as resf:
             if extension == "py":
-                subprocess.call(' '.join([exedir + '/' + code_filename,
-                                          'pcm',  # tell pcm is calling
-                                          '<',
-                                          testdir + case + '.in'],
-                                         ),
-                                stdout=f,
-                                stderr=subprocess.STDOUT, shell=True)
+                subprocess.run(
+                    [
+                        codefile,
+                        "pcm"  # tell pcm is calling
+                    ],
+                    stdin=open(infile, "r"),
+                    stdout=resf,
+                    stderr=subprocess.STDOUT
+                )
             elif extension == "cpp":
-                subprocess.call(' '.join(['g++', "-o", exedir + '/a.out' , exedir + '/' + code_filename]), stderr=subprocess.STDOUT, shell=True)
-                subprocess.call(' '.join([exedir + '/a.out',
-                                          'pcm',  # tell pcm is calling
-                                          '<',
-                                          testdir + case + '.in'],
-                                         ),
-                                stdout=f,
-                                stderr=subprocess.STDOUT, shell=True)
+                try:
+                    subprocess.run(['g++', "-o", code_dir + '/a.out' , codefile], stderr=subprocess.STDOUT)
+                except:
+                    "compile error"
+                    return
+                else:
+                    subprocess.run(
+                        [
+                            code_dir + '/a.out',
+                            'pcm',  # tell pcm is calling
+                        ],
+                        stdin=open(infile, "r"),
+                        stdout=resf,
+                        stderr=subprocess.STDOUT
+                    )
 
         # print expected
         with open(expfile, 'r') as f:
@@ -188,8 +199,8 @@ def test_core(exedir, testdir, code_filename):
             exp = exp.split('\n')
 
         # print result
-        with open(resfile, 'r') as f:
-            res = f.read()
+        with open(resfile, 'r') as resf:
+            res = resf.read()
             print('*'*7 + ' output ' + '*'*7)
             print(res)
             res = res.split('\n')

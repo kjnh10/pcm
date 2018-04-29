@@ -28,6 +28,7 @@ def cli(config, verbose, home_directory):
     config.home_directory = home_directory
 
 
+# sample
 @cli.command()
 @click.option('--string', default='World', help='This is  the thing that is greeted.')
 @click.option('--repeat', default=1, help='How many times you should be greeted.')
@@ -42,6 +43,7 @@ def sample(config, string, repeat, out):
         click.echo('Hello %s!' % string, file=out)
 
 
+# init
 @cli.command()
 @pass_config
 def init(config):
@@ -49,6 +51,7 @@ def init(config):
     os.makedirs('./.pcm')
 
 
+# prepare
 @cli.command()
 @click.argument('task_list_url', type=str, default='')
 @click.argument('contest_dir', type=str, default='')
@@ -122,6 +125,7 @@ def _getAtcoderTasksURL(task_list_url):
     return tasks  # }}}
 
 
+# test
 @cli.command()
 @click.argument('code_filename', type=str)
 @pass_config
@@ -131,7 +135,6 @@ def test(config, code_filename):
         return
     test_core(code_dir, code_filename, code_dir + '/' + 'test/')
 def test_core(code_dir, code_filename, testdir):
-    os.chdir(code_dir)
     files = os.listdir(testdir)
     files.sort()
     extension = code_filename[code_filename.rfind('.') + 1:]
@@ -265,7 +268,6 @@ def _pcm_root_dir():
             except:
                 print("it seems you aren't in directory maintained by pcm")
                 return None
-
 class Contest():
     def __init__(self, contest_url):
         self.name = ""

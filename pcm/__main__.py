@@ -148,15 +148,19 @@ def test_core(code_dir, code_filename, testdir):
         # run program and write to resfile
         with open(resfile, 'w') as resf:
             if extension == "py":
-                subprocess.run(
-                    [
-                        codefile,
-                        "pcm"  # tell pcm is calling
-                    ],
-                    stdin=open(infile, "r"),
-                    stdout=resf,
-                    stderr=subprocess.STDOUT
-                )
+                try:
+                    subprocess.run(  # TODO:関数化する。
+                        [
+                            codefile,
+                            "pcm"  # tell pcm is calling
+                        ],
+                        stdin=open(infile, "r"),
+                        stdout=resf,
+                        stderr=subprocess.STDOUT,  # TODO:標準出力とは分けると見やすそう
+                        timeout=2,
+                    )
+                except subprocess.TimeoutExpired:
+                    print('時間ぎれだよー')
             elif extension == "cpp":
                 try:
                     subprocess.run(['g++', "-o", code_dir + '/a.out' , codefile], stderr=subprocess.STDOUT)
@@ -164,15 +168,19 @@ def test_core(code_dir, code_filename, testdir):
                     "compile error"
                     return
                 else:
-                    subprocess.run(
-                        [
-                            code_dir + '/a.out',
-                            'pcm',  # tell pcm is calling
-                        ],
-                        stdin=open(infile, "r"),
-                        stdout=resf,
-                        stderr=subprocess.STDOUT
-                    )
+                    try:
+                        subprocess.run(
+                            [
+                                code_dir + '/a.out',
+                                'pcm',  # tell pcm is calling
+                            ],
+                            stdin=open(infile, "r"),
+                            stdout=resf,
+                            stderr=subprocess.STDOUT,
+                            timeout=2,
+                        )
+                except subprocess.TimeoutExpired:
+                    print('時間ぎれだよー')
 
         # print expected
         with open(expfile, 'r') as f:

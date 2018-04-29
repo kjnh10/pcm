@@ -123,30 +123,13 @@ def _getAtcoderTasksURL(task_list_url):
 
 
 @cli.command()
-@click.argument('filename', type=str)
+@click.argument('code_filename', type=str)
 @pass_config
-def test(config, filename):
-    while True:
-        if sum([1 if f == '.pcm' else 0 for f in os.listdir('./')]):
-            contest_dir = os.getcwd()
-            break
-        else:
-            try:
-                os.chdir('../')
-                if os.getcwd() == '/':
-                    print("it seems you aren't in directory maintained by pcm")
-                    return
-            except:
-                print("it seems you aren't in directory maintained by pcm")
-                return
-    for root, dirs, files in os.walk(contest_dir):
-        for f in files:
-            if f == filename:
-                os.chdir(root)
-                test_core(root, filename, root + '/' + 'test/')
-                return
-    else:
-        print("not found: " + filename + " in " + contest_dir)
+def test(config, code_filename):
+    code_dir = _seach_par_dir(code_filename)
+    if code_dir is None:
+        return
+    test_core(code_dir, code_filename, code_dir + '/' + 'test/')
 def test_core(code_dir, code_filename, testdir):
     os.chdir(code_dir)
     files = os.listdir(testdir)
@@ -216,17 +199,38 @@ def test_core(code_dir, code_filename, testdir):
                     break
             else:
                 click.secho('result:AC\n\n', fg='green')
+
+
+@cli.command()
+@click.argument('code_filename', type=str)
+@pass_config
+def submit(config, code_filename):
+    x = _seach_par_dir(code_filename)
+    if x is None:
+        return
+
+    print(x)
+    print('under implementing')
+    # oj submit https://agc023.contest.atcoder.jp/tasks/agc023_a A/A.py -l 3023
+    # 3023
+    # 3510
+    # 3029 (C++ (GCC 5.4.1))
+    # 3030 (C++ (Clang 3.8.0))
+    # 3003 (C++14 (GCC 5.4.1))
+    # 3004 (C (Clang 3.8.0))
+    # 3005 (C++14 (Clang 3.8.0))
+
+
 # private functions
-def _seach_file(code_filename):
+def _seach_par_dir(code_filename):
     contest_dir = _pcm_root_dir()
     if contest_dir is None:
         return None
 
-    for dir_name, _sub_dirs, files in os.walk(contest_dir):
+    for base_dir, _sub_dirs, files in os.walk(contest_dir):
         for f in files:
             if f == code_filename:
-                os.chdir(dir_name)
-                return [dir_name, code_filename]
+                return base_dir
     else:
         print("not found: " + code_filename + " in " + contest_dir)
         return None
@@ -235,9 +239,24 @@ def _pcm_root_dir():
         if sum([1 if f == '.pcm' else 0 for f in os.listdir('./')]):
             return os.getcwd()
         else:
+            if os.getcwd() == "/":
+                print("it seems you aren't in directory maintained by pcm")
+                return None
             try:
                 os.chdir('../')
             except:
                 print("it seems you aren't in directory maintained by pcm")
                 return None
+
+class Contest():
+    def __init__(self, contest_url):
+        self.name = ""
+        self.task_list_url = ""
+        self.task_list_url = ""
+
+    def get_submittion_url(self, code_filename):
+        return
+
+    def get_problem_url(self, code_filename):
+        return
 

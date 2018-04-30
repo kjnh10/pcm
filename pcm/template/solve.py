@@ -50,6 +50,5 @@ def solve():
 
 if __name__ == "__main__":
     local_test()
-    preprocess()
     solve()
 

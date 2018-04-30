@@ -79,6 +79,8 @@ def prepare(config, task_list_url, contest_dir, force):
 def _prepare_template():
     shutil.copytree(script_path+'/template/', './tmp/prob1/')
     shutil.copytree(script_path+'/template/', './tmp/prob2/')
+    os.makedirs('./tmp/.pcm')
+
 def _getAtcoderTask(task_list_url, contest_dir):
     atcoder_base_url = task_list_url[:task_list_url.rfind("/")]
     os.chdir(contest_dir)

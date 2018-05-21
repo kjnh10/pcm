@@ -63,7 +63,10 @@ def prepare(config, task_list_url, contest_dir, force):
         return
 
     if contest_dir == '':
-        contest_dir = task_list_url[task_list_url.find('//')+2:task_list_url.find('.')]
+        if "beta" in task_list_url:
+            contest_dir = task_list_url[task_list_url.find('contests')+9:task_list_url.find('tasks')-1]  # like arc071
+        else:
+            contest_dir = task_list_url[task_list_url.find('//')+2:task_list_url.find('.')]
 
     try:
         os.makedirs(contest_dir)
@@ -82,7 +85,10 @@ def _prepare_template():
     os.makedirs('./tmp/.pcm')
 
 def _getAtcoderTask(task_list_url, contest_dir):
-    atcoder_base_url = task_list_url[:task_list_url.rfind("/")]
+    if "beta" in task_list_url:
+        atcoder_base_url = "https://beta.atcoder.jp"
+    else:
+        atcoder_base_url = task_list_url[:task_list_url.rfind("/")]
     os.chdir(contest_dir)
     root = os.getcwd()
     tasks = _getAtcoderTasksURL(task_list_url)
@@ -99,12 +105,15 @@ def _getAtcoderTask(task_list_url, contest_dir):
         shutil.copy(script_path+'/template/solve.py', './' + description[0] + '.py')
         shutil.copy(script_path+'/template/solve.cpp', './' + description[0] + '.cpp')
         try:
+            print(task_url)
             oj(['download', atcoder_base_url + task_url]) # get test cases
             pathlib.Path(description[1].replace("/", "-")).touch()
         except:
             pass
+
 def _getAtcoderTasksURL(task_list_url):
-    oj(['login', task_list_url])
+    if not "beta" in task_list_url:
+        oj(['login', task_list_url])
     with oj_utils.with_cookiejar(oj_utils.new_default_session(), path=oj_utils.default_cookie_path) as session:
         task_page_html = oj_utils.request('GET', task_list_url, session, allow_redirects=True)
     task_page = BeautifulSoup(task_page_html.content, 'lxml')

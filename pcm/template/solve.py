@@ -30,6 +30,7 @@ sys.setrecursionlimit(10**7)
 INF = 10**20
 GOSA = 1.0 / 10**10
 MOD = 10**9+7
+ALPHABETS = [chr(i) for i in range(ord('a'), ord('z')+1)]  # can also use string module
 def LI(): return [int(x) for x in sys.stdin.readline().split()]
 def LI_(): return [int(x)-1 for x in sys.stdin.readline().split()]
 def LF(): return [float(x) for x in sys.stdin.readline().split()]

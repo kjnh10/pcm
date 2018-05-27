@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 from onlinejudge.implementation.main import main as oj
 import onlinejudge.implementation.utils as oj_utils
 
-ALPHABETS = {chr(i) for i in range(65, 65+26)}
+ALPHABETS = [chr(i) for i in range(ord('A'), ord('Z')+1)]  # can also use string module
 script_path = os.path.abspath(os.path.dirname(__file__))  # script path
 class Config(object):
     def __init__(self):
@@ -108,6 +108,8 @@ def _getAtcoderTask(task_list_url, contest_dir):
             print(task_url)
             oj(['download', atcoder_base_url + task_url]) # get test cases
             pathlib.Path(description[1].replace("/", "-")).touch()
+            with open("./.task_info", "w") as f:
+                f.write(atcoder_base_url + task_url)
         except:
             pass
 
@@ -232,25 +234,31 @@ def _run_code(code_filename, input_file):
         TLE_flag = True
     return outs.decode('utf-8'), errs.decode('utf-8'), TLE_flag
 
+
 # submit
 @cli.command()
 @click.argument('code_filename', type=str)
+@click.argument('task_url', type=str, default='')
 @pass_config
-def submit(config, code_filename):
-    x = _seach_par_dir(code_filename)
-    if x is None:
+def submit(config, code_filename, task_url):
+    dir_path = _seach_par_dir(code_filename)
+    extension = code_filename[code_filename.rfind('.') + 1:]
+    if dir_path is None:
         return
 
-    print(x)
-    print('under implementing')
-    # oj submit https://agc023.contest.atcoder.jp/tasks/agc023_a A/A.py -l 3023
-    # 3023
-    # 3510
-    # 3029 (C++ (GCC 5.4.1))
-    # 3030 (C++ (Clang 3.8.0))
-    # 3003 (C++14 (GCC 5.4.1))
-    # 3004 (C (Clang 3.8.0))
-    # 3005 (C++14 (Clang 3.8.0))
+    if task_url == '':
+        task_url = _get_task_url(dir_path)
+
+    if extension == 'py':
+        oj(['submit', task_url, dir_path + '/' + code_filename, '-l', '3023'])
+        # oj submit https://agc023.contest.atcoder.jp/tasks/agc023_a A/A.py -l 3023
+            # 3023 python3
+            # 3510 pypy3
+            # 3029 (C++ (GCC 5.4.1))
+            # 3030 (C++ (Clang 3.8.0))
+            # 3003 (C++14 (GCC 5.4.1))
+            # 3004 (C (Clang 3.8.0))
+            # 3005 (C++14 (Clang 3.8.0))
 
 
 # private functions
@@ -279,6 +287,12 @@ def _pcm_root_dir():
             except:
                 print("it seems you aren't in directory maintained by pcm")
                 return None
+def _get_task_url(task_dir_path):
+    with open(task_dir_path + "/.task_info", "r") as f:
+        task_url = f.readline()
+    return task_url
+
+
 class Contest():
     def __init__(self, contest_url):
         self.name = ""

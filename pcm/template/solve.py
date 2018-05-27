@@ -1,15 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-IN = 'sample-1.in'  # sample case for local test
-def local_test():
-    try:
-        from pcm.utils import set_stdin
-        import sys
-        if len(sys.argv) == 1:
-            set_stdin(os.path.dirname(__file__) + '/test/' + IN)
-    except:
-        pass
+def local_input():
+    from pcm.utils import set_stdin
+    import sys
+    if len(sys.argv) == 1:
+        set_stdin(os.path.dirname(__file__) + '/test/' + 'sample-1.in')
 
 
 import sys
@@ -49,6 +45,9 @@ def solve():
 
 
 if __name__ == "__main__":
-    local_test()
+    try:
+        local_input()
+    except:
+        pass
     solve()
 

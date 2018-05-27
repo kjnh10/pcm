@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 from onlinejudge.implementation.main import main as oj
 import onlinejudge.implementation.utils as oj_utils
 
-ALPHABETS = {chr(i) for i in range(65, 65+26)}
+ALPHABETS = [chr(i) for i in range(ord('A'), ord('Z')+1)]  # can also use string module
 script_path = os.path.abspath(os.path.dirname(__file__))  # script path
 class Config(object):
     def __init__(self):

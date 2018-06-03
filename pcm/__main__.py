@@ -250,7 +250,7 @@ def submit(config, code_filename, task_url):
         task_url = _get_task_url(dir_path)
 
     if extension == 'py':
-        oj(['submit', task_url, dir_path + '/' + code_filename, '-l', '3023'])
+        oj(['submit', task_url, dir_path + '/' + code_filename, '-l', '3510'])
         # oj submit https://agc023.contest.atcoder.jp/tasks/agc023_a A/A.py -l 3023
             # 3023 python3
             # 3510 pypy3

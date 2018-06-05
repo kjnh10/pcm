@@ -299,16 +299,40 @@ def _get_task_url(task_dir_path):# {{{
     return task_url# }}}
 
 
-class Contest():
-    def __init__(self, contest_url):
+class Contest(object):
+    def __init__(self, contest_url, work_dir="./"):
         self.name = ""
-        self.task_list_url = ""
-        self.task_list_url = ""
+        self.task_list_url = self.__get_list_of_task_urls(contest_url)
+        self.work_dir = work_dir
 
-    def get_submittion_url(self, code_filename):
+    def prepare(self):
+        pass
+
+    def submit(self, code_filename):
+        pass
+
+    def get_answers(self, code_filename):
+        pass
+
+    def save(self):
+        pass
+
+    def __get_contest_name(self):
+        """
+        get contest_name from contest_url
+        """
         return
 
-    def get_problem_url(self, code_filename):
+    def __get_list_of_task_urls(self):
+        """
+        get task_list_url from contest_url
+        """
+        return
+
+    def __get_submittion_url(self, code_filename):
+        return
+
+    def __get_problem_url(self, code_filename):
         return
 
 

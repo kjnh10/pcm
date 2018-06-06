@@ -1,8 +1,8 @@
-import click# {{{
+import click  # {{{
 import os, sys
 import shutil
 import pathlib
-import pickle
+import requests
 import fnmatch
 import subprocess
 from bs4 import BeautifulSoup
@@ -182,11 +182,17 @@ def submit(config, code_filename, task_url):
     code_full_path = dir_path + '/' + code_filename
     if task_url == '':
         task_url = _get_task_url(dir_path)
-    with open(_pcm_root_dir() + '/contest_info', mode="r") as f:
-        contest_url = f.readline()
-    contest = Contest(contest_url)
+    contest = _reload_contest_class()
     contest.submit(task_url, code_full_path)
 #}}}
+
+# get answers{{{
+@cli.command()
+@pass_config
+def ga(config, limit_count=5):
+    contest = _reload_contest_class()
+    contest.get_answers(limit_count)
+# }}}
 
 # private functions
 def _seach_par_dir(code_filename):# {{{
@@ -223,13 +229,22 @@ def _get_task_url(task_dir_path):# {{{
         task_url = f.readline()
     return task_url# }}}
 
+def _reload_contest_class():  # {{{
+    contest_dir = _pcm_root_dir()
+    with open(contest_dir + '/contest_info', mode="r") as f:
+        contest_url = f.readline()
+    return Contest(contest_url, contest_dir)
+# }}}
+
 class Contest(object):
-    def __init__(self, contest_url, work_dir="./"):# {{{
+    def __init__(self, contest_url, work_dir=""):# {{{
         self.url = contest_url
         self.type = self.__get_type()  # like atcoder, codeforce
-        self.name = self.__get_name()
+        self.name = self.__get_name()  # like agc023
         self.task_list_url = self.__get_task_list_url()
-        self.work_dir = os.path.abspath(work_dir + self.name)# }}}
+        self.task_urls = self.__get_list_of_task_urls()  # [{url:(alphabet, title)}, ...]
+        self.work_dir = work_dir if work_dir!="" else os.path.abspath("./" + self.name)  # 指定されていなければカレントフォルダ
+    # }}}
 
     def prepare(self, force):# {{{
         try:
@@ -262,8 +277,51 @@ class Contest(object):
                     # 3004 (C (Clang 3.8.0))
                     # 3005 (C++14 (Clang 3.8.0))}}}
 
-    def get_answers(self, code_filename):# {{{
-        pass# }}}
+    def get_answers(self, limit_count):  # {{{
+        if "atcoder" in self.type:
+            task_ids = [x[0] for x in self.task_urls.values()]
+            for task_id in task_ids:
+                self.__get_answer(extension="cpp", task_id=task_id, limit_count=limit_count)
+                self.__get_answer(extension="py",  task_id=task_id, limit_count=limit_count) # 3510 for pypy
+
+    def __get_answer(self, extension, task_id, limit_count):
+            answer_dir = self.work_dir + "/" + task_id + "/answers/"
+            if not os.path.exists(answer_dir):
+                os.makedirs(answer_dir)
+
+            if "atcoder" in self.type:
+                if extension == "cpp":
+                    lang_code="3003"
+                elif extension == "py":
+                    lang_code="3023"
+
+                all_answer_url = f"https://beta.atcoder.jp/contests/{self.name}/submissions?"
+                all_answer_url += f"f.Language={lang_code}&f.Status=AC&f.Task={self.name}_{task_id.lower()}&f.User=&orderBy=created&page=1"
+                # like https://beta.atcoder.jp/contests/abc045/submissions?f.Language=3003&f.Status=AC&f.Task=abc045_a&f.User=&orderBy=created&page=1
+
+                all_answer_page_html = requests.get(all_answer_url)
+                all_answer_page = BeautifulSoup(all_answer_page_html.content, 'lxml')
+                links = all_answer_page.findAll('a')
+
+                count = 0
+                for l in links:
+                    link_url = l.get('href')
+                    if l.get_text() in ("Detail", "詳細"):
+                        answer_id = link_url[link_url.rfind("/")+2:]
+                        answer_url = "https://beta.atcoder.jp" + l.get('href')
+                        answer_page = BeautifulSoup(requests.get(answer_url).content, 'lxml')
+                        A = answer_page.findAll('a')
+                        for a in A:
+                            link = a.get('href')
+                            if "users" in str(link):
+                                user_name = link[link.rfind('/')+2:]
+                        answer = answer_page.find(id='submission-code').get_text()
+                        with open(answer_dir + answer_id + "_" + user_name + "." + extension, mode='w') as f:
+                            f.write(answer)
+                        count += 1
+                    if count >= limit_count:
+                        break
+    # }}}
 
     def __get_type(self):# {{{
         if "beta.atcoder" in self.url:
@@ -307,10 +365,9 @@ class Contest(object):
     def __prepare_tasks(self):  # {{{
         if "atcoder" in self.type:
             base_url = self.task_list_url[:self.task_list_url.rfind("/")]
-            task_urls = self.__get_list_of_task_urls()  # returned as relative paths
             config_dir = self.work_dir + '/' + '.pcm'
             os.makedirs(config_dir)
-            for task_url, description in task_urls.items():
+            for task_url, description in self.task_urls.items():
                 task_dir = self.work_dir + '/' + description[0]
                 os.makedirs(task_dir)
                 os.chdir(task_dir)
@@ -357,4 +414,5 @@ class Contest(object):
             print("There seems to be no problems. Check that the url is correct task list url")
             sys.exit()
 # }}}
+
 # vim:set foldmethod=marker:

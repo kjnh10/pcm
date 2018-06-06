@@ -259,6 +259,8 @@ def submit(config, code_filename, task_url):
             # 3003 (C++14 (GCC 5.4.1))
             # 3004 (C (Clang 3.8.0))
             # 3005 (C++14 (Clang 3.8.0))
+    elif extension == 'cpp':
+        oj(['submit', task_url, dir_path + '/' + code_filename, '-l', '3003'])
 
 
 # private functions

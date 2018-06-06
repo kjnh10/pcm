@@ -357,3 +357,4 @@ class Contest(object):
             print("There seems to be no problems. Check that the url is correct task list url")
             sys.exit()
 # }}}
+# vim:set foldmethod=marker:

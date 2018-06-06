@@ -1,7 +1,8 @@
 import click# {{{
-import os
+import os, sys
 import shutil
 import pathlib
+import pickle
 import fnmatch
 import subprocess
 from bs4 import BeautifulSoup
@@ -61,81 +62,15 @@ def prepare(config, task_list_url, contest_dir, force):# {{{
         _prepare_template()
         return
 
-    if contest_dir == '':
-        if "beta" in task_list_url:
-            contest_dir = task_list_url[task_list_url.find('contests')+9:task_list_url.find('tasks')-1]  # like arc071
-        else:
-            contest_dir = task_list_url[task_list_url.find('//')+2:task_list_url.find('.')]
-
-    try:
-        os.makedirs(contest_dir)
-    except OSError:
-        if force:
-            shutil.rmtree(contest_dir)
-            os.makedirs(contest_dir)
-        else:
-            print('The specified direcotry already exists.')
-            return
-
-    _getAtcoderTask(task_list_url, contest_dir)# }}}
+    contest = Contest(task_list_url)
+    contest.prepare(force)
+# }}}
 
 def _prepare_template():# {{{
     shutil.copytree(script_path+'/template/', './tmp/prob1/')
     shutil.copytree(script_path+'/template/', './tmp/prob2/')
     os.makedirs('./tmp/.pcm')# }}}
 
-def _getAtcoderTask(task_list_url, contest_dir):# {{{
-    if "beta" in task_list_url:
-        atcoder_base_url = "https://beta.atcoder.jp"
-    else:
-        atcoder_base_url = task_list_url[:task_list_url.rfind("/")]
-    os.chdir(contest_dir)
-    root = os.getcwd()
-    tasks = _getAtcoderTasksURL(task_list_url)
-    if tasks == {}:
-        print("There seems to be no problems. Check that the url is correct task list url")
-        return
-
-    config_dir = root + '/' + '.pcm'
-    os.makedirs(config_dir)
-    for task_url, description in tasks.items():
-        task_dir = root + '/' + description[0]
-        os.makedirs(task_dir)
-        os.chdir(task_dir)
-        shutil.copy(script_path+'/template/solve.py', './' + description[0] + '.py')
-        shutil.copy(script_path+'/template/solve.cpp', './' + description[0] + '.cpp')
-        try:
-            print(task_url)
-            oj(['download', atcoder_base_url + task_url]) # get test cases
-            pathlib.Path(description[1].replace("/", "-")).touch()
-            with open("./.task_info", "w") as f:
-                f.write(atcoder_base_url + task_url)
-        except:
-            pass# }}}
-
-def _getAtcoderTasksURL(task_list_url):# {{{
-    if not "beta" in task_list_url:
-        oj(['login', task_list_url])
-    with oj_utils.with_cookiejar(oj_utils.new_default_session(), path=oj_utils.default_cookie_path) as session:
-        task_page_html = oj_utils.request('GET', task_list_url, session, allow_redirects=True)
-    task_page = BeautifulSoup(task_page_html.content, 'lxml')
-    links = task_page.findAll('a')
-    task_urls = []
-    for l in links:
-        if l.get_text() in ALPHABETS:
-            task_urls.append(l.get('href'))
-
-    # get title
-    tasks = {}
-    for url in task_urls:
-        for l in links:
-            if l.get('href') == url and l.get_text() in ALPHABETS:
-                alphabet = l.get_text()
-            elif (l.get('href') == url) and (not l.get_text() in ALPHABETS):
-                title = l.get_text()
-        tasks[url] = (alphabet, title)
-
-    return tasks# }}}
 # }}}
 
 # test{{{
@@ -244,25 +179,13 @@ def _run_code(code_filename, input_file):# {{{
 @pass_config
 def submit(config, code_filename, task_url):
     dir_path = _seach_par_dir(code_filename)
-    extension = code_filename[code_filename.rfind('.') + 1:]
-    if dir_path is None:
-        return
-
+    code_full_path = dir_path + '/' + code_filename
     if task_url == '':
         task_url = _get_task_url(dir_path)
-
-    if extension == 'py':
-        oj(['submit', task_url, dir_path + '/' + code_filename, '-l', '3510'])
-        # oj submit https://agc023.contest.atcoder.jp/tasks/agc023_a A/A.py -l 3023
-            # 3023 python3
-            # 3510 pypy3
-    elif extension == 'cpp':
-        oj(['submit', task_url, dir_path + '/' + code_filename, '-l', '3003'])
-            # 3029 (C++ (GCC 5.4.1))
-            # 3030 (C++ (Clang 3.8.0))
-            # 3003 (C++14 (GCC 5.4.1))
-            # 3004 (C (Clang 3.8.0))
-            # 3005 (C++14 (Clang 3.8.0))
+    with open(_pcm_root_dir() + '/contest_info', mode="r") as f:
+        contest_url = f.readline()
+    contest = Contest(contest_url)
+    contest.submit(task_url, code_full_path)
 #}}}
 
 # private functions
@@ -277,7 +200,8 @@ def _seach_par_dir(code_filename):# {{{
                 return base_dir
     else:
         print("not found: " + code_filename + " in " + contest_dir)
-        return None# }}}
+        sys.exit()
+# }}}
 
 def _pcm_root_dir():# {{{
     while True:
@@ -286,54 +210,150 @@ def _pcm_root_dir():# {{{
         else:
             if os.getcwd() == "/":
                 print("it seems you aren't in directory maintained by pcm")
-                return None
+                sys.exit()
             try:
                 os.chdir('../')
             except:
                 print("it seems you aren't in directory maintained by pcm")
-                return None# }}}
+                sys.exit()
+            # }}}
 
 def _get_task_url(task_dir_path):# {{{
     with open(task_dir_path + "/.task_info", "r") as f:
         task_url = f.readline()
     return task_url# }}}
 
-
 class Contest(object):
-    def __init__(self, contest_url, work_dir="./"):
-        self.name = ""
-        self.task_list_url = self.__get_list_of_task_urls(contest_url)
-        self.work_dir = work_dir
+    def __init__(self, contest_url, work_dir="./"):# {{{
+        self.url = contest_url
+        self.type = self.__get_type()  # like atcoder, codeforce
+        self.name = self.__get_name()
+        self.task_list_url = self.__get_task_list_url()
+        self.work_dir = os.path.abspath(work_dir + self.name)# }}}
 
-    def prepare(self):
-        pass
+    def prepare(self, force):# {{{
+        try:
+            os.makedirs(self.work_dir)
+        except OSError:
+            if force:
+                shutil.rmtree(self.work_dir)
+                os.makedirs(self.work_dir)
+            else:
+                print('The specified direcotry already exists.')
+                return
+        with open(self.work_dir + "/contest_info", mode="w") as f:
+            f.write(self.url)
 
-    def submit(self, code_filename):
-        pass
+        self.__prepare_tasks()# }}}
 
-    def get_answers(self, code_filename):
-        pass
+    def submit(self, task_url, code_full_path):# {{{
+        extension = code_full_path[code_full_path.rfind('.') + 1:]
+        if "atcoder" in self.type:
+            if extension == 'py':
+                oj(['submit', task_url, code_full_path, '-l', '3510'])
+                # oj submit https://agc023.contest.atcoder.jp/tasks/agc023_a A/A.py -l 3023
+                    # 3023 python3
+                    # 3510 pypy3
+            elif extension == 'cpp':
+                oj(['submit', task_url, code_full_path, '-l', '3003'])
+                    # 3029 (C++ (GCC 5.4.1))
+                    # 3030 (C++ (Clang 3.8.0))
+                    # 3003 (C++14 (GCC 5.4.1))
+                    # 3004 (C (Clang 3.8.0))
+                    # 3005 (C++14 (Clang 3.8.0))}}}
 
-    def save(self):
-        pass
+    def get_answers(self, code_filename):# {{{
+        pass# }}}
 
-    def __get_contest_name(self):
+    def __get_type(self):# {{{
+        if "beta.atcoder" in self.url:
+            return "beta.atcoder"
+        elif "atcoder" in self.url:
+            return "atcoder"
+        else:
+            print("unkonw type of url passed. program will exit")
+            sys.exit()# }}}
+
+    def __get_name(self):# {{{
         """
         get contest_name from contest_url
         """
-        return
+        if self.type == 'atcoder':
+            return self.url[self.url.find('//')+2:self.url.find('.')]  # like arc071
+        elif self.type == 'beta.atcoder':
+            return self.url[self.url.find('contests')+9:self.url.find('tasks')-1]
+        else:
+            print("unkonw type of url passed. program will exit")
+            sys.exit()# }}}
 
-    def __get_list_of_task_urls(self):
+    def __get_task_list_url(self):# {{{
         """
         get task_list_url from contest_url
         """
-        return
+        if self.type == 'atcoder':
+            return self.url + "/assignments"
+        elif self.type == 'beta.atcoder':
+            return "https://" + self.name + ".contest.atcoder.jp/assignments"
+        else:
+            print("unkonw type of url passed. program will exit")
+            sys.exit()# }}}
 
-    def __get_submittion_url(self, code_filename):
-        return
+    def __get_submittion_url(self, code_filename):# {{{
+        return# }}}
 
-    def __get_problem_url(self, code_filename):
-        return
+    def __get_problem_url(self, code_filename):# {{{
+        return# }}}
 
+    def __prepare_tasks(self):  # {{{
+        if "atcoder" in self.type:
+            base_url = self.task_list_url[:self.task_list_url.rfind("/")]
+            task_urls = self.__get_list_of_task_urls()  # returned as relative paths
+            config_dir = self.work_dir + '/' + '.pcm'
+            os.makedirs(config_dir)
+            for task_url, description in task_urls.items():
+                task_dir = self.work_dir + '/' + description[0]
+                os.makedirs(task_dir)
+                os.chdir(task_dir)
+                shutil.copy(script_path+'/template/solve.py', description[0] + '.py')
+                shutil.copy(script_path+'/template/solve.cpp', description[0] + '.cpp')
+                try:
+                    oj(['download', base_url + task_url]) # get test cases
+                    pathlib.Path(description[1].replace("/", "-")).touch()
+                    with open(".task_info", "w") as f:
+                        f.write(base_url + task_url)
+                except:
+                    print("faild preparing: " + base_url + task_url)
+        else:
+            print("unkonw type of url")
+            sys.exit()
+            # }}}
 
-# vim: set foldmethod=marker:}}}
+    def __get_list_of_task_urls(self):# {{{
+        oj(['login', self.task_list_url])
+        with oj_utils.with_cookiejar(oj_utils.new_default_session(), path=oj_utils.default_cookie_path) as session:
+            task_page_html = oj_utils.request('GET', self.task_list_url, session, allow_redirects=True)
+        task_page = BeautifulSoup(task_page_html.content, 'lxml')
+        links = task_page.findAll('a')
+        task_urls = []
+
+        if "atcoder" in self.type:
+            for l in links:
+                if l.get_text() in ALPHABETS:
+                    task_urls.append(l.get('href'))
+
+            # get title
+            tasks = {}
+            for url in task_urls:
+                for l in links:
+                    if l.get('href') == url and l.get_text() in ALPHABETS:
+                        alphabet = l.get_text()
+                    elif (l.get('href') == url) and (not l.get_text() in ALPHABETS):
+                        title = l.get_text()
+                tasks[url] = (alphabet, title)
+
+            return tasks
+        else:
+            print("unkonw type of url")
+            print("There seems to be no problems. Check that the url is correct task list url")
+            sys.exit()
+# }}}

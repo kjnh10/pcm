@@ -177,7 +177,7 @@ def _run_code(code_filename, input_file):# {{{
 @click.argument('code_filename', type=str)
 @click.argument('task_url', type=str, default='')
 @pass_config
-def submit(config, code_filename, task_url):
+def sb(config, code_filename, task_url):
     dir_path = _seach_par_dir(code_filename)
     code_full_path = dir_path + '/' + code_filename
     if task_url == '':

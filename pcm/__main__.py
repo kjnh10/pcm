@@ -105,10 +105,11 @@ def test_core(code_dir, code_filename, testdir):# {{{
                 subprocess.run(
                     ['g++', "-o", code_dir + '/a.out' , codefile],
                     stderr=subprocess.STDOUT,
+                    check=True,
                 )
             except:
-                print("compile error")
-                return
+                click.secho("compile error\n", fg='red')
+                sys.exit()
 
             outs, errs, TLE_flag = _run_code(code_dir + '/a.out', open(infile, "r"))
 

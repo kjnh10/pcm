@@ -103,7 +103,7 @@ def test_core(code_dir, code_filename, testdir):# {{{
         elif extension == "cpp":
             try:
                 subprocess.run(
-                    ['g++', "-o", code_dir + '/a.out' , codefile],
+                    ['g++', "-o", code_dir + '/a.out' , codefile, '-std=c++11'],
                     stderr=subprocess.STDOUT,
                     check=True,
                 )

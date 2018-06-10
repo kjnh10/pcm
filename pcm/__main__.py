@@ -234,7 +234,7 @@ def _get_task_url(task_dir_path):# {{{
 
 def _reload_contest_class():  # {{{
     contest_dir = _pcm_root_dir()
-    with open(contest_dir + '/.contest_info', mode="r") as f:
+    with open(contest_dir + '/.pcm/.contest_info', mode="r") as f:
         contest_url = f.readline()
     return Contest(contest_url, contest_dir)
 # }}}
@@ -247,6 +247,7 @@ class Contest(object):
         self.task_list_url = self.__get_task_list_url()
         self.task_urls = self.__get_list_of_task_urls()  # [{url:(alphabet, title)}, ...]
         self.work_dir = work_dir if work_dir!="" else os.path.abspath("./" + self.name)  # 指定されていなければカレントフォルダ
+        self.config_dir = self.work_dir + '/.pcm'
     # }}}
 
     def prepare(self, force):# {{{
@@ -259,7 +260,9 @@ class Contest(object):
             else:
                 print('The specified direcotry already exists.')
                 return
-        with open(self.work_dir + "/.contest_info", mode="w") as f:
+
+        os.makedirs(self.config_dir)
+        with open(self.config_dir + "/.contest_info", mode="w") as f:
             f.write(self.url)
 
         self.__prepare_tasks()# }}}
@@ -374,8 +377,6 @@ class Contest(object):
     def __prepare_tasks(self):  # {{{
         if "atcoder" in self.type:
             base_url = self.task_list_url[:self.task_list_url.rfind("/")]
-            config_dir = self.work_dir + '/' + '.pcm'
-            os.makedirs(config_dir)
             for task_url, description in self.task_urls.items():
                 task_dir = self.work_dir + '/' + description[0]
                 os.makedirs(task_dir)

@@ -295,6 +295,9 @@ class Contest(object):
                 elif extension == "py":
                     lang_code="3023"
 
+                if 'arc' in self.name:
+                    task_id = chr(ord(task_id) - 2)  # atcoder betaではarc_a~dでurlを発行する必要がある。
+
                 all_answer_url = f"https://beta.atcoder.jp/contests/{self.name}/submissions?"
                 all_answer_url += f"f.Language={lang_code}&f.Status=AC&f.Task={self.name}_{task_id.lower()}&f.User=&orderBy=created&page=1"
                 # like https://beta.atcoder.jp/contests/abc045/submissions?f.Language=3003&f.Status=AC&f.Task=abc045_a&f.User=&orderBy=created&page=1

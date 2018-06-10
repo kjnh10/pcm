@@ -113,6 +113,11 @@ def test_core(code_dir, code_filename, testdir):# {{{
 
             outs, errs, TLE_flag = _run_code(code_dir + '/a.out', open(infile, "r"))
 
+        # print input
+        with open(infile, 'r') as f:
+            print('*'*7 + ' input ' + '*'*7)
+            print(f.read())
+
         # print expected
         with open(expfile, 'r') as f:
             print('*'*7 + ' expected ' + '*'*7)

@@ -12,6 +12,7 @@
 #define SORT(v, n) sort(v, v+n);
 #define VSORT(v) sort(v.begin(), v.end());
 #define PB(a) push_back(a)
+#define debug(x) cerr << __LINE__ << ": " << #x << " -> " << x << '\n'
 #define INF 999999999
 using namespace std;
 typedef long long ll;

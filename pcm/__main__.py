@@ -237,7 +237,7 @@ def _get_task_url(task_dir_path):# {{{
 
 def _reload_contest_class():  # {{{
     contest_dir = _pcm_root_dir()
-    with open(contest_dir + '/contest_info', mode="r") as f:
+    with open(contest_dir + '/.contest_info', mode="r") as f:
         contest_url = f.readline()
     return Contest(contest_url, contest_dir)
 # }}}
@@ -262,7 +262,7 @@ class Contest(object):
             else:
                 print('The specified direcotry already exists.')
                 return
-        with open(self.work_dir + "/contest_info", mode="w") as f:
+        with open(self.work_dir + "/.contest_info", mode="w") as f:
             f.write(self.url)
 
         self.__prepare_tasks()# }}}

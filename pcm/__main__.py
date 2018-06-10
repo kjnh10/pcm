@@ -299,6 +299,7 @@ class Contest(object):
                 all_answer_url += f"f.Language={lang_code}&f.Status=AC&f.Task={self.name}_{task_id.lower()}&f.User=&orderBy=created&page=1"
                 # like https://beta.atcoder.jp/contests/abc045/submissions?f.Language=3003&f.Status=AC&f.Task=abc045_a&f.User=&orderBy=created&page=1
 
+                print('GET ' + all_answer_url)
                 all_answer_page_html = requests.get(all_answer_url)
                 all_answer_page = BeautifulSoup(all_answer_page_html.content, 'lxml')
                 links = all_answer_page.findAll('a')
@@ -321,6 +322,8 @@ class Contest(object):
                         count += 1
                     if count >= limit_count:
                         break
+                else:
+                    click.secho('There seems to be no answers you request. Maybe wrong url.', fg='red')
     # }}}
 
     def __get_type(self):# {{{

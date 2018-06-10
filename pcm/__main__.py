@@ -98,7 +98,7 @@ def test_core(code_dir, code_filename, testdir):# {{{
         # run program
         click.secho('-'*10 + case + '-'*10, fg='blue')
         if extension == "py":
-            outs, errs, TLE_flag = _run_code(codefile, open(infile, "r"))
+            returncode, outs, errs, TLE_flag = _run_code(codefile, open(infile, "r"))
 
         elif extension == "cpp":
             try:
@@ -111,7 +111,7 @@ def test_core(code_dir, code_filename, testdir):# {{{
                 click.secho("compile error\n", fg='red')
                 sys.exit()
 
-            outs, errs, TLE_flag = _run_code(code_dir + '/a.out', open(infile, "r"))
+            returncode, outs, errs, TLE_flag = _run_code(code_dir + '/a.out', open(infile, "r"))
 
         # print input
         with open(infile, 'r') as f:
@@ -132,14 +132,11 @@ def test_core(code_dir, code_filename, testdir):# {{{
 
         # print error message
         if errs != "":
-            print("-"*35)
+            print('*'*7 + ' stderr ' + '*'*7)
             print(errs)
-            err = errs.split('\n')
-        else:
-            err = None
 
         # compare result and expected
-        if err is not None:
+        if returncode != 0:
             click.secho('RE\n\n', fg='red')
             continue
 
@@ -175,7 +172,7 @@ def _run_code(code_filename, input_file):# {{{
         proc.kill()
         outs, errs = proc.communicate()
         TLE_flag = True
-    return outs.decode('utf-8'), errs.decode('utf-8'), TLE_flag# }}}
+    return proc.returncode, outs.decode('utf-8'), errs.decode('utf-8'), TLE_flag  # }}}
 # }}}
 
 # submit{{{

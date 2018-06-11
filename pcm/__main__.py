@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup
 # from pcm.atcoder_tools.core.AtCoder import AtCoder
 from onlinejudge.implementation.main import main as oj
 import onlinejudge.implementation.utils as oj_utils
+import onlinejudge.atcoder
 ALPHABETS = [chr(i) for i in range(ord('A'), ord('Z')+1)]  # can also use string module
 script_path = os.path.abspath(os.path.dirname(__file__))  # script path}}}
 
@@ -183,10 +184,12 @@ def _run_code(code_filename, input_file):# {{{
 def sb(config, code_filename, task_url):
     dir_path = _seach_par_dir(code_filename)
     code_full_path = dir_path + '/' + code_filename
-    if task_url == '':
-        task_url = _get_task_url(dir_path)
+    task_id = dir_path[dir_path.rfind('/')+1:]
+    extension = code_full_path[code_full_path.rfind('.') + 1:]
+    with open(code_full_path, "r") as f:
+        code = f.read()
     contest = _reload_contest_class()
-    contest.submit(task_url, code_full_path)
+    contest.submit(task_id, extension, code)
 #}}}
 
 # get answers{{{
@@ -267,21 +270,15 @@ class Contest(object):
 
         self.__prepare_tasks()# }}}
 
-    def submit(self, task_url, code_full_path):# {{{
-        extension = code_full_path[code_full_path.rfind('.') + 1:]
+    def submit(self, task_id, extension, code):# {{{
         if "atcoder" in self.type:
-            if extension == 'py':
-                oj(['submit', task_url, code_full_path, '-l', '3510'])
-                # oj submit https://agc023.contest.atcoder.jp/tasks/agc023_a A/A.py -l 3023
-                    # 3023 python3
-                    # 3510 pypy3
-            elif extension == 'cpp':
-                oj(['submit', task_url, code_full_path, '-l', '3003'])
-                    # 3029 (C++ (GCC 5.4.1))
-                    # 3030 (C++ (Clang 3.8.0))
-                    # 3003 (C++14 (GCC 5.4.1))
-                    # 3004 (C (Clang 3.8.0))
-                    # 3005 (C++14 (Clang 3.8.0))}}}
+            ext_to_lang_id = {'py': '3510', 'cpp': '3003'}  # pypy3, (C++14 (GCC 5.4.1))
+            lang_id = ext_to_lang_id[extension]
+        else:
+            print("not implemeted for contest type: {self.type}")
+            sys.exit()
+        with oj_utils.with_cookiejar(oj_utils.new_default_session(), path=oj_utils.default_cookie_path) as session:
+            onlinejudge.atcoder.AtCoderProblem(contest_id=self.name, problem_id=f"{self.name}_{task_id.lower()}").submit(code, lang_id, session)
 
     def get_answers(self, limit_count):  # {{{
         if "atcoder" in self.type:

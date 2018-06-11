@@ -308,9 +308,10 @@ class Contest(object):
         self.type = self.__get_type()  # like atcoder, codeforce
         self.name = self.__get_name()  # like agc023
         self.work_dir = work_dir if work_dir!="" else os.path.abspath("./" + self.name)  # 指定されていなければカレントフォルダ
+        self.config_dir = self.work_dir + '/.pcm'
+        self.task_info_cache = self.work_dir + "/.pcm/task_info_map"
         self.task_list_url = self.__get_task_list_url()
         self.task_info_map = self.__get_task_info_map()  # {task_id:{url:<url>, titile:<title>}}
-        self.config_dir = self.work_dir + '/.pcm'
     # }}}
 
     def prepare(self, force):# {{{
@@ -328,7 +329,11 @@ class Contest(object):
         with open(self.config_dir + "/.contest_info", mode="w") as f:
             f.write(self.url)
 
-        self.__prepare_tasks()# }}}
+        with open(self.task_info_cache, mode='wb') as f:
+            pickle.dump(self.task_info_map, f)
+
+        self.__prepare_tasks()
+        # }}}
 
     def submit(self, task_id, extension, code):# {{{
         if "atcoder" in self.type:
@@ -426,9 +431,8 @@ class Contest(object):
             sys.exit()# }}}
 
     def __get_task_info_map(self):# {{{
-        cache_file = self.work_dir + "/.pcm/task_info_map"
-        if os.path.exists(cache_file):
-            with open(cache_file, mode='rb') as f:
+        if os.path.exists(self.task_info_cache):
+            with open(self.task_info_cache, mode='rb') as f:
                 task_info_map = pickle.load(f)
                 return task_info_map
 
@@ -455,8 +459,12 @@ class Contest(object):
 
                 task_info_map[task_id] = {'url':url, 'title':title, 'problem_id':url[url.rfind("/")+1:]}
 
-            with open(cache_file, mode='wb') as f:
-                pickle.dump(task_info_map, f)
+
+            try:
+                with open(self.task_info_cache, mode='wb') as f:
+                    pickle.dump(self.task_info_map, f)
+            except:
+                pass
 
             return task_info_map
         else:

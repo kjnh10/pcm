@@ -427,7 +427,7 @@ class Contest(object):
         elif self.type == 'beta.atcoder':
             return "https://" + self.name + ".contest.atcoder.jp/assignments"
         else:
-            print("unkonw type of url passed. program will exit")
+            click.secho("unkonw type of url passed. program will exit", fg='red')
             sys.exit()# }}}
 
     def __get_task_info_map(self):# {{{
@@ -471,12 +471,12 @@ class Contest(object):
             print("unkonw type of url")
             print("There seems to be no problems. Check that the url is correct task list url")
             sys.exit()
+
 # }}}
 
     def __prepare_tasks(self):  # {{{
         if "atcoder" in self.type:
             base_url = self.task_list_url[:self.task_list_url.rfind("/")]
-            # for task_url, description in self.task_info_map.values():
             for task_id, task_info in self.task_info_map.items():
                 task_dir = self.work_dir + '/' + task_id
                 os.makedirs(task_dir)
@@ -487,9 +487,9 @@ class Contest(object):
                     oj(['download', base_url + task_info['url']]) # get test cases
                     pathlib.Path(task_info['title'].replace("/", "-")).touch()
                 except:
-                    print("faild preparing: " + base_url + task_info['url'])
+                    click.secho("faild preparing: " + base_url + task_info['url'], fg='red')
         else:
-            print("unkonw type of url")
+            click.secho("unkonw type of url", fg='red')
             sys.exit()
             # }}}
 # vim:set foldmethod=marker:

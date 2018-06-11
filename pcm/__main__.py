@@ -79,6 +79,7 @@ def _prepare_template():# {{{
 @click.argument('code_filename', type=str)
 @pass_config
 def test(config, code_filename):# {{{
+    # TODO classを利用するようにリファクタリング
     code_dir = _seach_par_dir(code_filename)
     if code_dir is None:
         return
@@ -154,7 +155,8 @@ def test_core(code_dir, code_filename, testdir):# {{{
                     click.secho('WA\n\n', fg='red')
                     break
             else:
-                click.secho('AC\n\n', fg='green')# }}}
+                click.secho('AC\n\n', fg='green')
+                return 'AC'  # }}}
 
 def _run_code(code_filename, input_file):# {{{
     proc = subprocess.Popen(
@@ -179,17 +181,24 @@ def _run_code(code_filename, input_file):# {{{
 # submit{{{
 @cli.command()
 @click.argument('code_filename', type=str)
-@click.argument('task_url', type=str, default='')
+@click.option('--pretest/--no-pretest', default=True)
 @pass_config
-def sb(config, code_filename, task_url):
-    dir_path = _seach_par_dir(code_filename)
-    code_full_path = dir_path + '/' + code_filename
-    task_id = dir_path[dir_path.rfind('/')+1:]
+def sb(config, code_filename, pretest):
+    code_dir = _seach_par_dir(code_filename)
+    code_full_path = code_dir + '/' + code_filename
+    task_id = code_dir[code_dir.rfind('/')+1:]
     extension = code_full_path[code_full_path.rfind('.') + 1:]
     with open(code_full_path, "r") as f:
         code = f.read()
     contest = _reload_contest_class()
-    contest.submit(task_id, extension, code)
+
+    if pretest:
+        click.secho("pretest started\n", fg='green')
+        if test_core(code_dir, code_filename, code_dir + '/' + 'test/') != 'AC':
+            return
+
+    if click.confirm('Are you sure to submit?'):
+        contest.submit(task_id, extension, code)
 #}}}
 
 # get answers{{{
@@ -278,7 +287,7 @@ class Contest(object):
             print("not implemeted for contest type: {self.type}")
             sys.exit()
         with oj_utils.with_cookiejar(oj_utils.new_default_session(), path=oj_utils.default_cookie_path) as session:
-            onlinejudge.atcoder.AtCoderProblem(contest_id=self.name, problem_id=f"{self.name}_{task_id.lower()}").submit(code, lang_id, session)
+            onlinejudge.atcoder.AtCoderProblem(contest_id=self.name, problem_id=f"{self.name}_{task_id.lower()}").submit(code, lang_id, session)# }}}
 
     def get_answers(self, limit_count):  # {{{
         if "atcoder" in self.type:

@@ -514,7 +514,7 @@ class Contest(object):
                     oj(['download', base_url + task_info['url']]) # get test cases
                     pathlib.Path(task_info['title'].replace("/", "-")).touch()
                 except:
-                    click.secho("faild preparing: " + base_url + task_info['url'], fg='red')
+                    click.secho("failed preparing: " + base_url + task_info['url'], fg='red')
         else:
             click.secho("unkonw type of url", fg='red')
             sys.exit()

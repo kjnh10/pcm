@@ -357,7 +357,8 @@ class Contest(object):
         if self.type == 'atcoder':
             return self.url[self.url.find('//')+2:self.url.find('.')]  # like arc071
         elif self.type == 'beta.atcoder':
-            return self.url[self.url.find('contests')+9:self.url.find('tasks')-1]
+            start = self.url.find('contests')+9
+            return self.url[start:start+6]
         else:
             print("unkonw type of url passed. program will exit")
             sys.exit()# }}}

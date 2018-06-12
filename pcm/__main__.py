@@ -82,7 +82,6 @@ def _prepare_template():# {{{
 @click.option('--case', '-c', type=str, default='')
 @click.option('--debug/--nodebug', '-', default=True)
 @pass_config
-def tt(config, code_filename):# {{{
 def tt(config, code_filename, case, debug):# {{{
     config.debug_mode = debug
 

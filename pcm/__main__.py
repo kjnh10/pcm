@@ -136,7 +136,13 @@ def _test_case(code_dir, code_filename, case, infile, expfile):# {{{
     elif extension == "cpp":
         try:
             subprocess.run(
-                ['g++', "-o", code_dir + '/a.out' , codefile, '-std=c++11'],
+                [
+                    'g++',
+                    "-o", code_dir + '/a.out' ,
+                    codefile,
+                    '-std=c++11',
+                    '-g3'
+                 ],
                 stderr=subprocess.STDOUT,
                 check=True,
             )

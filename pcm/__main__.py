@@ -83,7 +83,8 @@ def test(config, code_filename):# {{{
     code_dir = _seach_par_dir(code_filename)
     if code_dir is None:
         return
-    test_core(code_dir, code_filename, code_dir + '/' + 'test/')# }}}
+    test_core(code_dir, code_filename, f"{code_dir}/test/")
+# }}}
 
 def test_core(code_dir, code_filename, testdir):# {{{
     files = os.listdir(testdir)
@@ -289,9 +290,8 @@ class Contest(object):
             print("not implemeted for contest type: {self.type}")
             sys.exit()
         with oj_utils.with_cookiejar(oj_utils.new_default_session(), path=oj_utils.default_cookie_path) as session:
-            task_url = self.task_info_map[task_id]["url"]
-            oj_problem_id = task_url[task_url.rfind("/")+1:]
-            onlinejudge.atcoder.AtCoderProblem(contest_id=self.name, problem_id=oj_problem_id).submit(code, lang_id, session)# }}}
+            problem_id = self.task_info_map[task_id]["problem_id"]
+            onlinejudge.atcoder.AtCoderProblem(contest_id=self.name, problem_id=problem_id).submit(code, lang_id, session)# }}}
 
     def get_answers(self, limit_count):  # {{{
         if "atcoder" in self.type:
@@ -311,11 +311,9 @@ class Contest(object):
                 elif extension == "py":
                     lang_code="3023"
 
-                if 'arc' in self.name:
-                    task_id = chr(ord(task_id) - 2)  # atcoder betaではarc_a~dでurlを発行する必要がある。
-
+                problem_id = self.task_info_map[task_id]["problem_id"]
                 all_answer_url = f"https://beta.atcoder.jp/contests/{self.name}/submissions?"
-                all_answer_url += f"f.Language={lang_code}&f.Status=AC&f.Task={self.name}_{task_id.lower()}&f.User=&orderBy=created&page=1"
+                all_answer_url += f"f.Language={lang_code}&f.Status=AC&f.Task={problem_id}&f.User=&orderBy=created&page=1"
                 # like https://beta.atcoder.jp/contests/abc045/submissions?f.Language=3003&f.Status=AC&f.Task=abc045_a&f.User=&orderBy=created&page=1
 
                 print('GET ' + all_answer_url)
@@ -427,7 +425,8 @@ class Contest(object):
                         task_id = l.get_text()
                     elif (l.get('href') == url) and (not l.get_text() in ALPHABETS):
                         title = l.get_text()
-                task_info_map[task_id] = {'url':url, 'title':title}
+
+                task_info_map[task_id] = {'url':url, 'title':title, 'problem_id':url[url.rfind("/")+1:]}
 
             return task_info_map
         else:

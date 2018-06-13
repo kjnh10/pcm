@@ -246,11 +246,6 @@ def _pcm_root_dir():# {{{
                 sys.exit()
             # }}}
 
-def _get_task_url(task_dir_path):# {{{
-    with open(task_dir_path + "/.task_info", "r") as f:
-        task_url = f.readline()
-    return task_url# }}}
-
 def _reload_contest_class():  # {{{
     contest_dir = _pcm_root_dir()
     with open(contest_dir + '/.pcm/.contest_info', mode="r") as f:
@@ -264,7 +259,7 @@ class Contest(object):
         self.type = self.__get_type()  # like atcoder, codeforce
         self.name = self.__get_name()  # like agc023
         self.task_list_url = self.__get_task_list_url()
-        self.task_urls = self.__get_list_of_task_urls()  # [{url:(alphabet, title)}, ...]
+        self.task_info_map = self.__get_task_info_map()  # {task_id:{url:<url>, titile:<title>}}
         self.work_dir = work_dir if work_dir!="" else os.path.abspath("./" + self.name)  # 指定されていなければカレントフォルダ
         self.config_dir = self.work_dir + '/.pcm'
     # }}}
@@ -294,11 +289,13 @@ class Contest(object):
             print("not implemeted for contest type: {self.type}")
             sys.exit()
         with oj_utils.with_cookiejar(oj_utils.new_default_session(), path=oj_utils.default_cookie_path) as session:
-            onlinejudge.atcoder.AtCoderProblem(contest_id=self.name, problem_id=f"{self.name}_{task_id.lower()}").submit(code, lang_id, session)# }}}
+            task_url = self.task_info_map[task_id]["url"]
+            oj_problem_id = task_url[task_url.rfind("/")+1:]
+            onlinejudge.atcoder.AtCoderProblem(contest_id=self.name, problem_id=oj_problem_id).submit(code, lang_id, session)# }}}
 
     def get_answers(self, limit_count):  # {{{
         if "atcoder" in self.type:
-            task_ids = [x[0] for x in self.task_urls.values()]
+            task_ids = self.task_info_map.keys()
             for task_id in task_ids:
                 self.__get_answer(extension="cpp", task_id=task_id, limit_count=limit_count)
                 self.__get_answer(extension="py",  task_id=task_id, limit_count=limit_count) # 3510 for pypy
@@ -391,25 +388,25 @@ class Contest(object):
     def __prepare_tasks(self):  # {{{
         if "atcoder" in self.type:
             base_url = self.task_list_url[:self.task_list_url.rfind("/")]
-            for task_url, description in self.task_urls.items():
-                task_dir = self.work_dir + '/' + description[0]
+            # for task_url, description in self.task_info_map.values():
+            for task_id, task_info in self.task_info_map.items():
+                task_dir = self.work_dir + '/' + task_id
                 os.makedirs(task_dir)
                 os.chdir(task_dir)
-                shutil.copy(script_path+'/template/solve.py', description[0] + '.py')
-                shutil.copy(script_path+'/template/solve.cpp', description[0] + '.cpp')
+                shutil.copy(script_path+'/template/solve.py', task_id + '.py')
+                shutil.copy(script_path+'/template/solve.cpp', task_id + '.cpp')
                 try:
-                    oj(['download', base_url + task_url]) # get test cases
-                    pathlib.Path(description[1].replace("/", "-")).touch()
-                    with open(".task_info", "w") as f:
-                        f.write(base_url + task_url)
+                    oj(['download', base_url + task_info['url']]) # get test cases
+                    pathlib.Path(task_info['title'].replace("/", "-")).touch()
                 except:
-                    print("faild preparing: " + base_url + task_url)
+                    print("faild preparing: " + base_url + task_info['url'])
         else:
             print("unkonw type of url")
             sys.exit()
             # }}}
 
-    def __get_list_of_task_urls(self):# {{{
+    def __get_task_info_map(self):# {{{
+    # def __get_list_of_task_urls(self):
         oj(['login', self.task_list_url])
         with oj_utils.with_cookiejar(oj_utils.new_default_session(), path=oj_utils.default_cookie_path) as session:
             task_page_html = oj_utils.request('GET', self.task_list_url, session, allow_redirects=True)
@@ -423,16 +420,16 @@ class Contest(object):
                     task_urls.append(l.get('href'))
 
             # get title
-            tasks = {}
+            task_info_map = {}
             for url in task_urls:
                 for l in links:
                     if l.get('href') == url and l.get_text() in ALPHABETS:
-                        alphabet = l.get_text()
+                        task_id = l.get_text()
                     elif (l.get('href') == url) and (not l.get_text() in ALPHABETS):
                         title = l.get_text()
-                tasks[url] = (alphabet, title)
+                task_info_map[task_id] = {'url':url, 'title':title}
 
-            return tasks
+            return task_info_map
         else:
             print("unkonw type of url")
             print("There seems to be no problems. Check that the url is correct task list url")

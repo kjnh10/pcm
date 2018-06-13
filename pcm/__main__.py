@@ -89,6 +89,7 @@ def test_core(code_dir, code_filename, testdir):# {{{
     files = os.listdir(testdir)
     files.sort()
     extension = code_filename[code_filename.rfind('.') + 1:]
+    res = True
     for filename in files:
         if not fnmatch.fnmatch(filename, '*.in'):
             continue
@@ -138,25 +139,30 @@ def test_core(code_dir, code_filename, testdir):# {{{
             print(errs)
 
         # compare result and expected
-        if returncode != 0:
-            click.secho('RE\n\n', fg='red')
-            continue
-
         if TLE_flag:
             click.secho('TLE\n\n', fg='red')
+            res = False
+            continue
+
+        if returncode != 0:
+            click.secho('RE\n\n', fg='red')
+            res = False
             continue
 
         if len(res) != len(exp):
             click.secho('WA\n\n', fg='red')
+            res = False
             continue
         else:
             for i in range(len(res)):
                 if res[i] != exp[i]:
                     click.secho('WA\n\n', fg='red')
+                    res = False
                     break
             else:
                 click.secho('AC\n\n', fg='green')
-                return 'AC'  # }}}
+    return res
+# }}}
 
 def _run_code(code_filename, input_file):# {{{
     proc = subprocess.Popen(
@@ -194,7 +200,8 @@ def sb(config, code_filename, pretest):
 
     if pretest:
         click.secho("pretest started\n", fg='green')
-        if test_core(code_dir, code_filename, code_dir + '/' + 'test/') != 'AC':
+        if not test_core(code_dir, code_filename, code_dir + '/' + 'test/'):
+            click.secho("pretest not passed and exit", fg="red")
             return
 
     if click.confirm('Are you sure to submit?'):

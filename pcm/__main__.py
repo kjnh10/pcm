@@ -187,7 +187,7 @@ def _run_code(code_filename, input_file):# {{{
 # submit{{{
 @cli.command()
 @click.argument('code_filename', type=str)
-@click.option('--pretest/--no-pretest', default=True)
+@click.option('--pretest/--no-pretest', '-t/-nt',default=True)
 @pass_config
 def sb(config, code_filename, pretest):
     code_dir = _seach_par_dir(code_filename)

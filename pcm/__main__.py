@@ -56,7 +56,7 @@ def init(config):
 @cli.command()
 @click.argument('task_list_url', type=str, default='')
 @click.argument('contest_dir', type=str, default='')
-@click.option('--force/--no-force', default=False)
+@click.option('--force/--no-force', "-f/-nf", default=False)
 @pass_config
 def prepare(config, task_list_url, contest_dir, force):# {{{
     if task_list_url == '':

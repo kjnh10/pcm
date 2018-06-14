@@ -79,7 +79,6 @@ def _prepare_template():# {{{
 @cli.command()
 @click.argument('code_filename', type=str, default='')
 @pass_config
-    # TODO classを利用するようにリファクタリング
 def tt(config, code_filename):# {{{
     # when code_filename not specified
     if code_filename == "":
@@ -199,8 +198,8 @@ def _run_code(code_filename, input_file):# {{{
 
 # submit{{{
 @cli.command()
-@click.option('--pretest/--no-pretest', '-t/-nt',default=True)
 @click.argument('code_filename', type=str, default="")
+@click.option('--pretest/--no-pretest', '-t/-nt', default=True)
 @pass_config
 def sb(config, code_filename, pretest):
     contest = _reload_contest_class()

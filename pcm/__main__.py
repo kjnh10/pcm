@@ -81,7 +81,7 @@ def _prepare_template():# {{{
 @pass_config
 def test(config, code_filename):# {{{
     # TODO classを利用するようにリファクタリング
-    code_dir = _seach_par_dir(code_filename)
+    code_dir = _search_parent_dir(code_filename)
     if code_dir is None:
         return
     test_core(code_dir, code_filename, f"{code_dir}/test/")
@@ -192,7 +192,7 @@ def _run_code(code_filename, input_file):# {{{
 @click.option('--pretest/--no-pretest', '-t/-nt',default=True)
 @pass_config
 def sb(config, code_filename, pretest):
-    code_dir = _seach_par_dir(code_filename)
+    code_dir = _search_parent_dir(code_filename)
     code_full_path = code_dir + '/' + code_filename
     task_id = code_dir[code_dir.rfind('/')+1:]
     extension = code_full_path[code_full_path.rfind('.') + 1:]
@@ -219,7 +219,7 @@ def ga(config, limit_count=5):
 # }}}
 
 # private functions
-def _seach_par_dir(code_filename):# {{{
+def _search_parent_dir(code_filename):# {{{
     contest_dir = _pcm_root_dir()
     if contest_dir is None:
         return None
@@ -378,34 +378,7 @@ class Contest(object):
             print("unkonw type of url passed. program will exit")
             sys.exit()# }}}
 
-    def __get_submittion_url(self, code_filename):# {{{
-        return# }}}
-
-    def __get_problem_url(self, code_filename):# {{{
-        return# }}}
-
-    def __prepare_tasks(self):  # {{{
-        if "atcoder" in self.type:
-            base_url = self.task_list_url[:self.task_list_url.rfind("/")]
-            # for task_url, description in self.task_info_map.values():
-            for task_id, task_info in self.task_info_map.items():
-                task_dir = self.work_dir + '/' + task_id
-                os.makedirs(task_dir)
-                os.chdir(task_dir)
-                shutil.copy(script_path+'/template/solve.py', task_id + '.py')
-                shutil.copy(script_path+'/template/solve.cpp', task_id + '.cpp')
-                try:
-                    oj(['download', base_url + task_info['url']]) # get test cases
-                    pathlib.Path(task_info['title'].replace("/", "-")).touch()
-                except:
-                    print("faild preparing: " + base_url + task_info['url'])
-        else:
-            print("unkonw type of url")
-            sys.exit()
-            # }}}
-
     def __get_task_info_map(self):# {{{
-    # def __get_list_of_task_urls(self):
         cache_file = self.work_dir + "/.pcm/task_info_map"
         if os.path.exists(cache_file):
             with open(cache_file, mode='rb') as f:
@@ -445,4 +418,23 @@ class Contest(object):
             sys.exit()
 # }}}
 
+    def __prepare_tasks(self):  # {{{
+        if "atcoder" in self.type:
+            base_url = self.task_list_url[:self.task_list_url.rfind("/")]
+            # for task_url, description in self.task_info_map.values():
+            for task_id, task_info in self.task_info_map.items():
+                task_dir = self.work_dir + '/' + task_id
+                os.makedirs(task_dir)
+                os.chdir(task_dir)
+                shutil.copy(script_path+'/template/solve.py', task_id + '.py')
+                shutil.copy(script_path+'/template/solve.cpp', task_id + '.cpp')
+                try:
+                    oj(['download', base_url + task_info['url']]) # get test cases
+                    pathlib.Path(task_info['title'].replace("/", "-")).touch()
+                except:
+                    print("faild preparing: " + base_url + task_info['url'])
+        else:
+            print("unkonw type of url")
+            sys.exit()
+            # }}}
 # vim:set foldmethod=marker:

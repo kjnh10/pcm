@@ -83,7 +83,6 @@ def tt(config, code_filename):# {{{
     # when code_filename not specified
     if code_filename == "":
         p = list(pathlib.Path('.').glob('*.cpp'))
-        print(p)
         if len(p)>0:
             code_filename = str(p[0])
             click.secho(f"you did not specify code_filename.so pcm will use {code_filename}\n", fg='yellow')
@@ -141,9 +140,9 @@ def test_core(code_dir, code_filename, testdir):# {{{
             exp = exp.split('\n')
 
         # print result
-        print('*'*7 + ' result ' + '*'*7)
+        print('*'*7 + ' stdout ' + '*'*7)
         print(outs)
-        res = outs.split('\n')
+        stdout = outs.split('\n')
 
         # print error message
         if errs != "":
@@ -161,13 +160,13 @@ def test_core(code_dir, code_filename, testdir):# {{{
             res = False
             continue
 
-        if len(res) != len(exp):
+        if len(stdout) != len(exp):
             click.secho('WA\n\n', fg='red')
             res = False
             continue
         else:
-            for i in range(len(res)):
-                if res[i] != exp[i]:
+            for i in range(len(stdout)):
+                if stdout[i] != exp[i]:
                     click.secho('WA\n\n', fg='red')
                     res = False
                     break

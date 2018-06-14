@@ -77,10 +77,21 @@ def _prepare_template():# {{{
 
 # test{{{
 @cli.command()
-@click.argument('code_filename', type=str)
+@click.argument('code_filename', type=str, default='')
 @pass_config
     # TODO classを利用するようにリファクタリング
 def tt(config, code_filename):# {{{
+    # when code_filename not specified
+    if code_filename == "":
+        p = list(pathlib.Path('.').glob('*.cpp'))
+        print(p)
+        if len(p)>0:
+            code_filename = str(p[0])
+            click.secho(f"you did not specify code_filename.so pcm will use {code_filename}\n", fg='yellow')
+        else:
+            click.secho("you are not in a pcm validproblem directory", fg='red')
+            return
+
     code_dir = _search_parent_dir(code_filename)
     if code_dir is None:
         return
@@ -188,17 +199,28 @@ def _run_code(code_filename, input_file):# {{{
 
 # submit{{{
 @cli.command()
-@click.argument('code_filename', type=str)
 @click.option('--pretest/--no-pretest', '-t/-nt',default=True)
+@click.argument('code_filename', type=str, default="")
 @pass_config
 def sb(config, code_filename, pretest):
-    code_dir = _search_parent_dir(code_filename)
-    code_full_path = code_dir + '/' + code_filename
-    task_id = code_dir[code_dir.rfind('/')+1:]
-    extension = code_full_path[code_full_path.rfind('.') + 1:]
-    with open(code_full_path, "r") as f:
-        code = f.read()
     contest = _reload_contest_class()
+
+    # when code_filename not specified
+    if code_filename == "":
+        p = list(pathlib.Path('.').glob('*.cpp'))
+        print(p)
+        if len(p)>0:
+            code_filename = str(p[0])
+            click.secho(f"you did not specify code_filename.so pcm will use {code_filename}\n", fg='yellow')
+        else:
+            click.secho("you are not in a pcm validproblem directory", fg='red')
+            return
+
+    code_dir = _search_parent_dir(code_filename)
+    task_id = code_dir[code_dir.rfind('/')+1:]
+    extension = code_filename[code_filename.rfind('.') + 1:]
+    with open(code_dir + '/' + code_filename, "r") as f:
+        code = f.read()
 
     if pretest:
         click.secho("pretest started\n", fg='green')
@@ -234,9 +256,12 @@ def _search_parent_dir(code_filename):# {{{
 # }}}
 
 def _pcm_root_dir():# {{{
+    pwd = os.getcwd() # 最後には元のdirecotryに戻るため保存しておく。
     while True:
         if sum([1 if f == '.pcm' else 0 for f in os.listdir('./')]):
-            return os.getcwd()
+            now = os.getcwd()
+            os.chdir(pwd)
+            return now
         else:
             if os.getcwd() == "/":
                 print("it seems you aren't in directory maintained by pcm")

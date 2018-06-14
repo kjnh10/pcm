@@ -59,7 +59,7 @@ def init(config):
 @click.argument('contest_dir', type=str, default='')
 @click.option('--force/--no-force', "-f/-nf", default=False)
 @pass_config
-def prepare(config, task_list_url, contest_dir, force):# {{{
+def pp(config, task_list_url, contest_dir, force):# {{{
     if task_list_url == '':
         _prepare_template()
         return
@@ -79,8 +79,8 @@ def _prepare_template():# {{{
 @cli.command()
 @click.argument('code_filename', type=str)
 @pass_config
-def test(config, code_filename):# {{{
     # TODO classを利用するようにリファクタリング
+def tt(config, code_filename):# {{{
     code_dir = _search_parent_dir(code_filename)
     if code_dir is None:
         return

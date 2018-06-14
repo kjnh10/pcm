@@ -4,6 +4,7 @@ import shutil
 import pathlib
 import requests
 import fnmatch
+import pickle
 import subprocess
 from bs4 import BeautifulSoup
 # from pcm.atcoder_tools.core.AtCoder import AtCoder
@@ -259,9 +260,9 @@ class Contest(object):
         self.url = contest_url
         self.type = self.__get_type()  # like atcoder, codeforce
         self.name = self.__get_name()  # like agc023
+        self.work_dir = work_dir if work_dir!="" else os.path.abspath("./" + self.name)  # 指定されていなければカレントフォルダ
         self.task_list_url = self.__get_task_list_url()
         self.task_info_map = self.__get_task_info_map()  # {task_id:{url:<url>, titile:<title>}}
-        self.work_dir = work_dir if work_dir!="" else os.path.abspath("./" + self.name)  # 指定されていなければカレントフォルダ
         self.config_dir = self.work_dir + '/.pcm'
     # }}}
 
@@ -405,6 +406,12 @@ class Contest(object):
 
     def __get_task_info_map(self):# {{{
     # def __get_list_of_task_urls(self):
+        cache_file = self.work_dir + "/.pcm/task_info_map"
+        if os.path.exists(cache_file):
+            with open(cache_file, mode='rb') as f:
+                task_info_map = pickle.load(f)
+                return task_info_map
+
         oj(['login', self.task_list_url])
         with oj_utils.with_cookiejar(oj_utils.new_default_session(), path=oj_utils.default_cookie_path) as session:
             task_page_html = oj_utils.request('GET', self.task_list_url, session, allow_redirects=True)
@@ -427,6 +434,9 @@ class Contest(object):
                         title = l.get_text()
 
                 task_info_map[task_id] = {'url':url, 'title':title, 'problem_id':url[url.rfind("/")+1:]}
+
+            with open(cache_file, mode='wb') as f:
+                pickle.dump(task_info_map, f)
 
             return task_info_map
         else:

@@ -357,7 +357,7 @@ class Contest(object):
                         for a in A:
                             link = a.get('href')
                             if "users" in str(link):
-                                user_name = link[link.rfind('/')+2:]
+                                user_name = link[link.rfind('/')+1:]
                         answer = answer_page.find(id='submission-code').get_text()
                         with open(answer_dir + answer_id + "_" + user_name + "." + extension, mode='w') as f:
                             f.write(answer)

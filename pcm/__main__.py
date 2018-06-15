@@ -206,7 +206,6 @@ def sb(config, code_filename, pretest):
     # when code_filename not specified
     if code_filename == "":
         p = list(pathlib.Path('.').glob('*.cpp'))
-        print(p)
         if len(p)>0:
             code_filename = str(p[0])
             click.secho(f"you did not specify code_filename.so pcm will use {code_filename}\n", fg='yellow')
@@ -322,7 +321,7 @@ class Contest(object):
                 shutil.rmtree(self.work_dir)
                 os.makedirs(self.work_dir)
             else:
-                print('The specified direcotry already exists.')
+                click.secho('The specified direcotry already exists.', fg='red')
                 return
 
         os.makedirs(self.config_dir)

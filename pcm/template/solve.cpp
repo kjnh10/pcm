@@ -6,6 +6,7 @@
 #define rreps(i,x) for(int i=((int)(x));i>0;i--)
 #define FOR(i, m, n) for(int i = m;i < n;i++)
 #define RFOR(i, m, n) for(int i = m;i >= n;i--)
+#define foreach(x,a) for(auto& (x) : (a) )
 #define all(x) (x).begin(),(x).end()
 #define sz(x) ((int)(x).size())
 #define fill(x,y) memset(x,y,sizeof(x))

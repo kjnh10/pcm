@@ -469,9 +469,9 @@ class Contest(object):
 
             try:
                 with open(self.task_info_cache, mode='wb') as f:
-                    pickle.dump(self.task_info_map, f)
+                    pickle.dump(task_info_map, f)
             except:
-                pass
+                click.secho("caching task_info_map failed", fg='red')
 
             return task_info_map
         else:

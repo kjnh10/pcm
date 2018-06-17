@@ -94,92 +94,93 @@ def tt(config, code_filename):# {{{
     code_dir = _search_parent_dir(code_filename)
     if code_dir is None:
         return
-    test_core(code_dir, code_filename, f"{code_dir}/test/")
+    _test_task(code_dir, code_filename, f"{code_dir}/test/")
 # }}}
 
-def test_core(code_dir, code_filename, testdir):# {{{
+def _test_task(code_dir, code_filename, testdir):# {{{
     files = os.listdir(testdir)
     files.sort()
-    extension = code_filename[code_filename.rfind('.') + 1:]
     res = True
     for filename in files:
         if not fnmatch.fnmatch(filename, '*.in'):
             continue
         case = filename[:-3]
-        codefile = code_dir + '/' + code_filename
         infile = testdir + case + '.in'
         expfile = testdir + case + '.out'  # 拡張子をexpにしたいが。。
-
-        # run program
-        click.secho('-'*10 + case + '-'*10, fg='blue')
-        if extension == "py":
-            returncode, outs, errs, TLE_flag = _run_code(codefile, open(infile, "r"))
-
-        elif extension == "cpp":
-            try:
-                subprocess.run(
-                    ['g++', "-o", code_dir + '/a.out' , codefile, '-std=c++11'],
-                    stderr=subprocess.STDOUT,
-                    check=True,
-                )
-            except:
-                click.secho("compile error\n", fg='red')
-                sys.exit()
-
-            returncode, outs, errs, TLE_flag = _run_code(code_dir + '/a.out', open(infile, "r"))
-
-        # print input
-        with open(infile, 'r') as f:
-            print('*'*7 + ' input ' + '*'*7)
-            print(f.read())
-
-        # print expected
-        with open(expfile, 'r') as f:
-            print('*'*7 + ' expected ' + '*'*7)
-            exp = f.read()
-            print(exp)
-            exp = exp.split('\n')
-
-        # print result
-        print('*'*7 + ' stdout ' + '*'*7)
-        print(outs)
-        stdout = outs.split('\n')
-
-        # print error message
-        if errs != "":
-            print('*'*7 + ' stderr ' + '*'*7)
-            print(errs)
-
-        # compare result and expected
-        if TLE_flag:
-            click.secho('TLE\n\n', fg='red')
-            res = False
-            continue
-
-        if returncode != 0:
-            SIGMAP = dict(
-                (int(k), v) for v, k in reversed(sorted(signal.__dict__.items()))
-                if v.startswith('SIG') and not v.startswith('SIG_')
-            )
-            click.secho(f'RE', fg='red')
-            click.secho(f':{SIGMAP[abs(returncode)]}' if abs(returncode) in SIGMAP.keys() else str(abs(returncode)), fg='red')
-            print('\n')
-            res = False
-            continue
-
-        if len(stdout) != len(exp):
-            click.secho('WA\n\n', fg='red')
-            res = False
-            continue
-        else:
-            for i in range(len(stdout)):
-                if stdout[i] != exp[i]:
-                    click.secho('WA\n\n', fg='red')
-                    res = False
-                    break
-            else:
-                click.secho('AC\n\n', fg='green')
+        res = _test_case(code_dir, code_filename, case, infile, expfile)
     return res
+# }}}
+
+def _test_case(code_dir, code_filename, case, infile, expfile):# {{{
+    codefile = code_dir + '/' + code_filename
+    extension = code_filename[code_filename.rfind('.') + 1:]
+
+    # run program
+    click.secho('-'*10 + case + '-'*10, fg='blue')
+    if extension == "py":
+        returncode, outs, errs, TLE_flag = _run_code(codefile, open(infile, "r"))
+
+    elif extension == "cpp":
+        try:
+            subprocess.run(
+                ['g++', "-o", code_dir + '/a.out' , codefile, '-std=c++11'],
+                stderr=subprocess.STDOUT,
+                check=True,
+            )
+        except:
+            click.secho("compile error\n", fg='red')
+            sys.exit()
+
+        returncode, outs, errs, TLE_flag = _run_code(code_dir + '/a.out', open(infile, "r"))
+
+    # print input
+    with open(infile, 'r') as f:
+        print('*'*7 + ' input ' + '*'*7)
+        print(f.read())
+
+    # print expected
+    with open(expfile, 'r') as f:
+        print('*'*7 + ' expected ' + '*'*7)
+        exp = f.read()
+        print(exp)
+        exp = exp.split('\n')
+
+    # print result
+    print('*'*7 + ' stdout ' + '*'*7)
+    print(outs)
+    stdout = outs.split('\n')
+
+    # print error message
+    if errs != "":
+        print('*'*7 + ' stderr ' + '*'*7)
+        print(errs)
+
+    # compare result and expected
+    if TLE_flag:
+        click.secho('TLE\n', fg='red')
+        return False
+
+    if returncode != 0:
+        SIGMAP = dict(
+            (int(k), v) for v, k in reversed(sorted(signal.__dict__.items()))
+            if v.startswith('SIG') and not v.startswith('SIG_')
+        )
+        click.secho(f'RE', fg='red')
+        click.secho(f':{SIGMAP[abs(returncode)]}' if abs(returncode) in SIGMAP.keys() else str(abs(returncode)), fg='red')
+        print('\n')
+        return False
+
+    if len(stdout) != len(exp):
+        click.secho('WA\n', fg='red')
+        return False
+    else:
+        for i in range(len(stdout)):
+            if stdout[i] != exp[i]:
+                click.secho('WA\n\n', fg='red')
+                return False
+        else:
+            click.secho('AC\n', fg='green')
+    return True
 # }}}
 
 def _run_code(code_filename, input_file):# {{{
@@ -228,7 +229,7 @@ def sb(config, code_filename, pretest):
 
     if pretest:
         click.secho("pretest started\n", fg='green')
-        if not test_core(code_dir, code_filename, code_dir + '/' + 'test/'):
+        if not _test_task(code_dir, code_filename, code_dir + '/' + 'test/'):
             click.secho("pretest not passed and exit", fg="red")
             return
 

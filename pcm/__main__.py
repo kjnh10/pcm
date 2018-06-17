@@ -120,7 +120,8 @@ def _test_task(code_dir, code_filename, testdir):# {{{
         case = filename[:-3]
         infile = testdir + case + '.in'
         expfile = testdir + case + '.out'  # 拡張子をexpにしたいが。。
-        res = _test_case(code_dir, code_filename, case, infile, expfile)
+        if not _test_case(code_dir, code_filename, case, infile, expfile):
+            res = False
     return res
 # }}}
 

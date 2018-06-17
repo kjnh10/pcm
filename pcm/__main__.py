@@ -79,8 +79,13 @@ def _prepare_template():# {{{
 # test{{{
 @cli.command()
 @click.argument('code_filename', type=str, default='')
+@click.option('--case', '-c', type=str, default='')
+@click.option('--debug/--nodebug', '-', default=True)
 @pass_config
 def tt(config, code_filename):# {{{
+def tt(config, code_filename, case, debug):# {{{
+    config.debug_mode = debug
+
     # when code_filename not specified
     if code_filename == "":
         p = list(pathlib.Path('.').glob('*.cpp'))
@@ -94,7 +99,16 @@ def tt(config, code_filename):# {{{
     code_dir = _search_parent_dir(code_filename)
     if code_dir is None:
         return
-    _test_task(code_dir, code_filename, f"{code_dir}/test/")
+
+    testdir = f"{code_dir}/test/"
+    if case == '': # test all case
+        _test_task(code_dir, code_filename, testdir)
+    else:
+        if case == 'd':
+            case = 'sample-1'
+        infile = testdir + case + '.in'
+        expfile = testdir + case + '.out'
+        _test_case(code_dir, code_filename, case, infile, expfile)
 # }}}
 
 def _test_task(code_dir, code_filename, testdir):# {{{

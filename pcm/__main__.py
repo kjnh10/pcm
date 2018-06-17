@@ -6,6 +6,7 @@ import requests
 import fnmatch
 import pickle
 import subprocess
+import signal
 from bs4 import BeautifulSoup
 # from pcm.atcoder_tools.core.AtCoder import AtCoder
 from onlinejudge.implementation.main import main as oj
@@ -156,7 +157,13 @@ def test_core(code_dir, code_filename, testdir):# {{{
             continue
 
         if returncode != 0:
-            click.secho('RE\n\n', fg='red')
+            SIGMAP = dict(
+                (int(k), v) for v, k in reversed(sorted(signal.__dict__.items()))
+                if v.startswith('SIG') and not v.startswith('SIG_')
+            )
+            click.secho(f'RE', fg='red')
+            click.secho(f':{SIGMAP[abs(returncode)]}' if abs(returncode) in SIGMAP.keys() else str(abs(returncode)), fg='red')
+            print('\n')
             res = False
             continue
 

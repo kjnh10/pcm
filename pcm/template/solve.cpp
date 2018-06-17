@@ -1,6 +1,9 @@
 using namespace std;
 #include <iostream>/*{{{*/
+struct Fast {Fast(){std::cin.tie(0);ios::sync_with_stdio(false);}} fast;
+
 #include <bits/stdc++.h>
+
 #define rep(i, x) for(int i = 0; i < (int)(x); i++)
 #define reps(i,x) for(int i = 1; i <= (int)(x); i++)
 #define rrep(i,x) for(int i=((int)(x)-1);i>=0;i--)
@@ -66,6 +69,7 @@ ostream& operator << (ostream& os, vector<T>& vec) {
 #define db_2d(d,n,m) rep(i,n){rep(j,m){ cerr << (d)[i][j] << (((j)==(m-1))?"\n":" "); }}
 #define db_1d(d,n) rep(i,n){cout << d[i] << (((i)==(n-1))?"\n":" ") << __LINE__}
 #define INF 999999999
+#define MOD 1000000007
 typedef long long ll;
 typedef vector<int> vi;
 typedef vector<vi> vvi;
@@ -85,8 +89,6 @@ int dy[]={0, 0, 1, -1, 0};
 int dx[]={1, -1, 0, 0, 0};/*}}}*/
 
 int main() {
-  cin.tie(0);
-  ios::sync_with_stdio(false);
 
   return 0;
 }

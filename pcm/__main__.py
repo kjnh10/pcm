@@ -171,9 +171,8 @@ def _test_case(code_dir, code_filename, case, infile, expfile):# {{{
     stdout = outs.split('\n')
 
     # print error message
-    if errs != "":
-        print('*'*7 + ' stderr ' + '*'*7)
-        print(errs)
+    print('*'*7 + ' stderr ' + '*'*7)
+    print(errs)
 
     # compare result and expected
     if TLE_flag:

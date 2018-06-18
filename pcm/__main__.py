@@ -461,8 +461,11 @@ class Contest(object):
     def __get_task_info_map(self):# {{{
         if os.path.exists(self.task_info_cache):
             with open(self.task_info_cache, mode='rb') as f:
-                task_info_map = pickle.load(f)
-                return task_info_map
+                try:
+                    task_info_map = pickle.load(f)
+                    return task_info_map
+                except:
+                    click.secho(f"{self.task_info_cache} is broken, so will try to retrieve info", fg='yellow')
 
         oj(['login', self.task_list_url])
         with oj_utils.with_cookiejar(oj_utils.new_default_session(), path=oj_utils.default_cookie_path) as session:

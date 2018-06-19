@@ -128,7 +128,8 @@ def _test_case(code_dir, code_filename, case, infile, expfile):# {{{
                     "-o", code_dir + '/a.out' ,
                     codefile,
                     '-std=c++11',
-                    '-g3'
+                    '-g3',
+                    '-DPCM'
                  ],
                 stderr=subprocess.STDOUT,
                 check=True,

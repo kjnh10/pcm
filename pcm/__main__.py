@@ -145,11 +145,17 @@ def _test_case(code_dir, code_filename, case, infile, expfile):# {{{
         print(f.read())
 
     # print expected
-    with open(expfile, 'r') as f:
+
+    try:
+        with open(expfile, 'r') as f:
+            print('*'*7 + ' expected ' + '*'*7)
+            exp = f.read()
+            print(exp)
+            exp = exp.split('\n')
+    except FileNotFoundError:
         print('*'*7 + ' expected ' + '*'*7)
-        exp = f.read()
-        print(exp)
-        exp = exp.split('\n')
+        click.secho(f"expected file: {expfile} not found\n", fg='yellow')
+        exp = ""
 
     # print result
     print('*'*7 + ' stdout ' + '*'*7)

@@ -472,6 +472,7 @@ class Contest(object):
             with open(self.task_info_cache, mode='rb') as f:
                 try:
                     task_info_map = pickle.load(f)
+                    assert task_info_map != {} # 前回のフォルダが壊れていて空のcacheがおいてある場合は例外を発生させる。
                     return task_info_map
                 except:
                     click.secho(f"{self.task_info_cache} is broken, so will try to retrieve info", fg='yellow')

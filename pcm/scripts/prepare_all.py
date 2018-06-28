@@ -5,7 +5,8 @@ import shutil
 
 # work_dir = "/Users/koji0708/go/src/github.com/kjnh10/pcw/work/atcoder"
 # work_dir = "/home/koji0708/go/src/github.com/kjnh10/pcw/work/atcoder"
-work_dir = "/home/vagrant/go/src/github.com/kjnh10/pcw/work/atcoder"
+# work_dir = "/home/vagrant/go/src/github.com/kjnh10/pcw/work/atcoder"
+work_dir = "/home/koji0708/Dropbox/01_projects/2018/pcw/work/atcoder"
 
 def get_all(type, start, end):
     for num in range(start, end):
@@ -17,10 +18,9 @@ def get_all(type, start, end):
             # print("skip")
             # continue
 
-
             print("deleted")
             shutil.rmtree(work_dir + f"/{type}{snum}")
-        
+
         subprocess.run(
             ["pcm", "pp", f"https://{type}{snum}.contest.atcoder.jp"],
             stderr=subprocess.STDOUT,
@@ -40,5 +40,5 @@ def get_all(type, start, end):
     print("finish")
 
 if __name__ == '__main__':
-    # get_all('abc', 88, 100)
-    get_all('arc', 58, 99)
+    get_all('abc', 14, 42)
+    # get_all('arc', 58, 99)

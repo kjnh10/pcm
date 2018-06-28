@@ -2,6 +2,14 @@ using namespace std;
 #include <iostream>
 #include <bits/stdc++.h>
 
+#define ten(n) ((int)1e##n)
+#define uni(x) x.erase(unique(all(x)),x.end())
+// n次元配列の初期化。第２引数の型のサイズごとに初期化していく。
+template<typename A, size_t N, typename T>
+void Fill(A (&array)[N], const T &val){
+    std::fill( (T*)array, (T*)(array+N), val );
+}
+
 // dump macro{{{
 // http://www.creativ.xyz/dump-cpp-652
 #define DUMPOUT cerr // 変数ダンプ先。coutかcerr
@@ -89,7 +97,7 @@ int dx[]={1, -1, 0, 0, 0};
 
 /*}}}*/
 
-// global variables
+//--------------------------------------------------------------------------
 
 int main() {
 

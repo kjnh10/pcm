@@ -334,13 +334,13 @@ def _reload_contest_class():  # {{{
 class Contest(object):
     def __init__(self, contest_url, work_dir=""):# {{{
         self.url = contest_url
-        self.type = self.__get_type()  # like atcoder, codeforce
+        self.type = self.__get_type()  # like atcoder, codeforces
         self.name = self.__get_name()  # like agc023
         self.work_dir = work_dir if work_dir!="" else os.path.abspath("./" + self.name)  # 指定されていなければカレントフォルダ
         self.config_dir = self.work_dir + '/.pcm'
         self.task_info_cache = self.work_dir + "/.pcm/task_info_map"
         self.task_list_url = self.__get_task_list_url()
-        self.task_info_map = self.__get_task_info_map()  # {task_id:{url:<url>, titile:<title>}}
+        self.task_info_map = self.__get_task_info_map()  # {task_id:{url:<url>, description:<description>}}
     # }}}
 
     def prepare(self, force):# {{{
@@ -431,7 +431,7 @@ class Contest(object):
         elif "atcoder" in self.url:
             return "atcoder"
         else:
-            print("unkonw type of url passed. program will exit")
+            click.secho(f"unknown type of url: {self.url}", fg='red')
             sys.exit()# }}}
 
     def __get_name(self):# {{{
@@ -444,7 +444,7 @@ class Contest(object):
             start = self.url.find('contests')+9
             return self.url[start:start+6]
         else:
-            print("unkonw type of url passed. program will exit")
+            click.secho(f"unknown type of url: {self.url}", fg='red')
             sys.exit()# }}}
 
     def __get_task_list_url(self):# {{{
@@ -456,10 +456,11 @@ class Contest(object):
         elif self.type == 'beta.atcoder':
             return "https://" + self.name + ".contest.atcoder.jp/assignments"
         else:
-            click.secho("unkonw type of url passed. program will exit", fg='red')
+            click.secho(f"unknown type of url: {self.url}", fg='red')
             sys.exit()# }}}
 
     def __get_task_info_map(self):# {{{
+        # reload cache if it exists.
         if os.path.exists(self.task_info_cache):
             with open(self.task_info_cache, mode='rb') as f:
                 try:
@@ -480,7 +481,7 @@ class Contest(object):
                 if l.get_text() in ALPHABETS:
                     task_urls.append(l.get('href'))
 
-            # get title
+            # get task_id, description
             task_info_map = {}
             for url in task_urls:
                 for l in links:
@@ -489,18 +490,18 @@ class Contest(object):
                     elif (l.get('href') == url) and (not l.get_text() in ALPHABETS):
                         title = l.get_text()
 
-                task_info_map[task_id] = {'url':url, 'title':title, 'problem_id':url[url.rfind("/")+1:]}
 
+                task_info_map[task_id] = {'url':url, 'description':description, 'problem_id':url[url.rfind("/")+1:]}
 
             try:
                 with open(self.task_info_cache, mode='wb') as f:
                     pickle.dump(task_info_map, f)
             except:
-                click.secho("caching task_info_map failed", fg='red')
+                click.secho("caching task_info_map failed", fg='yellow')
 
             return task_info_map
         else:
-            print("unkonw type of url")
+            click.secho(f"unknown type of url: {self.url}", fg='red')
             print("There seems to be no problems. Check that the url is correct task list url")
             sys.exit()
 
@@ -521,7 +522,7 @@ class Contest(object):
                 except:
                     click.secho("failed preparing: " + base_url + task_info['url'], fg='red')
         else:
-            click.secho("unkonw type of url", fg='red')
+            click.secho(f"unknown type of url: {self.url}", fg='red')
             sys.exit()
             # }}}
 # vim:set foldmethod=marker:

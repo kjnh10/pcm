@@ -430,6 +430,8 @@ class Contest(object):
             return "beta.atcoder"
         elif "atcoder" in self.url:
             return "atcoder"
+        elif "codeforces" in self.url:
+            return "codeforces"
         else:
             click.secho(f"unknown type of url: {self.url}", fg='red')
             sys.exit()# }}}
@@ -443,6 +445,9 @@ class Contest(object):
         elif self.type == 'beta.atcoder':
             start = self.url.find('contests')+9
             return self.url[start:start+6]
+        elif self.type == 'codeforces':
+            start = self.url.find('contest')+8
+            return self.url[start:]
         else:
             click.secho(f"unknown type of url: {self.url}", fg='red')
             sys.exit()# }}}
@@ -455,6 +460,8 @@ class Contest(object):
             return self.url + "/assignments"
         elif self.type == 'beta.atcoder':
             return "https://" + self.name + ".contest.atcoder.jp/assignments"
+        elif self.type == 'codeforces':
+            return self.url  # codeforcesはproblemsがindex pageになっている。
         else:
             click.secho(f"unknown type of url: {self.url}", fg='red')
             sys.exit()# }}}
@@ -474,22 +481,22 @@ class Contest(object):
             task_page_html = oj_utils.request('GET', self.task_list_url, session, allow_redirects=True)
         task_page = BeautifulSoup(task_page_html.content, 'lxml')
         links = task_page.findAll('a')
-        task_urls = []
 
-        if "atcoder" in self.type:
+        task_urls = []
+        if ("atcoder" in self.type) or (self.type=='codeforces'):
             for l in links:
-                if l.get_text() in ALPHABETS:
+                if l.get_text().strip() in ALPHABETS:
                     task_urls.append(l.get('href'))
 
             # get task_id, description
             task_info_map = {}
             for url in task_urls:
                 for l in links:
-                    if l.get('href') == url and l.get_text() in ALPHABETS:
-                        task_id = l.get_text()
-                    elif (l.get('href') == url) and (not l.get_text() in ALPHABETS):
-                        title = l.get_text()
-
+                    link_text = l.get_text().strip()
+                    if l.get('href') == url and link_text in ALPHABETS:
+                        task_id = link_text
+                    elif (l.get('href') == url) and (not link_text in ALPHABETS):
+                        description = link_text
 
                 task_info_map[task_id] = {'url':url, 'description':description, 'problem_id':url[url.rfind("/")+1:]}
 
@@ -510,19 +517,24 @@ class Contest(object):
     def __prepare_tasks(self):  # {{{
         if "atcoder" in self.type:
             base_url = self.task_list_url[:self.task_list_url.rfind("/")]
-            for task_id, task_info in self.task_info_map.items():
-                task_dir = self.work_dir + '/' + task_id
-                os.makedirs(task_dir)
-                os.chdir(task_dir)
-                shutil.copy(script_path+'/template/solve.py', task_id + '.py')
-                shutil.copy(script_path+'/template/solve.cpp', task_id + '.cpp')
-                try:
-                    oj(['download', base_url + task_info['url']]) # get test cases
-                    pathlib.Path(task_info['title'].replace("/", "-")).touch()
-                except:
-                    click.secho("failed preparing: " + base_url + task_info['url'], fg='red')
+        elif self.type == 'codeforces':
+            base_url = "http://codeforces.com"
         else:
             click.secho(f"unknown type of url: {self.url}", fg='red')
             sys.exit()
+
+        for task_id, task_info in self.task_info_map.items():
+            task_url = base_url + task_info['url']
+            task_dir = self.work_dir + '/' + task_id
+            os.makedirs(task_dir)
+            os.chdir(task_dir)
+            shutil.copy(script_path+'/template/solve.py', task_id + '.py')
+            shutil.copy(script_path+'/template/solve.cpp', task_id + '.cpp')
+            try:
+                click.secho(f"oj will try to download {task_url}...", fg='yellow')
+                oj(['download', task_url]) # get test cases
+                pathlib.Path(task_info['description'].replace("/", "-")).touch()
+            except:
+                click.secho("failed preparing: " + base_url + task_info['url'], fg='red')
             # }}}
 # vim:set foldmethod=marker:

@@ -2,13 +2,31 @@ using namespace std;
 #include <iostream>
 #include <bits/stdc++.h>
 
-#define ten(n) ((int)1e##n)
-#define uni(x) x.erase(unique(all(x)),x.end())
+#define infile "./test/sample-1.in"
+// {{{ define basic macro
+#define rep(i, x) for(int i = 0; i < (int)(x); i++)
+#define reps(i,x) for(int i = 1; i <= (int)(x); i++)
+#define rrep(i,x) for(int i=((int)(x)-1);i>=0;i--)
+#define rreps(i,x) for(int i=((int)(x));i>0;i--)
+#define FOR(i, m, n) for(int i = m;i < n;i++)
+#define RFOR(i, m, n) for(int i = m;i >= n;i--)
+#define foreach(x,a) for(auto& (x) : (a) )
+#define all(x) (x).begin(),(x).end()
+#define sum(v) accumulate(all(v), 0)
+#define sz(x) ((int)(x).size())
 // n次元配列の初期化。第２引数の型のサイズごとに初期化していく。
 template<typename A, size_t N, typename T>
 void Fill(A (&array)[N], const T &val){
     std::fill( (T*)array, (T*)(array+N), val );
 }
+#define fill(x,y) memset(x,y,sizeof(x))
+#define pb(a) push_back(a)
+#define uni(x) sort(all(x));x.erase(unique(all(x)),x.end())
+#define ten(n) ((int)1e##n)
+#define INF 2147483647
+#define INFLL 1000000000000000000LL
+#define MOD 1000000007
+// }}}
 
 // dump macro{{{
 // http://www.creativ.xyz/dump-cpp-652
@@ -54,30 +72,19 @@ void dump_func(Head&& head, Tail&&... tail)
 template<typename T>
 ostream& operator << (ostream& os, vector<T>& vec) {
     os << "{";
-    for (int i = 0; i<vec.size(); i++) {
-        os << vec[i] << (i + 1 == vec.size() ? "" : ", ");
+    for (int i = 0; i<sz(vec); i++) {
+        os << vec[i] << (i + 1 == sz(vec) ? "" : ", ");
     }
     os << "}";
     return os;
 }/*}}}*/
 
-#define rep(i, x) for(int i = 0; i < (int)(x); i++)/*{{{*/
-#define reps(i,x) for(int i = 1; i <= (int)(x); i++)
-#define rrep(i,x) for(int i=((int)(x)-1);i>=0;i--)
-#define rreps(i,x) for(int i=((int)(x));i>0;i--)
-#define FOR(i, m, n) for(int i = m;i < n;i++)
-#define RFOR(i, m, n) for(int i = m;i >= n;i--)
-#define foreach(x,a) for(auto& (x) : (a) )
-#define all(x) (x).begin(),(x).end()
-#define sum(v) accumulate(all(v), 0)
-#define sz(x) ((int)(x).size())
-#define fill(x,y) memset(x,y,sizeof(x))
-#define pb(a) push_back(a)
-#define INF 2147483647
-#define INFLL 1000000000000000000LL
-#define MOD 1000000007/*}}}*/
-
-struct Fast {Fast(){std::cin.tie(0);ios::sync_with_stdio(false);}} fast;/*{{{*/
+struct Fast {  //{{{
+  Fast(){
+    std::cin.tie(0);
+    ios::sync_with_stdio(false);
+  }
+} fast;
 typedef long long ll;
 typedef vector<int> vi;
 typedef vector<vi> vvi;
@@ -95,11 +102,17 @@ typedef priority_queue<pii,vii,greater<pii> > spq;
 int dy[]={0, 0, 1, -1, 0};
 int dx[]={1, -1, 0, 0, 0};
 
-/*}}}*/
+// }}}
 
-//--------------------------------------------------------------------------
-
-int main() {
-
+int solve(){
   return 0;
 }
+
+signed main() { //{{{
+#ifdef INPUT_FROM_FILE
+  std::ifstream in(infile);
+  std::cin.rdbuf(in.rdbuf());
+#endif
+  solve();
+  return 0;
+} //}}}

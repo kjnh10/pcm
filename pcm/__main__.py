@@ -531,6 +531,7 @@ class Contest(object):
             os.chdir(task_dir)
             shutil.copy(script_path+'/template/solve.py', task_id + '.py')
             shutil.copy(script_path+'/template/solve.cpp', task_id + '.cpp')
+            shutil.copytree(script_path+'/template/.vscode/', '.vscode/')
             try:
                 click.secho(f"oj will try to download {task_url}...", fg='yellow')
                 oj(['download', task_url]) # get test cases

@@ -60,7 +60,7 @@ def init(config):
 @click.argument('contest_dir', type=str, default='')
 @click.option('--force/--no-force', "-f/-nf", default=False)
 @pass_config
-def pp(config, task_list_url, contest_dir, force):# {{{
+def pp(config, task_list_url, contest_dir, force): # {{{
     if task_list_url == '':
         _prepare_template()
         return
@@ -127,9 +127,12 @@ def _test_case(code_dir, code_filename, case, infile, expfile):# {{{
                     'g++',
                     "-o", code_dir + '/a.out' ,
                     codefile,
-                    '-std=c++11',
+                    '-std=c++14',
                     '-g3',
-                    '-DPCM'
+                    '-Wall',
+                    '-fsanitize=undefined', # 未定義動作の検出
+                    '-D_GLIBCXX_DEBUG',
+                    '-DPCM'  # macro
                  ],
                 stderr=subprocess.STDOUT,
                 check=True,
@@ -358,6 +361,7 @@ class Contest(object):
         with open(self.config_dir + "/.contest_info", mode="w") as f:
             f.write(self.url)
 
+        self.task_info_map = self.__get_task_info_map()  # 古いバージョンの形式のcacheが入っている可能性があるためprepareの時はもう一度読み込む。
         with open(self.task_info_cache, mode='wb') as f:
             pickle.dump(self.task_info_map, f)
 
@@ -473,6 +477,7 @@ class Contest(object):
                 try:
                     task_info_map = pickle.load(f)
                     assert task_info_map != {} # 前回のフォルダが壊れていて空のcacheがおいてある場合は例外を発生させる。
+                    click.secho("reloaded cache", fg='yellow')
                     return task_info_map
                 except:
                     click.secho(f"{self.task_info_cache} is broken, so will try to retrieve info", fg='yellow')

@@ -235,6 +235,7 @@ def _get_code_info(code_filename):# {{{
             return
         test_dir = f"{code_dir}/test/"
     return code_dir, code_filename, test_dir# }}}
+# }}}
 
 # submit{{{
 @cli.command()
@@ -497,11 +498,12 @@ class Contest(object):
             # get task_id, description
             task_info_map = {}
             for url in task_urls:
+                description = ""
                 for l in links:
                     link_text = l.get_text().strip()
                     if l.get('href') == url and link_text in ALPHABETS:
                         task_id = link_text
-                    elif (l.get('href') == url) and (not link_text in ALPHABETS):
+                    elif (l.get('href') == url) and (not link_text in ALPHABETS): # 問題名がA,B,C,D・だととれない。。
                         description = link_text
 
                 task_info_map[task_id] = {'url':url, 'description':description, 'problem_id':url[url.rfind("/")+1:]}

@@ -23,9 +23,16 @@ void Fill(A (&array)[N], const T &val){
 #define pb(a) push_back(a)
 #define uni(x) sort(all(x));x.erase(unique(all(x)),x.end())
 #define ten(n) ((int)1e##n)
-#define INF 2147483647
-#define INFLL 1000000000000000000LL
-#define MOD 1000000007
+
+template <class T = int>
+T in() {T x; cin>>x; return (x);}
+
+struct Fast {
+  Fast(){
+    std::cin.tie(0);
+    ios::sync_with_stdio(false);
+  }
+} fast;
 // }}}
 
 // dump macro{{{
@@ -79,13 +86,7 @@ ostream& operator << (ostream& os, vector<T>& vec) {
     return os;
 }/*}}}*/
 
-struct Fast {  //{{{
-  Fast(){
-    std::cin.tie(0);
-    ios::sync_with_stdio(false);
-  }
-} fast;
-typedef long long ll;
+typedef long long ll;/*{{{*/
 typedef vector<int> vi;
 typedef vector<vi> vvi;
 typedef vector<long long> vll;
@@ -100,11 +101,14 @@ typedef complex<double> pnt;
 typedef vector<pnt> vpnt;
 typedef priority_queue<pii,vii,greater<pii> > spq;
 int dy[]={0, 0, 1, -1, 0};
-int dx[]={1, -1, 0, 0, 0};
-
-// }}}
+int dx[]={1, -1, 0, 0, 0};/*}}}*/
+#define INF 2147483647
+#define INFLL 1000000000000000000LL
+#define MOD 1000000007
+#define int long long
 
 int solve(){
+
   return 0;
 }
 

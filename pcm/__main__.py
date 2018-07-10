@@ -286,12 +286,17 @@ def gt(config, extension, new):
     p = list(pathlib.Path('.').glob("*.cpp"))
     if len(p)>0:
         filename = str(p[0])
-        click.secho(f"overrided {filename} with template", fg='green')
         shutil.copy(script_path+f'/template/solve.{extension}', filename)
+        click.secho(f"overrided {filename} with template", fg='green')
     else:
         shutil.copy(script_path+f'/template/solve.{extension}', f"solve.{extension}")
         click.secho(f"not found {extension} file\n", fg='red')
         click.secho(f"generated new solve.{extension}", fg='green')
+
+    # vscodeのsettingも更新する。
+    shutil.copytree(script_path+f'/template/.vscode/', ".vscode/")
+    click.secho(f"copied .vscode/", fg='green')
+
 # }}}
 #}}}
 

@@ -56,16 +56,16 @@ def init(config):
 
 # prepare{{{
 @cli.command()
-@click.argument('task_list_url', type=str, default='')
+@click.argument('contest_identifier', type=str, default='')
 @click.argument('contest_dir', type=str, default='')
 @click.option('--force/--no-force', "-f/-nf", default=False)
 @pass_config
-def pp(config, task_list_url, contest_dir, force): # {{{
-    if task_list_url == '':
+def pp(config, contest_identifier, contest_dir, force): # {{{
+    if contest_identifier == '':
         _prepare_template()
         return
 
-    contest = Contest(task_list_url)
+    contest = Contest(contest_identifier)
     contest.prepare(force)
 # }}}
 
@@ -341,8 +341,11 @@ def _reload_contest_class():  # {{{
 # }}}
 
 class Contest(object):
-    def __init__(self, contest_url, work_dir=""):# {{{
-        self.url = contest_url
+    def __init__(self, contest_identifier, work_dir=""):# {{{
+        if contest_identifier[:3] in ("abc", "arc", "agc"):
+            self.url = f"https://{contest_identifier}.contest.atcoder.jp"
+        else:
+            self.url = contest_identifier
         self.type = self.__get_type()  # like atcoder, codeforces
         self.name = self.__get_name()  # like agc023
         self.work_dir = work_dir if work_dir!="" else os.path.abspath("./" + self.name)  # 指定されていなければカレントフォルダ

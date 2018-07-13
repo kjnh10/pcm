@@ -89,11 +89,12 @@ def tt(config, code_filename, case, debug):# {{{
     if case == '': # test all case
         _test_task(code_dir, code_filename, test_dir)
     else:
-        if case == 'd':
-            case = 'sample-1'
+        if case in ("1", "2", "3", "4", "5", "6"):
+            case = f'sample-{case}'
         infile = test_dir + case + '.in'
         expfile = test_dir + case + '.out'
         _test_case(code_dir, code_filename, case, infile, expfile)
+        print(code_dir, test_dir)
 # }}}
 
 def _test_task(code_dir, code_filename, testdir):# {{{

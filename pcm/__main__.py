@@ -216,25 +216,6 @@ def _run_code(code_filename, input_file):# {{{
         outs, errs = proc.communicate()
         TLE_flag = True
     return proc.returncode, outs.decode('utf-8'), errs.decode('utf-8'), TLE_flag  # }}}
-
-def _get_code_info(code_filename):# {{{
-    # when code_filename not specified
-    if code_filename == "":
-        p = list(pathlib.Path('.').glob('*.cpp'))
-        if len(p)>0:
-            code_filename = str(p[0])
-            code_dir = os.getcwd()
-            test_dir = f"{code_dir}/test/"
-            click.secho(f"you did not specify code_filename.so pcm will use {code_filename}\n", fg='yellow')
-        else:
-            click.secho("you are not in a pcm validproblem directory", fg='red')
-            return
-    else:
-        code_dir = _search_parent_dir(code_filename)
-        if code_dir is None:
-            return
-        test_dir = f"{code_dir}/test/"
-    return code_dir, code_filename, test_dir# }}}
 # }}}
 
 # submit{{{
@@ -338,6 +319,28 @@ def _reload_contest_class():  # {{{
     with open(contest_dir + '/.pcm/.contest_info', mode="r") as f:
         contest_url = f.readline()
     return Contest(contest_url, contest_dir)
+# }}}
+
+def _get_code_info(code_filename):# {{{
+    if code_filename == "": # when code_filename not specified
+        p = list(pathlib.Path('.').glob('*.cpp'))  #TODO: cpp決め打ちではなく設定出来るようにする。
+        if len(p)>0:
+            code_filename = str(p[0])
+            code_dir = os.getcwd()
+            click.secho(f"you did not specify code_filename.so pcm will use {code_filename}\n", fg='yellow')
+        else:
+            click.secho("you are not in a pcm valid problem directory", fg='red')
+            return
+    elif os.path.exists(f'./{code_filename}'): # まずはcurrent directory以下を探す。
+        code_dir = os.getcwd()
+    else:
+        code_dir = _search_parent_dir(code_filename)
+        if code_dir is None:
+            click.secho("you are not in a pcm managed directory", fg='red')
+            return
+
+    test_dir = f"{code_dir}/test/"
+    return code_dir, code_filename, test_dir
 # }}}
 
 class Contest(object):

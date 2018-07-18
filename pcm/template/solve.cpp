@@ -18,6 +18,8 @@ using namespace std;
 #define all(x) (x).begin(),(x).end()
 #define sum(v) accumulate(all(v), 0)
 #define sz(x) ((int)(x).size())
+template<class T> inline void chmax(T &a, const T &b) { if(a < b) a = b; }
+template<class T> inline void chmin(T &a, const T &b) { if(a > b) a = b; }
 // n次元配列の初期化。第２引数の型のサイズごとに初期化していく。
 template<typename A, size_t N, typename T>
 void Fill(A (&array)[N], const T &val){
@@ -38,74 +40,28 @@ struct Fast {
   }
 } fast;
 // }}}
-
-// dump macro{{{
-// http://www.creativ.xyz/dump-cpp-652
-#define DUMPOUT cerr // 変数ダンプ先。coutかcerr
+//{{{ dump macro
+#define DUMPOUT cerr // where to dump. cout or cerr
 
 #ifdef PCM
-// 引数はいくつでもどんな型でも可（ストリーム出力演算子があればOK）
-#define dump(...) DUMPOUT<<"  "; \
-  DUMPOUT<<#__VA_ARGS__; \
-  DUMPOUT<<":=> "; \
-  dump_func(__VA_ARGS__); DUMPOUT<<"in ["<<__LINE__<<":"<<__FUNCTION__<<"]"<<endl;
-#define dump_1d(x,n) DUMPOUT <<"  " \
-  <<#x<<"["<<#n<<"]"<<":=> {"; \
-  rep(i,n){ DUMPOUT << x[i] << (((i)==(n-1))?"}":", "); } DUMPOUT <<" in [" << __LINE__ << "]" << endl;
-
-#define dump_2d(x,n,m) DUMPOUT <<"  " \
+  #include "dump.hpp"
+  #define dump(...) DUMPOUT<<"  "; \
+    DUMPOUT<<#__VA_ARGS__; \
+    DUMPOUT<<":=> "; \
+    dump_func(__VA_ARGS__); DUMPOUT<<"in ["<<__LINE__<<":"<<__FUNCTION__<<"]"<<endl;
+  #define dump_1d(x,n) DUMPOUT <<"  " \
+    <<#x<<"["<<#n<<"]"<<":=> {"; \
+    rep(i,n){ DUMPOUT << x[i] << (((i)==(n-1))?"}":", "); } DUMPOUT <<" in [" << __LINE__ << "]" << endl;
+  #define dump_2d(x,n,m) DUMPOUT <<"  " \
     <<#x<<"["<<#n<<"]"<<"["<<#m<<"]"<<":=> \n"; \
     rep(i,n)rep(j,m){ DUMPOUT << ((j==0)?"     |":" ") << x[i][j] << (((j)==(m-1))?"|\n":" "); } \
     DUMPOUT <<"  in [" << __LINE__ << "]" << endl;
 #else
-#define dump(...) 42
-#define dump_1d(...) 42
-#define dump_2d(...) 42
+  #define dump(...) 42
+  #define dump_1d(...) 42
+  #define dump_2d(...) 42
 #endif
-
-// デバッグ用変数ダンプ関数
-void dump_func() {
-}
-template <class Head, class... Tail>
-void dump_func(Head&& head, Tail&&... tail)
-{
-    DUMPOUT << head;
-    if (sizeof...(Tail) == 0) {
-        DUMPOUT << " ";
-    }
-    else {
-        DUMPOUT << ", ";
-    }
-    dump_func(std::move(tail)...);
-}
-
-// vector出力
-template<typename T>
-ostream& operator << (ostream& os, vector<T>& vec) {
-    os << "{";
-    for (int i = 0; i<sz(vec); i++) {
-        os << vec[i] << (i + 1 == sz(vec) ? "" : ", ");
-    }
-    os << "}";
-    return os;
-}
-
-// map出力
-template<typename T, typename U>
-ostream& operator << (ostream& os, map<T, U>& ma) {
-    os << "{";
-
-    int cnt = 0;
-    for (auto x: ma){
-      cnt ++;
-      os << x.first << ": " << x.second << (cnt==sz(ma) ? "" : ", ");
-    }
-    os << "}";
-    return os;
-}
-
 //}}}
-
 //{{{ others
 typedef long long ll;
 typedef vector<int> vi;

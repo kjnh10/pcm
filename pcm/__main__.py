@@ -85,6 +85,9 @@ def _prepare_template():# {{{
 def tt(config, code_filename, case, debug):# {{{
     config.debug_mode = debug
     code_dir, code_filename, test_dir = _get_code_info(code_filename)
+    print('code_dir: ' + code_dir)
+    print('code_filename: ' + code_filename)
+    print('test_dir: ' + test_dir)
 
     if case == '': # test all case
         _test_task(code_dir, code_filename, test_dir)
@@ -94,7 +97,6 @@ def tt(config, code_filename, case, debug):# {{{
         infile = test_dir + case + '.in'
         expfile = test_dir + case + '.out'
         _test_case(code_dir, code_filename, case, infile, expfile)
-        print(code_dir, test_dir)
 # }}}
 
 def _test_task(code_dir, code_filename, testdir):# {{{

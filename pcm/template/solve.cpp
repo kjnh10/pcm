@@ -3,6 +3,10 @@ using namespace std;
 #include <bits/stdc++.h>
 
 #define infile "./test/sample-1.in"
+#define int long long
+#define INF 2147483647
+#define INFLL 1000000000000000000LL
+#define MOD 1000000007
 // {{{ define basic macro
 #define rep(i, x) for(int i = 0; i < (int)(x); i++)
 #define reps(i,x) for(int i = 1; i <= (int)(x); i++)
@@ -84,9 +88,26 @@ ostream& operator << (ostream& os, vector<T>& vec) {
     }
     os << "}";
     return os;
-}/*}}}*/
+}
 
-typedef long long ll;/*{{{*/
+// map出力
+template<typename T, typename U>
+ostream& operator << (ostream& os, map<T, U>& ma) {
+    os << "{";
+
+    int cnt = 0;
+    for (auto x: ma){
+      cnt ++;
+      os << x.first << ": " << x.second << (cnt==sz(ma) ? "" : ", ");
+    }
+    os << "}";
+    return os;
+}
+
+//}}}
+
+//{{{ others
+typedef long long ll;
 typedef vector<int> vi;
 typedef vector<vi> vvi;
 typedef vector<long long> vll;
@@ -101,11 +122,9 @@ typedef complex<double> pnt;
 typedef vector<pnt> vpnt;
 typedef priority_queue<pii,vii,greater<pii> > spq;
 int dy[]={0, 0, 1, -1, 0};
-int dx[]={1, -1, 0, 0, 0};/*}}}*/
-#define INF 2147483647
-#define INFLL 1000000000000000000LL
-#define MOD 1000000007
-#define int long long
+int dx[]={1, -1, 0, 0, 0};
+//}}}
+
 
 int solve(){
 

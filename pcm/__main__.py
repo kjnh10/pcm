@@ -59,8 +59,9 @@ def ppp(config, prob_name):
     _prepare_problem(prob_name)
 
 def _prepare_problem(prob_name):
-    shutil.copytree(script_path+'/template/', './{prob_name}/')
-    os.makedirs('./.pcm')
+    shutil.copytree(script_path+'/template/', f'./{prob_name}/')
+    if not os.path.exists('./.pcm'):
+        os.makedirs('./.pcm')
 # }}}
 
 # test: tt {{{

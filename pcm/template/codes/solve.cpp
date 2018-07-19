@@ -8,13 +8,18 @@ using namespace std;
 #define INF 1000000000000000000LL
 #define MOD 1000000007LL
 // {{{ define basic macro
-#define rep(i, x) for(int i = 0; i < (int)(x); i++)
+// #define rep(i, x) for(int i = 0; i < (int)(x); i++)
+#define _overload3(_1,_2,_3,name,...) name
+#define _rep(i,n) repi(i,0,n)
+#define repi(i,a,b) for(int i=int(a);i<int(b);++i)
+#define rep(...) _overload3(__VA_ARGS__,repi,_rep,)(__VA_ARGS__)
 #define reps(i,x) for(int i = 1; i <= (int)(x); i++)
 #define rrep(i,x) for(int i=((int)(x)-1);i>=0;i--)
 #define rreps(i,x) for(int i=((int)(x));i>0;i--)
 #define FOR(i, m, n) for(int i = m;i < n;i++)
 #define RFOR(i, m, n) for(int i = m;i >= n;i--)
 #define foreach(x,a) for(auto& (x) : (a) )
+#define each(it,c) for(__typeof((c).begin()) it=(c).begin();it!=(c).end();it++)
 #define all(x) (x).begin(),(x).end()
 #define sum(v) accumulate(all(v), 0)
 #define sz(x) ((int)(x).size())
@@ -41,21 +46,8 @@ struct Fast {
 } fast;
 // }}}
 //{{{ dump macro
-#define DUMPOUT cerr // where to dump. cout or cerr
-
 #ifdef PCM
   #include "dump.hpp"
-  #define dump(...) DUMPOUT<<"  "; \
-    DUMPOUT<<#__VA_ARGS__; \
-    DUMPOUT<<":=> "; \
-    dump_func(__VA_ARGS__); DUMPOUT<<"in ["<<__LINE__<<":"<<__FUNCTION__<<"]"<<endl;
-  #define dump_1d(x,n) DUMPOUT <<"  " \
-    <<#x<<"["<<#n<<"]"<<":=> {"; \
-    rep(i,n){ DUMPOUT << x[i] << (((i)==(n-1))?"}":", "); } DUMPOUT <<" in [" << __LINE__ << "]" << endl;
-  #define dump_2d(x,n,m) DUMPOUT <<"  " \
-    <<#x<<"["<<#n<<"]"<<"["<<#m<<"]"<<":=> \n"; \
-    rep(i,n)rep(j,m){ DUMPOUT << ((j==0)?"     |":" ") << x[i][j] << (((j)==(m-1))?"|\n":" "); } \
-    DUMPOUT <<"  in [" << __LINE__ << "]" << endl;
 #else
   #define dump(...) 42
   #define dump_1d(...) 42
@@ -76,9 +68,9 @@ typedef tuple<int,int,int> iii;
 typedef set<int> si;
 typedef complex<double> pnt;
 typedef vector<pnt> vpnt;
-typedef priority_queue<pii,vii,greater<pii> > spq;
-int dy[]={0, 0, 1, -1, 0};
+typedef priority_queue<pii, vii, greater<pii> > spq;  //pop, topで最小値
 int dx[]={1, -1, 0, 0, 0};
+int dy[]={0, 0, 1, -1, 0};
 //}}}
 
 

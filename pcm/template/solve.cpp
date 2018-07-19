@@ -4,9 +4,9 @@ using namespace std;
 
 #define infile "./test/sample-1.in"
 #define int long long
-#define INF 2147483647
-#define INFLL 1000000000000000000LL
-#define MOD 1000000007
+// #define INF 2147483647
+#define INF 1000000000000000000LL
+#define MOD 1000000007LL
 // {{{ define basic macro
 #define rep(i, x) for(int i = 0; i < (int)(x); i++)
 #define reps(i,x) for(int i = 1; i <= (int)(x); i++)

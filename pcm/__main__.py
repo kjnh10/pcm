@@ -71,7 +71,7 @@ def _prepare_problem(prob_name):
 @pass_config
 def tt(config, code_filename, case, debug):# {{{
     config.debug_mode = debug
-    code_dir, code_filename, test_dir = _get_code_info(code_filename)
+    task_id, code_dir, code_filename, test_dir = _get_code_info(code_filename)
     print('code_dir: ' + code_dir)
     print('code_filename: ' + code_filename)
     print('test_dir: ' + test_dir)
@@ -215,16 +215,15 @@ def _run_code(code_filename, input_file):# {{{
 @pass_config
 def sb(config, code_filename, pretest):
     contest = _reload_contest_class()
-    code_dir, code_filename, test_dir = _get_code_info(code_filename)
+    task_id, code_dir, code_filename, test_dir = _get_code_info(code_filename)
 
-    task_id = code_dir[code_dir.rfind('/')+1:]
     extension = code_filename[code_filename.rfind('.') + 1:]
     with open(code_dir + '/' + code_filename, "r") as f:
         code = f.read()
 
     if pretest:
         click.secho("pretest started\n", fg='green')
-        if not _test_task(code_dir, code_filename, code_dir + '/' + 'test/'):
+        if not _test_task(code_dir, code_filename, test_dir):
             click.secho("pretest not passed and exit", fg="red")
             return
 
@@ -332,8 +331,9 @@ def _get_code_info(code_filename):# {{{
 
     prob_dir = code_dir[:code_dir.rfind('/')]
     test_dir = f"{prob_dir}/test/"
-    return code_dir, code_filename, test_dir
-# }}}
+    task_id = prob_dir[prob_dir.rfind('/')+1:]
+    return task_id, code_dir, code_filename, test_dir
+    # }}}
 
 class Contest(object):
     def __init__(self, contest_identifier, work_dir=""):# {{{

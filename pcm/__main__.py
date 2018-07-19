@@ -33,20 +33,6 @@ def cli(config, verbose, home_directory):
 # }}}
 
 # sub command
-# sample{{{
-@cli.command()
-@click.option('--string', default='World', help='This is  the thing that is greeted.')
-@click.option('--repeat', default=1, help='How many times you should be greeted.')
-@click.argument('out', type=click.File('w'), default='-', required=False)
-@pass_config
-def sample(config, string, repeat, out):
-    """This script greets you."""
-    if config.verbose:
-        click.echo('We are in verbose mode')
-    click.echo('Home directory is %s' % config.home_directory)
-    for x in range(repeat):
-        click.echo('Hello %s!' % string, file=out)# }}}
-
 # init{{{
 @cli.command()
 @pass_config
@@ -54,29 +40,30 @@ def init(config):
     """This command will make current dir pcm work-space"""
     os.makedirs('./.pcm')# }}}
 
-# prepare{{{
+# prepare contest: pp {{{
 @cli.command()
-@click.argument('contest_identifier', type=str, default='')
+@click.argument('contest_identifier', type=str, default='abc001')
 @click.argument('contest_dir', type=str, default='')
 @click.option('--force/--no-force', "-f/-nf", default=False)
 @pass_config
-def pp(config, contest_identifier, contest_dir, force): # {{{
-    if contest_identifier == '':
-        _prepare_template()
-        return
-
+def pp(config, contest_identifier, contest_dir, force):
     contest = Contest(contest_identifier)
     contest.prepare(force)
 # }}}
 
-def _prepare_template():# {{{
-    shutil.copytree(script_path+'/template/', './tmp/prob1/')
-    shutil.copytree(script_path+'/template/', './tmp/prob2/')
-    os.makedirs('./tmp/.pcm')# }}}
+# prepare problem: ppp {{{
+@cli.command()
+@click.argument('prob_name', type=str, default='prob')
+@pass_config
+def ppp(config, prob_name):
+    _prepare_problem(prob_name)
 
+def _prepare_problem(prob_name):
+    shutil.copytree(script_path+'/template/', './{prob_name}/')
+    os.makedirs('./.pcm')
 # }}}
 
-# test{{{
+# test: tt {{{
 @cli.command()
 @click.argument('code_filename', type=str, default='')
 @click.option('--case', '-c', type=str, default='')
@@ -221,7 +208,7 @@ def _run_code(code_filename, input_file):# {{{
     return proc.returncode, outs.decode('utf-8'), errs.decode('utf-8'), TLE_flag  # }}}
 # }}}
 
-# submit{{{
+# submit: sb {{{
 @cli.command()
 @click.argument('code_filename', type=str, default="")
 @click.option('--pretest/--no-pretest', '-t/-nt', default=True)
@@ -245,7 +232,7 @@ def sb(config, code_filename, pretest):
         contest.submit(task_id, extension, code)
 #}}}
 
-# get answers{{{
+# get answers: ga {{{
 @cli.command()
 @pass_config
 def ga(config, limit_count=5):
@@ -253,7 +240,7 @@ def ga(config, limit_count=5):
     contest.get_answers(limit_count)
 # }}}
 
-# get template{{{
+# get template: gt {{{
 @cli.command()
 @click.argument('extension', type=str, default='cpp')
 @click.option('--new/--replace', '-n/-r', default=False)
@@ -279,7 +266,8 @@ def gt(config, extension, new):
 
     # vscodeのsettingも更新する。
     shutil.copytree(script_path+f'/template/.vscode/', ".vscode/")
-    click.secho(f"copied .vscode/", fg='green')
+    shutil.copy(script_path+'/template/dump.hpp', 'dump.hpp')
+    click.secho(f"copied .vscode and dump.hpp", fg='green')
 
 # }}}
 #}}}
@@ -342,7 +330,8 @@ def _get_code_info(code_filename):# {{{
             click.secho("you are not in a pcm managed directory", fg='red')
             return
 
-    test_dir = f"{code_dir}/test/"
+    prob_dir = code_dir[:code_dir.rfind('/')]
+    test_dir = f"{prob_dir}/test/"
     return code_dir, code_filename, test_dir
 # }}}
 
@@ -534,7 +523,7 @@ class Contest(object):
             print("There seems to be no problems. Check that the url is correct task list url")
             sys.exit()
 
-# }}}
+    # }}}
 
     def __prepare_tasks(self):  # {{{
         if "atcoder" in self.type:
@@ -548,17 +537,16 @@ class Contest(object):
         for task_id, task_info in self.task_info_map.items():
             task_url = base_url + task_info['url']
             task_dir = self.work_dir + '/' + task_id
-            os.makedirs(task_dir)
+            shutil.copytree(script_path+'/template/', f'{task_dir}/')
             os.chdir(task_dir)
-            shutil.copy(script_path+'/template/solve.py', task_id + '.py')
-            shutil.copy(script_path+'/template/solve.cpp', task_id + '.cpp')
-            shutil.copy(script_path+'/template/dump.hpp', 'dump.hpp')
-            shutil.copytree(script_path+'/template/.vscode/', '.vscode/')
+
             try:
+                shutil.rmtree(f"{task_dir}/test") # templateからのコピーでtest directoryが作られているので消しておく。
                 click.secho(f"oj will try to download {task_url}...", fg='yellow')
                 oj(['download', task_url]) # get test cases
                 pathlib.Path(task_info['description'].replace("/", "-")).touch()
             except:
                 click.secho("failed preparing: " + base_url + task_info['url'], fg='red')
-            # }}}
+    # }}}
+
 # vim:set foldmethod=marker:

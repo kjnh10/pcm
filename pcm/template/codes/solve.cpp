@@ -2,7 +2,7 @@ using namespace std;
 #include <iostream>
 #include <bits/stdc++.h>
 
-#define infile "./test/sample-1.in"
+#define infile "../test/sample-1.in"
 #define int long long
 // #define INF 2147483647
 #define INF 1000000000000000000LL

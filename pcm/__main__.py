@@ -377,12 +377,40 @@ class Contest(object):
         if "atcoder" in self.type:
             ext_to_lang_id = {'py': '3510', 'cpp': '3003'}  # pypy3, (C++14 (GCC 5.4.1))
             lang_id = ext_to_lang_id[extension]
+            with oj_utils.with_cookiejar(oj_utils.new_default_session(), path=oj_utils.default_cookie_path) as session:
+                print(type(session))
+                problem_id = self.task_info_map[task_id]["problem_id"]
+                onlinejudge.atcoder.AtCoderProblem(contest_id=self.name, problem_id=problem_id).submit(code, lang_id, session)
+        elif "codeforces" in self.type:
+            base_submit_url = f"http://codeforces.com/contest/{self.name}/submit"
+            lang_id = '50'  # GNU G++14 6.4.0
+            with oj_utils.with_cookiejar(oj_utils.new_default_session(), path=oj_utils.default_cookie_path) as session:
+                # csrf_token
+                r = session.get(base_submit_url)
+                soup = BeautifulSoup(r.text, "lxml")
+                csrf_token = soup.find(name="span", class_="csrf-token").get('data-csrf')
+                print(csrf_token)
+
+                payload = {
+                            "csrf_token":csrf_token,
+                            "ftaa":"2gm68wq1kofdqv7d71",
+                            "bfaa":"37ed9af431852dbdb93c7ef8bfed8a9d",
+                            "action":"submitSolutionFormSubmitted",
+                            "submittedProblemIndex":task_id,
+                            "programTypeId":lang_id,
+                            "source":code,
+                            "tabSize":"4",
+                            "sourceFile":"",
+                        }
+                r = session.post(
+                        base_submit_url,
+                        params = payload,
+                        )
+                print('finish')
         else:
             print("not implemeted for contest type: {self.type}")
             sys.exit()
-        with oj_utils.with_cookiejar(oj_utils.new_default_session(), path=oj_utils.default_cookie_path) as session:
-            problem_id = self.task_info_map[task_id]["problem_id"]
-            onlinejudge.atcoder.AtCoderProblem(contest_id=self.name, problem_id=problem_id).submit(code, lang_id, session)# }}}
+            # }}}
 
     def get_answers(self, limit_count):  # {{{
         if "atcoder" in self.type:

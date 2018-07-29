@@ -32,6 +32,7 @@ void Fill(A (&array)[N], const T &val){
 }
 #define fill(x,y) memset(x,y,sizeof(x))
 #define pb(a) push_back(a)
+#define mp(a, b) make_pair(a, b)
 #define uni(x) sort(all(x));x.erase(unique(all(x)),x.end())
 #define ten(n) ((int)1e##n)
 
@@ -68,7 +69,9 @@ typedef tuple<int,int,int> iii;
 typedef set<int> si;
 typedef complex<double> pnt;
 typedef vector<pnt> vpnt;
-typedef priority_queue<pii, vii, greater<pii> > spq;  //pop, topで最小値
+template<typename T>
+using PQ = priority_queue<T, vector<T>, greater<T>>;
+
 int dx[]={1, -1, 0, 0};
 int dy[]={0, 0, 1, -1};
 //}}}

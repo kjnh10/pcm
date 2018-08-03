@@ -383,7 +383,11 @@ class Contest(object):
                 onlinejudge.atcoder.AtCoderProblem(contest_id=self.name, problem_id=problem_id).submit(code, lang_id, session)
         elif "codeforces" in self.type:
             base_submit_url = f"http://codeforces.com/contest/{self.name}/submit"
-            lang_id = '50'  # GNU G++14 6.4.0
+            ext_to_lang_id = {
+                    'py': '31', # python3,   pypy=>41
+                    'cpp': '50',  # GNU G++14 6.4.0
+                    }
+            lang_id = ext_to_lang_id[extension]
             with oj_utils.with_cookiejar(oj_utils.new_default_session(), path=oj_utils.default_cookie_path) as session:
                 # csrf_token
                 r = session.get(base_submit_url)

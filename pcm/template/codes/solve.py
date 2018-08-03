@@ -17,7 +17,8 @@ from heapq import heappop, heappush, heapify
 import array
 from bisect import bisect_left, bisect_right, insort_left, insort_right
 from copy import deepcopy as dcopy
-import itertools# }}}
+import itertools
+# }}}
 
 # pre-defined{{{
 sys.setrecursionlimit(10**7)
@@ -32,18 +33,21 @@ def LS(): return sys.stdin.readline().split()
 def I(): return int(sys.stdin.readline())
 def F(): return float(sys.stdin.readline())
 def DP(N, M, first): return [[first] * M for n in range(N)]
-def DP3(N, M, L, first): return [[[first] * L for n in range(M)] for _ in range(N)]# }}}
+def DP3(N, M, L, first): return [[[first] * L for n in range(M)] for _ in range(N)]
+from inspect import currentframe
+def dump(*args):
+    names = {id(v):k for k,v in currentframe().f_back.f_locals.items()}
+    print(', '.join(names.get(id(arg),'???')+' => '+repr(arg) for arg in args), file=sys.stderr)
+# }}}
 
-def local_input():
+def local_input():# {{{
     from pcm.utils import set_stdin
     import sys
     if len(sys.argv) == 1:
-        set_stdin(os.path.dirname(__file__) + '/test/' + 'sample-1.in')
+        set_stdin(os.path.dirname(__file__) + '/test/' + 'sample-1.in')# }}}
 
 def solve():
-    N = int(input())
-    a,b = map(int, input().split())
-
+    return 0
 
 if __name__ == "__main__":# {{{
     try:

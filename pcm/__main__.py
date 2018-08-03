@@ -53,10 +53,15 @@ def pp(config, contest_identifier, contest_dir, force):
 
 # prepare problem: ppp {{{
 @cli.command()
-@click.argument('prob_name', type=str, default='prob')
+@click.argument('task_url', type=str, default='')
+@click.option('-n', '--prob_name', type=str, default='prob')
 @pass_config
-def ppp(config, prob_name):
+def ppp(config, task_url, prob_name):
     _prepare_problem(prob_name)
+    os.chdir(prob_name)
+    if task_url != '':
+        shutil.rmtree('./test')
+        oj(['download', task_url]) # get test cases
 
 def _prepare_problem(prob_name):
     shutil.copytree(script_path+'/template/', f'./{prob_name}/')

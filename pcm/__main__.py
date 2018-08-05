@@ -125,7 +125,9 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
                 '-fsanitize=undefined', # 未定義動作の検出
                 '-D_GLIBCXX_DEBUG',
                 ]
-        if debug: command.append('-DPCM', 'Wall') # for debug
+        if debug:
+            command.append('-DPCM') # for debug
+            command.append('-Wall') # for debug
         try:
             subprocess.run(
                 command,

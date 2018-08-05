@@ -73,26 +73,25 @@ def _prepare_problem(prob_name):
 @cli.command()
 @click.argument('code_filename', type=str, default='')
 @click.option('--case', '-c', type=str, default='')
-@click.option('--debug/--nodebug', '-', default=True)
+@click.option('--debug/--nodebug', '-d/-nd', default=True)
 @pass_config
 def tt(config, code_filename, case, debug):# {{{
-    config.debug_mode = debug
     task_id, code_dir, code_filename, test_dir = _get_code_info(code_filename)
     print('code_dir: ' + code_dir)
     print('code_filename: ' + code_filename)
     print('test_dir: ' + test_dir)
 
     if case == '': # test all case
-        _test_task(code_dir, code_filename, test_dir)
+        _test_task(code_dir, code_filename, test_dir, debug)
     else:
         if case in ("1", "2", "3", "4", "5", "6"):
             case = f'sample-{case}'
         infile = test_dir + case + '.in'
         expfile = test_dir + case + '.out'
-        _test_case(code_dir, code_filename, case, infile, expfile)
+        _test_case(code_dir, code_filename, case, infile, expfile, debug)
 # }}}
 
-def _test_task(code_dir, code_filename, testdir):# {{{
+def _test_task(code_dir, code_filename, testdir, debug=True):# {{{
     files = os.listdir(testdir)
     files.sort()
     res = True
@@ -102,12 +101,12 @@ def _test_task(code_dir, code_filename, testdir):# {{{
         case = filename[:-3]
         infile = testdir + case + '.in'
         expfile = testdir + case + '.out'  # 拡張子をexpにしたいが。。
-        if not _test_case(code_dir, code_filename, case, infile, expfile):
+        if not _test_case(code_dir, code_filename, case, infile, expfile, debug):
             res = False
     return res
 # }}}
 
-def _test_case(code_dir, code_filename, case, infile, expfile):# {{{
+def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
     codefile = code_dir + '/' + code_filename
     extension = code_filename[code_filename.rfind('.') + 1:]
 
@@ -117,19 +116,19 @@ def _test_case(code_dir, code_filename, case, infile, expfile):# {{{
         returncode, outs, errs, TLE_flag = _run_code(codefile, open(infile, "r"))
 
     elif extension == "cpp":
+        command = [
+                'g++',
+                "-o", code_dir + '/a.out' ,
+                codefile,
+                '-std=c++14',
+                '-g3',
+                '-fsanitize=undefined', # 未定義動作の検出
+                '-D_GLIBCXX_DEBUG',
+                ]
+        if debug: command.append('-DPCM', 'Wall') # for debug
         try:
             subprocess.run(
-                [
-                    'g++',
-                    "-o", code_dir + '/a.out' ,
-                    codefile,
-                    '-std=c++14',
-                    '-g3',
-                    '-Wall',
-                    '-fsanitize=undefined', # 未定義動作の検出
-                    '-D_GLIBCXX_DEBUG',
-                    '-DPCM'  # macro
-                 ],
+                command,
                 stderr=subprocess.STDOUT,
                 check=True,
             )
@@ -218,8 +217,9 @@ def _run_code(code_filename, input_file):# {{{
 @cli.command()
 @click.argument('code_filename', type=str, default="")
 @click.option('--pretest/--no-pretest', '-t/-nt', default=True)
+@click.option('--debug/--nodebug', '-d/-nd', default=False)
 @pass_config
-def sb(config, code_filename, pretest):
+def sb(config, code_filename, pretest, debug):
     contest = _reload_contest_class()
     task_id, code_dir, code_filename, test_dir = _get_code_info(code_filename)
 
@@ -229,7 +229,7 @@ def sb(config, code_filename, pretest):
 
     if pretest:
         click.secho("pretest started\n", fg='green')
-        if not _test_task(code_dir, code_filename, test_dir):
+        if not _test_task(code_dir, code_filename, test_dir, debug):
             click.secho("pretest not passed and exit", fg="red")
             return
 
@@ -411,6 +411,7 @@ class Contest(object):
                             "tabSize":"4",
                             "sourceFile":"",
                         }
+                click.secho(base_submit_url, fg='red')
                 r = session.post(
                         base_submit_url,
                         params = payload,

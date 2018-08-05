@@ -7,19 +7,19 @@ using namespace std;
 // #define INF 2147483647
 #define INF 1000000000000000000LL
 #define MOD 1000000007LL
+
 // {{{ define basic macro
-// #define rep(i, x) for(int i = 0; i < (int)(x); i++)
 #define _overload3(_1,_2,_3,name,...) name
 #define _rep(i,n) repi(i,0,n)
 #define repi(i,a,b) for(int i=(int)(a);i<(int)(b);++i)
 #define rep(...) _overload3(__VA_ARGS__,repi,_rep,)(__VA_ARGS__)
-#define reps(i,x) for(int i = 1; i <= (int)(x); i++)
-#define rrep(i,x) for(int i=((int)(x)-1);i>=0;i--)
-#define rreps(i,x) for(int i=((int)(x));i>0;i--)
-#define FOR(i, m, n) for(int i = m;i < n;i++)
-#define RFOR(i, m, n) for(int i = m;i >= n;i--)
+#define _rrep(i,n) repi(i,0,n)
+#define rrepi(i,a,b) for(int i=(int)(b-1);i>=(int)(a);--i)
+#define rrep(...) _overload3(__VA_ARGS__,rrepi,_rrep,)(__VA_ARGS__)
+
 #define foreach(x,a) for(auto& (x) : (a) )
 #define each(it,c) for(__typeof((c).begin()) it=(c).begin();it!=(c).end();it++)
+
 #define all(x) (x).begin(),(x).end()
 #define sum(v) accumulate(all(v), 0)
 #define sz(x) ((int)(x).size())
@@ -59,16 +59,9 @@ struct Fast {
 typedef long long ll;
 typedef vector<int> vi;
 typedef vector<vi> vvi;
-typedef vector<long long> vll;
-typedef vector<vll> vvll;
 typedef long double ld;
 typedef pair<int,int> pii;
-typedef vector<pii> vii;
-typedef vector<vii> vvii;
 typedef tuple<int,int,int> iii;
-typedef set<int> si;
-typedef complex<double> pnt;
-typedef vector<pnt> vpnt;
 template<typename T>
 using PQ = priority_queue<T, vector<T>, greater<T>>;
 

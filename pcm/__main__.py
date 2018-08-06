@@ -43,11 +43,11 @@ def init(config):
 # prepare contest: pp {{{
 @cli.command()
 @click.argument('contest_identifier', type=str, default='abc001')
-@click.argument('contest_dir', type=str, default='')
+@click.option('-n', '--work_dir_name', type=str, default='')
 @click.option('--force/--no-force', "-f/-nf", default=False)
 @pass_config
-def pp(config, contest_identifier, contest_dir, force):
-    contest = Contest(contest_identifier)
+def pp(config, contest_identifier, work_dir_name, force):
+    contest = Contest(contest_identifier, work_dir=work_dir_name)
     contest.prepare(force)
 # }}}
 
@@ -351,7 +351,7 @@ class Contest(object):
             self.url = contest_identifier
         self.type = self.__get_type()  # like atcoder, codeforces
         self.name = self.__get_name()  # like agc023
-        self.work_dir = work_dir if work_dir!="" else os.path.abspath("./" + self.name)  # 指定されていなければカレントフォルダ
+        self.work_dir = os.path.abspath(work_dir if work_dir else self.name)
         self.config_dir = self.work_dir + '/.pcm'
         self.task_info_cache = self.work_dir + "/.pcm/task_info_map"
         self.task_list_url = self.__get_task_list_url()

@@ -1,4 +1,4 @@
-from pcm.__main__ import pp, sb, tt, ga
+from pcm.__main__ import pp, ppp, sb, tt, ga
 import os
 import subprocess
 import shutil
@@ -6,7 +6,7 @@ import shutil
 # work_dir = "/Users/koji0708/go/src/github.com/kjnh10/pcw/work/atcoder"
 # work_dir = "/home/koji0708/go/src/github.com/kjnh10/pcw/work/atcoder"
 # work_dir = "/home/vagrant/go/src/github.com/kjnh10/pcw/work/atcoder"
-work_dir = "/home/koji0708/Dropbox/01_projects/2018/pcw/work/atcoder"
+work_dir = "/home/koji0708/Dropbox/01_projects/2018/pcw/work/atcoder/agc"
 
 def get_all(type, start, end):
     for num in range(start, end):
@@ -40,5 +40,6 @@ def get_all(type, start, end):
     print("finish")
 
 if __name__ == '__main__':
-    get_all('abc', 14, 42)
-    # get_all('arc', 58, 99)
+    # get_all('abc', 14, 42)
+    # get_all('arc', 1, 99)
+    get_all('agc', 1, 27)

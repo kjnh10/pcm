@@ -121,9 +121,10 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
                 "-o", code_dir + '/a.out' ,
                 codefile,
                 '-std=c++14',
+                '-O2',
                 '-g3',
                 '-fsanitize=undefined', # 未定義動作の検出
-                '-D_GLIBCXX_DEBUG',
+                # '-D_GLIBCXX_DEBUG',
                 ]
         if debug:
             command.append('-DPCM') # for debug

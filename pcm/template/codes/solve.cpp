@@ -13,7 +13,7 @@ using namespace std;
 #define _rep(i,n) repi(i,0,n)
 #define repi(i,a,b) for(int i=(int)(a);i<(int)(b);++i)
 #define rep(...) _overload3(__VA_ARGS__,repi,_rep,)(__VA_ARGS__)
-#define _rrep(i,n) repi(i,0,n)
+#define _rrep(i,n) rrepi(i,0,n)
 #define rrepi(i,a,b) for(int i=(int)(b-1);i>=(int)(a);--i)
 #define rrep(...) _overload3(__VA_ARGS__,rrepi,_rrep,)(__VA_ARGS__)
 

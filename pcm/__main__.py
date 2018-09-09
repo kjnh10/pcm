@@ -397,11 +397,11 @@ class Contest(object):
                     }
             lang_id = ext_to_lang_id[extension]
             with oj_utils.with_cookiejar(oj_utils.new_default_session(), path=oj_utils.default_cookie_path) as session:
-                # csrf_token
+                # get csrf_token
                 r = session.get(base_submit_url)
                 soup = BeautifulSoup(r.text, "lxml")
                 csrf_token = soup.find(name="span", class_="csrf-token").get('data-csrf')
-                print(csrf_token)
+                assert(csrf_token)
 
                 payload = {
                             "csrf_token":csrf_token,
@@ -414,7 +414,6 @@ class Contest(object):
                             "tabSize":"4",
                             "sourceFile":"",
                         }
-                click.secho(base_submit_url, fg='red')
                 r = session.post(
                         base_submit_url,
                         params = payload,

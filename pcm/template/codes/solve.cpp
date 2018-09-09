@@ -1,4 +1,4 @@
-// template version 1.0
+// template version 1.2
 using namespace std;
 #include <iostream>
 #include <bits/stdc++.h>
@@ -22,20 +22,20 @@ using namespace std;
 #define each(it,c) for(__typeof((c).begin()) it=(c).begin();it!=(c).end();it++)
 
 #define all(x) (x).begin(),(x).end()
-#define sum(v) accumulate(all(v), 0)
+#define sum(v) accumulate(all(v), 0LL)
 #define sz(x) ((int)(x).size())
-template<class T> inline void chmax(T &a, const T &b) { if(a < b) a = b; }
-template<class T> inline void chmin(T &a, const T &b) { if(a > b) a = b; }
-// n次元配列の初期化。第２引数の型のサイズごとに初期化していく。
-template<typename A, size_t N, typename T>
-void Fill(A (&array)[N], const T &val){
-    std::fill( (T*)array, (T*)(array+N), val );
-}
-#define fill(x,y) memset(x,y,sizeof(x))
 #define pb(a) push_back(a)
 #define mp(a, b) make_pair(a, b)
 #define uni(x) sort(all(x));x.erase(unique(all(x)),x.end())
 #define ten(n) ((int)1e##n)
+
+template<class T> inline void chmax(T &a, const T &b) { if(a < b) a = b; }
+template<class T> inline void chmin(T &a, const T &b) { if(a > b) a = b; }
+
+template<typename A, size_t N, typename T> // n次元配列の初期化。第２引数の型のサイズごとに初期化していく。
+void Fill(A (&array)[N], const T &val){
+    std::fill( (T*)array, (T*)(array+N), val );
+}
 
 template <class T = int>
 T in() {T x; cin>>x; return (x);}

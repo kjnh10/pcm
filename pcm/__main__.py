@@ -419,7 +419,14 @@ class Contest(object):
                         base_submit_url,
                         params = payload,
                         )
-                print('finish')
+                soup = BeautifulSoup(r.text, "lxml")
+                error = soup.find(class_="error for__source")
+                if error:
+                    click.secho(error.text, fg='red')
+                elif(r.url[r.url.rfind("/")+1:]=="my"):  # if submitted successfully, returned url will be http://codeforces.com/contest/****/my
+                    click.secho('successfully submitted maybe...', fg='green')
+                else:
+                    click.secho('submittion failed maybe...', fg='red')
         else:
             print("not implemeted for contest type: {self.type}")
             sys.exit()

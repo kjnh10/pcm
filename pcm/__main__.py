@@ -136,7 +136,7 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 )
-        outs, errs = proc.communicate(timeout=2)
+        outs, errs = proc.communicate()
         if proc.returncode:
             click.secho("compile error\n", fg='red')
             print(errs.decode('utf-8').replace(code_dir, ""))

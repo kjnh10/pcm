@@ -77,9 +77,10 @@ def _prepare_problem(prob_name):
 @pass_config
 def tt(config, code_filename, case, debug):# {{{
     task_id, code_dir, code_filename, test_dir = _get_code_info(code_filename)
-    print('code_dir: ' + code_dir)
-    print('code_filename: ' + code_filename)
-    print('test_dir: ' + test_dir)
+    if config.verbose:
+        print('code_dir: ' + code_dir)
+        print('code_filename: ' + code_filename)
+        print('test_dir: ' + test_dir)
 
     if case == '': # test all case
         _test_task(code_dir, code_filename, test_dir, debug)
@@ -116,7 +117,7 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
         returncode, outs, errs, TLE_flag = _run_code(codefile, open(infile, "r"))
 
     elif extension == "cpp":
-        click.secho('compile start.....', fg='green')
+        click.secho('compile start.....', blink=True)
         command = [
                 'g++',
                 "-o", code_dir + '/a.out' ,
@@ -142,8 +143,9 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
             print(errs.decode('utf-8').replace(code_dir, ""))
             sys.exit()
 
-        print(outs.decode('utf-8'))
-        click.secho('compile finised', fg='green')
+        if outs:
+            print(outs.decode('utf-8'))
+        click.secho('compile finised')
 
         returncode, outs, errs, TLE_flag = _run_code(code_dir + '/a.out', open(infile, "r"))
 

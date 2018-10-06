@@ -521,7 +521,7 @@ class Contest(object):
             return self.url[self.url.find('//')+2:self.url.find('.')]  # like arc071
         elif self.type == 'beta.atcoder':
             start = self.url.find('contests')+9
-            return self.url[start:start+6]
+            return self.url[start:]
         elif self.type == 'codeforces':
             start = self.url.find('contest')+8
             return self.url[start:]
@@ -536,7 +536,8 @@ class Contest(object):
         if self.type == 'atcoder':
             return self.url + "/assignments"
         elif self.type == 'beta.atcoder':
-            return "https://" + self.name + ".contest.atcoder.jp/assignments"
+            # return "https://" + self.name + ".contest.atcoder.jp/assignments"
+            return self.url + '/tasks'
         elif self.type == 'codeforces':
             return self.url  # codeforcesはproblemsがindex pageになっている。
         else:
@@ -595,8 +596,10 @@ class Contest(object):
     # }}}
 
     def __prepare_tasks(self):  # {{{
-        if "atcoder" in self.type:
+        if self.type == 'atcoder':
             base_url = self.task_list_url[:self.task_list_url.rfind("/")]
+        elif self.type == 'beta.atcoder':
+            base_url = 'https://beta.atcoder.jp'
         elif self.type == 'codeforces':
             base_url = "http://codeforces.com"
         else:

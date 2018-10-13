@@ -251,9 +251,11 @@ def sb(config, code_filename, pretest, debug):
 # get answers: ga {{{
 @cli.command()
 @pass_config
-def ga(config, limit_count=5):
+@click.option('--limit_count', '-c', type=int, default=5)
+@click.option('--extension', '-e', type=str, default='cpp')
+def ga(config, limit_count, extension):
     contest = _reload_contest_class()
-    contest.get_answers(limit_count)
+    contest.get_answers(limit_count, extension)
 # }}}
 
 # get template: gt {{{
@@ -439,14 +441,19 @@ class Contest(object):
             sys.exit()
             # }}}
 
-    def get_answers(self, limit_count):  # {{{
+    def get_answers(self, limit_count, extension):  # {{{
         if "atcoder" in self.type:
+            # get redcoderlist
+            rank_url = "https://beta.atcoder.jp/ranking?page=1"
+            rank_page = BeautifulSoup(requests.get(rank_url).content, 'lxml')
+            excelent_users = [tag.get('href') for tag in rank_page.findAll('a', class_='username')]
+            excelent_users = set([l[l.rfind('/')+1:] for l in excelent_users])
+
             task_ids = self.task_info_map.keys()
             for task_id in task_ids:
-                self.__get_answer(extension="cpp", task_id=task_id, limit_count=limit_count)
-                self.__get_answer(extension="py",  task_id=task_id, limit_count=limit_count) # 3510 for pypy
+                self.__get_answer(extension=extension, task_id=task_id, limit_count=limit_count, candidate_users=excelent_users)
 
-    def __get_answer(self, extension, task_id, limit_count):
+    def __get_answer(self, extension, task_id, limit_count, candidate_users):
             answer_dir = self.work_dir + "/" + task_id + "/answers/"
             if not os.path.exists(answer_dir):
                 os.makedirs(answer_dir)
@@ -456,37 +463,43 @@ class Contest(object):
                     lang_code="3003"
                 elif extension == "py":
                     lang_code="3023"
+                    # 3510 for pypy
 
                 problem_id = self.task_info_map[task_id]["problem_id"]
-                all_answer_url = f"https://beta.atcoder.jp/contests/{self.name}/submissions?"
-                all_answer_url += f"f.Language={lang_code}&f.Status=AC&f.Task={problem_id}&f.User=&orderBy=created&page=1"
-                # like https://beta.atcoder.jp/contests/abc045/submissions?f.Language=3003&f.Status=AC&f.Task=abc045_a&f.User=&orderBy=created&page=1
-
-                print('GET ' + all_answer_url)
-                all_answer_page_html = requests.get(all_answer_url)
-                all_answer_page = BeautifulSoup(all_answer_page_html.content, 'lxml')
-                links = all_answer_page.findAll('a')
-
                 count = 0
-                for l in links:
-                    link_url = l.get('href')
-                    if l.get_text() in ("Detail", "詳細"):
-                        answer_id = link_url[link_url.rfind("/")+2:]
-                        answer_url = "https://beta.atcoder.jp" + l.get('href')
-                        answer_page = BeautifulSoup(requests.get(answer_url).content, 'lxml')
-                        A = answer_page.findAll('a')
-                        for a in A:
-                            link = a.get('href')
-                            if "users" in str(link):
-                                user_name = link[link.rfind('/')+1:]
-                        answer = answer_page.find(id='submission-code').get_text()
-                        with open(answer_dir + answer_id + "_" + user_name + "." + extension, mode='w') as f:
-                            f.write(answer)
-                        count += 1
-                    if count >= limit_count:
-                        break
-                else:
-                    click.secho('There seems to be no answers you request. Maybe wrong url.', fg='red')
+                page = 1
+                while count < limit_count:
+                    all_answer_url = f"https://beta.atcoder.jp/contests/{self.name}/submissions?"
+                    all_answer_url += f"f.Language={lang_code}&f.Status=AC&f.Task={problem_id}&f.User=&orderBy=created&page={page}"
+                    #like https://beta.atcoder.jp/contests/abc045/submissions?f.Language=3003&f.Status=AC&f.Task=abc045_a&f.User=&orderBy=created&page=1
+                    print('GET ' + all_answer_url)
+                    all_answer_page = BeautifulSoup(requests.get(all_answer_url).content, 'lxml')
+                    links = all_answer_page.findAll('a')
+
+                    if all_answer_page.find('div', class_='panel-body') is not None: # 回答が尽きた場合
+                        click.secho('There seems to be no enough answers for your request.', fg='yellow')
+                        break;
+
+                    for l in links:
+                        link_url = l.get('href')
+                        if l.get_text() in ("Detail", "詳細"):
+                            answer_id = link_url[link_url.rfind("/")+2:]
+                            answer_url = "https://beta.atcoder.jp" + l.get('href')
+                            answer_page = BeautifulSoup(requests.get(answer_url).content, 'lxml')
+                            A = answer_page.findAll('a')
+                            for a in A:
+                                link = a.get('href')
+                                if "users" in str(link):
+                                    user_name = link[link.rfind('/')+1:]
+                            if user_name in candidate_users:
+                                answer = answer_page.find(id='submission-code').get_text()
+                                with open(answer_dir + answer_id + "_" + user_name + "." + extension, mode='w') as f:
+                                    f.write(answer)
+                                count += 1
+
+                        if count == limit_count:
+                            break
+                    page += 1;
     # }}}
 
     def __get_type(self):# {{{

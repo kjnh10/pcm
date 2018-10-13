@@ -1,4 +1,4 @@
-// template version 1.3
+// template version 1.4
 // {{{ define basic macro
 using namespace std;
 #include <iostream>

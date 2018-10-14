@@ -217,7 +217,7 @@ def _run_code(code_filename, input_file):# {{{
     try:
         outs, errs = proc.communicate(timeout=2)
         TLE_flag = False
-    except subprocess.TimeoutExpired as e:
+    except subprocess.TimeoutExpired:
         proc.kill()
         outs, errs = proc.communicate()
         TLE_flag = True
@@ -449,9 +449,16 @@ class Contest(object):
             excelent_users = [tag.get('href') for tag in rank_page.findAll('a', class_='username')]
             excelent_users = set([l[l.rfind('/')+1:] for l in excelent_users])
 
-            task_ids = self.task_info_map.keys()
-            for task_id in task_ids:
-                self.__get_answer(extension=extension, task_id=task_id, limit_count=limit_count, candidate_users=excelent_users)
+        elif self.type == 'codeforces':
+            # get redcoderlist
+            rank_url = 'http://codeforces.com/ratings/page/1'
+            rank_page = BeautifulSoup(requests.get(rank_url).content, 'lxml')
+            excelent_users = [tag.get('href') for tag in rank_page.findAll('a') if '/profile/' in tag.get('href')]
+            excelent_users = set([l[l.rfind('/')+1:] for l in excelent_users])
+
+        task_ids = self.task_info_map.keys()
+        for task_id in task_ids:
+            self.__get_answer(extension=extension, task_id=task_id, limit_count=limit_count, candidate_users=excelent_users)
 
     def __get_answer(self, extension, task_id, limit_count, candidate_users):
             answer_dir = self.work_dir + "/" + task_id + "/answers/"
@@ -500,6 +507,9 @@ class Contest(object):
                         if count == limit_count:
                             break
                     page += 1;
+            else:
+                # codeforcesはseleniumを使わないととれなそう。
+                raise Exception(f'not implemented for {self.type} yet.')
     # }}}
 
     def __get_type(self):# {{{

@@ -43,8 +43,12 @@ def dump(*args):
 def local_input():# {{{
     from pcm.utils import set_stdin
     import sys
+    from pathlib import Path
+    parentdir = Path(os.path.dirname(__file__)).parent
+    inputfile = parentdir.joinpath('test/sample-1.in')
     if len(sys.argv) == 1:
-        set_stdin(os.path.dirname(__file__) + '/test/' + 'sample-1.in')# }}}
+        set_stdin(inputfile)
+# }}}
 
 def solve():
     return 0

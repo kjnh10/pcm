@@ -127,3 +127,4 @@ venv.bak/
 *.out
 
 pcm/tmp/
+pcm/.vscode/

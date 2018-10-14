@@ -62,8 +62,7 @@ int dy[]={0, 0, 1, -1};
 // }}}
 
 int solve(){
-  int n=3;
-  dump(3);
+
   return 0;
 }
 

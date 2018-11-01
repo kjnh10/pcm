@@ -11,7 +11,6 @@ using namespace std;
 #define rrepi(i,a,b) for(int i=(int)(b-1);i>=(int)(a);--i)
 #define rrep(...) _overload3(__VA_ARGS__,rrepi,_rrep,)(__VA_ARGS__)
 #define all(x) (x).begin(),(x).end()
-#define sum(v) accumulate(all(v), 0LL)
 #define sz(x) ((int)(x).size())
 #define pb(a) push_back(a)
 #define mp(a, b) make_pair(a, b)
@@ -21,13 +20,7 @@ template<class T, size_t N> size_t sza(const T (&array)[N]) { return N; }
 template<class T> inline void chmax(T &a, const T &b) { if(a < b) a = b; }
 template<class T> inline void chmin(T &a, const T &b) { if(a > b) a = b; }
 template<class T=int> T in() {T x; cin>>x; return (x);}
-
-struct Fast {
-  Fast(){
-    std::cin.tie(0);
-    ios::sync_with_stdio(false);
-  }
-} fast;
+struct Fast { Fast(){ std::cin.tie(0); ios::sync_with_stdio(false); } } fast;
 
 // dump macro
 #ifdef PCM

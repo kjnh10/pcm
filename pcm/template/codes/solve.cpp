@@ -1,8 +1,16 @@
-// template version 1.4
+// template version 1.6
 // {{{ define basic macro
 using namespace std;
 #include <iostream>
 #include <bits/stdc++.h>
+// varibable settings
+#define int long long
+#define INF 1000000000000000000LL
+// #define INF 2147483647
+#define MOD 1000000007LL
+// #define MOD 998244353LL
+#define infile "../test/sample-1.in"
+
 #define _overload3(_1,_2,_3,name,...) name
 #define _rep(i,n) repi(i,0,n)
 #define repi(i,a,b) for(int i=(int)(a);i<(int)(b);++i)
@@ -42,15 +50,6 @@ int dx[]={1, -1, 0, 0};
 int dy[]={0, 0, 1, -1};
 #define fi first
 #define se second
-
-// }}}
-// varible setting{{{
-
-#define infile "../test/sample-1.in"
-#define int long long
-#define INF 1000000000000000000LL
-// #define INF 2147483647
-#define MOD 1000000007LL
 
 // }}}
 

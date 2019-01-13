@@ -7,6 +7,7 @@ import fnmatch
 import pickle
 import subprocess
 import signal
+from . import config
 from bs4 import BeautifulSoup
 # from pcm.atcoder_tools.core.AtCoder import AtCoder
 from onlinejudge.implementation.main import main as oj
@@ -357,11 +358,13 @@ def _get_code_info(code_filename):# {{{
 class Contest(object):
     def __init__(self, contest_identifier, work_dir=""):# {{{
         if contest_identifier[:3] in ("abc", "arc", "agc"):
-            self.url = f"https://{contest_identifier}.contest.atcoder.jp"
+            self.url = f"https://atcoder.jp/contests/{contest_identifier}"
         else:
             self.url = contest_identifier
         self.type = self.__get_type()  # like atcoder, codeforces
         self.name = self.__get_name()  # like agc023
+        self.session = requests.session()
+        self.__login(self.session)
         self.work_dir = os.path.abspath(work_dir if work_dir else self.name)
         self.config_dir = self.work_dir + '/.pcm'
         self.task_info_cache = self.work_dir + "/.pcm/task_info_map"
@@ -392,64 +395,62 @@ class Contest(object):
         # }}}
 
     def submit(self, task_id, extension, code):# {{{
-        if "atcoder" in self.type:
+        if self.type=='atcoder':
             ext_to_lang_id = {'py': '3510', 'cpp': '3003'}  # pypy3, (C++14 (GCC 5.4.1))
             lang_id = ext_to_lang_id[extension]
-            with oj_utils.with_cookiejar(oj_utils.new_default_session(), path=oj_utils.default_cookie_path) as session:
-                print(type(session))
-                problem_id = self.task_info_map[task_id]["problem_id"]
-                onlinejudge.atcoder.AtCoderProblem(contest_id=self.name, problem_id=problem_id).submit(code, lang_id, session)
-        elif "codeforces" in self.type:
+            problem_id = self.task_info_map[task_id]["problem_id"]
+            onlinejudge.atcoder.AtCoderProblem(contest_id=self.name, problem_id=problem_id).submit(code, lang_id, self.session)
+        elif self.type=='codeforces':
             base_submit_url = f"http://codeforces.com/contest/{self.name}/submit"
             ext_to_lang_id = {
                     'py': '31', # python3,   pypy=>41
                     'cpp': '50',  # GNU G++14 6.4.0
                     }
             lang_id = ext_to_lang_id[extension]
-            with oj_utils.with_cookiejar(oj_utils.new_default_session(), path=oj_utils.default_cookie_path) as session:
-                # get csrf_token
-                r = session.get(base_submit_url)
-                soup = BeautifulSoup(r.text, "lxml")
-                csrf_token = soup.find(name="span", class_="csrf-token").get('data-csrf')
-                assert(csrf_token)
 
-                payload = {
-                            "csrf_token":csrf_token,
-                            "ftaa":"2gm68wq1kofdqv7d71",
-                            "bfaa":"37ed9af431852dbdb93c7ef8bfed8a9d",
-                            "action":"submitSolutionFormSubmitted",
-                            "submittedProblemIndex":task_id,
-                            "programTypeId":lang_id,
-                            "source":code,
-                            "tabSize":"4",
-                            "sourceFile":"",
-                        }
-                r = session.post(
-                        base_submit_url,
-                        params = payload,
-                        )
-                soup = BeautifulSoup(r.text, "lxml")
-                error = soup.find(class_="error for__source")
-                if error:
-                    click.secho(error.text, fg='red')
-                elif(r.url[r.url.rfind("/")+1:]=="my"):  # if submitted successfully, returned url will be http://codeforces.com/contest/****/my
-                    click.secho('successfully submitted maybe...', fg='green')
-                else:
-                    click.secho('submittion failed maybe...', fg='red')
+            # get csrf_token
+            r = self.session.get(base_submit_url)
+            soup = BeautifulSoup(r.text, "lxml")
+            csrf_token = soup.find(name="span", class_="csrf-token").get('data-csrf')
+            assert(csrf_token)
+
+            payload = {
+                        "csrf_token":csrf_token,
+                        "ftaa":"2gm68wq1kofdqv7d71",
+                        "bfaa":"37ed9af431852dbdb93c7ef8bfed8a9d",
+                        "action":"submitSolutionFormSubmitted",
+                        "submittedProblemIndex":task_id,
+                        "programTypeId":lang_id,
+                        "source":code,
+                        "tabSize":"4",
+                        "sourceFile":"",
+                    }
+            r = self.session.post(
+                    base_submit_url,
+                    params = payload,
+                    )
+            soup = BeautifulSoup(r.text, "lxml")
+            error = soup.find(class_="error for__source")
+            if error:
+                click.secho(error.text, fg='red')
+            elif(r.url[r.url.rfind("/")+1:]=="my"):  # if submitted successfully, returned url will be http://codeforces.com/contest/****/my
+                click.secho('successfully submitted maybe...', fg='green')
+            else:
+                click.secho('submittion failed maybe...', fg='red')
         else:
             print("not implemeted for contest type: {self.type}")
             sys.exit()
             # }}}
 
     def get_answers(self, limit_count, extension):  # {{{
-        if "atcoder" in self.type:
+        if self.type=='atcoder':
             # get redcoderlist
             rank_url = "https://beta.atcoder.jp/ranking?page=1"
             rank_page = BeautifulSoup(requests.get(rank_url).content, 'lxml')
             excelent_users = [tag.get('href') for tag in rank_page.findAll('a', class_='username')]
             excelent_users = set([l[l.rfind('/')+1:] for l in excelent_users])
 
-        elif self.type == 'codeforces':
+        elif self.type=='codeforces':
             # get redcoderlist
             rank_url = 'http://codeforces.com/ratings/page/1'
             rank_page = BeautifulSoup(requests.get(rank_url).content, 'lxml')
@@ -465,7 +466,7 @@ class Contest(object):
             if not os.path.exists(answer_dir):
                 os.makedirs(answer_dir)
 
-            if "atcoder" in self.type:
+            if self.type=='atcoder':
                 if extension == "cpp":
                     lang_code="3003"
                 elif extension == "py":
@@ -513,9 +514,7 @@ class Contest(object):
     # }}}
 
     def __get_type(self):# {{{
-        if "beta.atcoder" in self.url:
-            return "beta.atcoder"
-        elif "atcoder" in self.url:
+        if "atcoder" in self.url:
             return "atcoder"
         elif "codeforces" in self.url:
             return "codeforces"
@@ -528,10 +527,7 @@ class Contest(object):
         get contest_name from contest_url
         """
         if self.type == 'atcoder':
-            return self.url[self.url.find('//')+2:self.url.find('.')]  # like arc071
-        elif self.type == 'beta.atcoder':
-            start = self.url.find('contests')+9
-            return self.url[start:]
+            return self.url[self.url.rfind('/')+1 : ]  # like arc071
         elif self.type == 'codeforces':
             start = self.url.find('contest')+8
             return self.url[start:]
@@ -544,10 +540,7 @@ class Contest(object):
         get task_list_url from contest_url
         """
         if self.type == 'atcoder':
-            return self.url + "/assignments"
-        elif self.type == 'beta.atcoder':
-            # return "https://" + self.name + ".contest.atcoder.jp/assignments"
-            return self.url + '/tasks'
+            return self.url + "/tasks"
         elif self.type == 'codeforces':
             return self.url  # codeforcesはproblemsがindex pageになっている。
         else:
@@ -566,14 +559,17 @@ class Contest(object):
                 except:
                     click.secho(f"{self.task_info_cache} is broken, so will try to retrieve info", fg='yellow')
 
-        oj(['login', self.task_list_url])
-        with oj_utils.with_cookiejar(oj_utils.new_default_session(), path=oj_utils.default_cookie_path) as session:
-            task_page_html = oj_utils.request('GET', self.task_list_url, session, allow_redirects=True)
+        task_page_html = self.session.request('GET', self.task_list_url)
+        if self.type == 'atcoder':
+            click.secho(f'login status in __get_task_info_map(): {"Sign Out" in task_page_html.text}', fg='green')
+        elif self.type == 'codeforces':
+            click.secho(f'login status in __get_task_info_map(): {"Logout" in task_page_html.text}', fg='green')
+
         task_page = BeautifulSoup(task_page_html.content, 'lxml')
         links = task_page.findAll('a')
 
         task_urls = []
-        if ("atcoder" in self.type) or (self.type=='codeforces'):
+        if (self.type=='atcoder') or (self.type=='codeforces'):
             for l in links:
                 if l.get_text().strip() in ALPHABETS:
                     task_urls.append(l.get('href'))
@@ -607,9 +603,7 @@ class Contest(object):
 
     def __prepare_tasks(self):  # {{{
         if self.type == 'atcoder':
-            base_url = self.task_list_url[:self.task_list_url.rfind("/")]
-        elif self.type == 'beta.atcoder':
-            base_url = 'https://beta.atcoder.jp'
+            base_url = "https://atcoder.jp"
         elif self.type == 'codeforces':
             base_url = "http://codeforces.com"
         else:
@@ -631,4 +625,49 @@ class Contest(object):
                 click.secho("failed preparing: " + base_url + task_info['url'], fg='red')
     # }}}
 
+    def __login(self, session):# {{{
+        if self.type == 'atcoder':
+            LOGIN_URL = "https://atcoder.jp/login"
+
+            # csrf_token取得
+            r = session.get(LOGIN_URL)
+            s = BeautifulSoup(r.text, 'lxml')
+            csrf_token = s.find(attrs={'name': 'csrf_token'}).get('value')
+
+            # パラメータセット
+            login_info = {
+                "csrf_token": csrf_token,
+                "username": config.atcoder_username,
+                "password": config.atcoder_password
+            }
+        elif self.type == 'codeforces':
+            LOGIN_URL = "http://codeforces.com/enter"
+
+            # csrf_token取得
+            r = session.get(LOGIN_URL)
+            s = BeautifulSoup(r.text, 'lxml')
+            csrf_token = s.find(attrs={'class': 'csrf-token'}).get('data-csrf')
+
+            # パラメータセット
+            login_info = {
+                'csrf_token': csrf_token,
+                'action': 'enter',
+                'ftaa' : 'jp14jktv73egplz2is',
+                'bfaa' : 'cc5b70fc5cbc458bb9c010b167bc3592',
+                'handleOrEmail': config.codeforces_username,
+                'password': config.codeforces_password,
+                'remember': 'on',
+                '_tta': '376'
+            }
+        else:
+            raise Exception('not implemented')
+
+        result = session.post(LOGIN_URL, data=login_info)
+        result.raise_for_status()
+        if self.type == 'atcoder':
+            click.secho(f'login status in __login(): {"Sign Out" in result.text}', fg='green')
+        elif self.type == 'codeforces':
+            click.secho(f'login status in __login(): {"Logout" in result.text}', fg='green')
+
+# }}}
 # vim:set foldmethod=marker:

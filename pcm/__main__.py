@@ -11,7 +11,7 @@ from bs4 import BeautifulSoup
 # from pcm.atcoder_tools.core.AtCoder import AtCoder
 from onlinejudge.implementation.main import main as oj
 import onlinejudge.implementation.utils as oj_utils
-import onlinejudge.atcoder
+import onlinejudge.service.atcoder
 ALPHABETS = [chr(i) for i in range(ord('A'), ord('Z')+1)]  # can also use string module
 script_path = os.path.abspath(os.path.dirname(__file__))  # script path}}}
 

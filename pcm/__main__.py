@@ -399,7 +399,8 @@ class Contest(object):
             ext_to_lang_id = {'py': '3510', 'cpp': '3003'}  # pypy3, (C++14 (GCC 5.4.1))
             lang_id = ext_to_lang_id[extension]
             problem_id = self.task_info_map[task_id]["problem_id"]
-            onlinejudge.atcoder.AtCoderProblem(contest_id=self.name, problem_id=problem_id).submit(code, lang_id, self.session)
+            with oj_utils.with_cookiejar(oj_utils.new_default_session(), path=oj_utils.default_cookie_path) as session:
+                onlinejudge.service.atcoder.AtCoderProblem(contest_id=self.name, problem_id=problem_id).submit_code(code, lang_id, session)
         elif self.type=='codeforces':
             base_submit_url = f"http://codeforces.com/contest/{self.name}/submit"
             ext_to_lang_id = {

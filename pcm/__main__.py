@@ -333,14 +333,14 @@ def _reload_contest_class():  # {{{
 
 def _get_code_info(code_filename):# {{{
     if code_filename == "": # when code_filename not specified
-        p = list(pathlib.Path('.').glob('*.cpp'))  #TODO: cpp決め打ちではなく設定出来るようにする。
-        if len(p)>0:
-            code_filename = str(p[0])
-            code_dir = os.getcwd()
-            click.secho(f"you did not specify code_filename.so pcm will use {code_filename}\n", fg='yellow')
-        else:
+        code_dir = os.getcwd()
+        try:
+            code_filename = _get_last_modified_file()
+            click.secho(f"you did not specify code_filename.so pcm will use {code_filename}\n which is the one you updated at last", fg='yellow')
+        except:
             click.secho("you are not in a pcm valid problem directory", fg='red')
             return
+
     elif os.path.exists(f'./{code_filename}'): # まずはcurrent directory以下を探す。
         code_dir = os.getcwd()
     else:
@@ -354,6 +354,18 @@ def _get_code_info(code_filename):# {{{
     task_id = prob_dir[prob_dir.rfind('/')+1:]
     return task_id, code_dir, code_filename, test_dir
     # }}}
+
+def _get_last_modified_file():# {{{
+    candidates = []
+    candidates += [(p.stat().st_mtime, str(p)) for p in pathlib.Path('.').glob(f'*.cpp')]
+    candidates += [(p.stat().st_mtime, str(p)) for p in pathlib.Path('.').glob(f'*.py')]
+    candidates.sort(reverse=True)
+    if len(candidates)>0:
+        code_filename = str(candidates[0][1])
+        return code_filename
+    else:
+        raise Exception("no valid code file found")
+# }}}
 
 class Contest(object):
     def __init__(self, contest_identifier, work_dir=""):# {{{

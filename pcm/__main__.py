@@ -10,8 +10,8 @@ import signal
 from . import config
 from bs4 import BeautifulSoup
 # from pcm.atcoder_tools.core.AtCoder import AtCoder
-from onlinejudge.implementation.main import main as oj
-import onlinejudge.implementation.utils as oj_utils
+from onlinejudge._implementation.main import main as oj
+import onlinejudge._implementation.utils as oj_utils
 import onlinejudge.service.atcoder
 ALPHABETS = [chr(i) for i in range(ord('A'), ord('Z')+1)]  # can also use string module
 script_path = os.path.abspath(os.path.dirname(__file__))  # script path}}}
@@ -411,7 +411,7 @@ class Contest(object):
             ext_to_lang_id = {'py': '3510', 'cpp': '3003'}  # pypy3, (C++14 (GCC 5.4.1))
             lang_id = ext_to_lang_id[extension]
             problem_id = self.task_info_map[task_id]["problem_id"]
-            with oj_utils.with_cookiejar(oj_utils.new_default_session(), path=oj_utils.default_cookie_path) as session:
+            with oj_utils.with_cookiejar(oj_utils.get_default_session(), path=oj_utils.default_cookie_path) as session:
                 onlinejudge.service.atcoder.AtCoderProblem(contest_id=self.name, problem_id=problem_id).submit_code(code, lang_id, session)
         elif self.type=='codeforces':
             base_submit_url = f"http://codeforces.com/contest/{self.name}/submit"

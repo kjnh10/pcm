@@ -458,11 +458,13 @@ class Contest(object):
     def get_answers(self, limit_count, extension):  # {{{
         if self.type=='atcoder':
             # get redcoderlist
-            rank_url = "https://beta.atcoder.jp/ranking?page=1"
-            rank_page = BeautifulSoup(requests.get(rank_url).content, 'lxml')
-            excelent_users = [tag.get('href') for tag in rank_page.findAll('a', class_='username')]
-            excelent_users = set([l[l.rfind('/')+1:] for l in excelent_users])
-
+            excelent_users = []
+            for page in [1, 2]:
+                rank_url = f"https://atcoder.jp/ranking?page={page}"
+                rank_page = BeautifulSoup(requests.get(rank_url).content, 'lxml')
+                excelent_users_buf = [tag.get('href') for tag in rank_page.findAll('a', class_='username')]
+                excelent_users += [l[l.rfind('/')+1:] for l in excelent_users_buf]
+            print(len(excelent_users), excelent_users)
         elif self.type=='codeforces':
             # get redcoderlist
             rank_url = 'http://codeforces.com/ratings/page/1'

@@ -119,34 +119,38 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
 
     elif extension == "cpp":
         click.secho('compile start.....', blink=True)
-        command = [
-                'g++',
-                "-o", code_dir + '/a.out' ,
-                codefile,
-                '-std=c++14',
-                '-O2',
-                '-g3',
-                '-fsanitize=undefined', # 未定義動作の検出
-                # '-D_GLIBCXX_DEBUG',
-                ]
-        if debug:
-            command.append('-DPCM') # for debug
-            command.append('-Wall') # for debug
+        if (pathlib.Path(codefile).stat().st_mtime <= pathlib.Path(code_dir + '/a.out').stat().st_mtime):
+            click.secho(f'compile skipped since {codefile} is older than a.out')
+        else:
+            command = [
+                    'g++',
+                    "-o",
+                    code_dir + '/a.out',
+                    codefile,
+                    '-std=c++14',
+                    '-O2',
+                    '-g3',
+                    '-fsanitize=undefined', # 未定義動作の検出
+                    # '-D_GLIBCXX_DEBUG',
+                    ]
+            if debug:
+                command.append('-DPCM') # for debug
+                command.append('-Wall') # for debug
 
-        proc = subprocess.Popen(
-                command,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                )
-        outs, errs = proc.communicate()
-        if proc.returncode:
-            click.secho("compile error\n", fg='red')
-            print(errs.decode('utf-8').replace(code_dir, ""))
-            sys.exit()
+            proc = subprocess.Popen(
+                    command,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    )
+            outs, errs = proc.communicate()
+            if proc.returncode:
+                click.secho("compile error\n", fg='red')
+                print(errs.decode('utf-8').replace(code_dir, ""))
+                sys.exit()
 
-        if outs:
-            print(outs.decode('utf-8'))
-        click.secho('compile finised')
+            if outs:
+                print(outs.decode('utf-8'))
+            click.secho('compile finised')
 
         returncode, outs, errs, TLE_flag = _run_code(code_dir + '/a.out', open(infile, "r"))
 

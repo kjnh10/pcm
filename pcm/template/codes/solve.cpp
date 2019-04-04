@@ -1,16 +1,23 @@
-// template version 1.6
-// {{{ define basic macro
+// template version 1.7
+
+// varibable settings {{{
 using namespace std;
 #include <iostream>
 #include <bits/stdc++.h>
-// varibable settings
-#define int long long
-#define INF 1000000000000000000LL
-// #define INF 2147483647
-#define MOD 1000000007LL
-// #define MOD 998244353LL
-#define infile "../test/sample-1.in"
 
+#define int long long
+#define INF 1e18
+// #define INF 2147483647
+#define MOD 1e9+7
+#define infile "../test/sample-1.in"
+int dx[]={1, -1, 0, 0};
+int dy[]={0, 0, 1, -1};
+#define fi first
+#define se second
+
+// }}}
+
+// define basic macro {{{
 #define _overload3(_1,_2,_3,name,...) name
 #define _rep(i,n) repi(i,0,n)
 #define repi(i,a,b) for(int i=(int)(a);i<(int)(b);++i)
@@ -23,12 +30,16 @@ using namespace std;
 #define pb(a) push_back(a)
 #define mp(a, b) make_pair(a, b)
 #define uni(x) sort(all(x));x.erase(unique(all(x)),x.end())
-#define ten(n) ((int)1e##n)
-template<class T, size_t N> size_t sza(const T (&array)[N]) { return N; }
 template<class T> inline void chmax(T &a, const T &b) { if(a < b) a = b; }
 template<class T> inline void chmin(T &a, const T &b) { if(a > b) a = b; }
-template<class T=int> T in() {T x; cin>>x; return (x);}
-struct Fast { Fast(){ std::cin.tie(0); ios::sync_with_stdio(false); } } fast;
+
+typedef long long ll;
+typedef vector<int> vi;
+typedef vector<vi> vvi;
+typedef long double ld;
+typedef pair<int,int> pii;
+typedef tuple<int,int,int> iii;
+template<typename T> using PQ = priority_queue<T, vector<T>, greater<T>>;
 
 // dump macro
 #ifdef PCM
@@ -38,22 +49,13 @@ struct Fast { Fast(){ std::cin.tie(0); ios::sync_with_stdio(false); } } fast;
   #define dump_1d(...) 42
   #define dump_2d(...) 42
 #endif
-
-typedef long long ll;
-typedef vector<int> vi;
-typedef vector<vi> vvi;
-typedef long double ld;
-typedef pair<int,int> pii;
-typedef tuple<int,int,int> iii;
-template<typename T> using PQ = priority_queue<T, vector<T>, greater<T>>;
-int dx[]={1, -1, 0, 0};
-int dy[]={0, 0, 1, -1};
-#define fi first
-#define se second
-
+struct Fast { Fast(){ std::cin.tie(0); ios::sync_with_stdio(false); } } fast;
 // }}}
 
 int solve(){
+  int n;
+  n = 12;
+  cout << n*12 << endl;
 
   return 0;
 }

@@ -118,7 +118,8 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
 
     elif extension == "cpp":
         click.secho('compile start.....', blink=True)
-        if (pathlib.Path(codefile).stat().st_mtime <= pathlib.Path(code_dir + '/a.out').stat().st_mtime):
+        exe = pathlib.Path(code_dir + '/a.out')
+        if (exe.exists() and pathlib.Path(codefile).stat().st_mtime <= exe.stat().st_mtime):
             click.secho(f'compile skipped since {codefile} is older than a.out')
         else:
             command = [

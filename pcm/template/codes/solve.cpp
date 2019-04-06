@@ -53,10 +53,6 @@ struct Fast { Fast(){ std::cin.tie(0); ios::sync_with_stdio(false); } } fast;
 // }}}
 
 int solve(){
-  int n;
-  n = 12;
-  cout << n*12 << endl;
-
   return 0;
 }
 

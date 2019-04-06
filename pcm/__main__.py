@@ -7,7 +7,6 @@ import fnmatch
 import pickle
 import subprocess
 import signal
-from . import config
 from bs4 import BeautifulSoup
 # from pcm.atcoder_tools.core.AtCoder import AtCoder
 from onlinejudge._implementation.main import main as oj
@@ -379,8 +378,10 @@ class Contest(object):
             self.url = contest_identifier
         self.type = self.__get_type()  # like atcoder, codeforces
         self.name = self.__get_name()  # like agc023
-        self.session = requests.session()
-        self.__login(self.session)
+        with oj_utils.with_cookiejar(oj_utils.get_default_session()) as session:
+            self.session = session
+            if not self.__is_logined():
+                click.secho(f'you are not logged in to {self.type}. if you want to join a contest realtime or submit, you need to "oj login"', fg='red')
         self.work_dir = os.path.abspath(work_dir if work_dir else self.name)
         self.config_dir = self.work_dir + '/.pcm'
         self.task_info_cache = self.work_dir + "/.pcm/task_info_map"
@@ -415,8 +416,7 @@ class Contest(object):
             ext_to_lang_id = {'py': '3510', 'cpp': '3003'}  # pypy3, (C++14 (GCC 5.4.1))
             lang_id = ext_to_lang_id[extension]
             problem_id = self.task_info_map[task_id]["problem_id"]
-            with oj_utils.with_cookiejar(oj_utils.get_default_session(), path=oj_utils.default_cookie_path) as session:
-                onlinejudge.service.atcoder.AtCoderProblem(contest_id=self.name, problem_id=problem_id).submit_code(code, lang_id, session)
+            onlinejudge.service.atcoder.AtCoderProblem(contest_id=self.name, problem_id=problem_id).submit_code(code, lang_id, self.session)
         elif self.type=='codeforces':
             base_submit_url = f"http://codeforces.com/contest/{self.name}/submit"
             ext_to_lang_id = {
@@ -566,6 +566,17 @@ class Contest(object):
             click.secho(f"unknown type of url: {self.url}", fg='red')
             sys.exit()# }}}
 
+
+    def __is_logined(self):
+        resp = self.session.request('GET', self.url)
+        if self.type == 'atcoder':
+            click.secho(f'login status in __is_logined(): {"Sign Out" in resp.text}', fg='green')
+            return ("Sign Out" in resp.text)
+        elif self.type == 'codeforces':
+            click.secho(f'login status in __is_logined(): {"Logout" in resp.text}', fg='green')
+            return ("Logout" in resp.text)
+
+
     def __get_task_info_map(self):# {{{
         # reload cache if it exists.
         if os.path.exists(self.task_info_cache):
@@ -579,11 +590,6 @@ class Contest(object):
                     click.secho(f"{self.task_info_cache} is broken, so will try to retrieve info", fg='yellow')
 
         task_page_html = self.session.request('GET', self.task_list_url)
-        if self.type == 'atcoder':
-            click.secho(f'login status in __get_task_info_map(): {"Sign Out" in task_page_html.text}', fg='green')
-        elif self.type == 'codeforces':
-            click.secho(f'login status in __get_task_info_map(): {"Logout" in task_page_html.text}', fg='green')
-
         task_page = BeautifulSoup(task_page_html.content, 'lxml')
         links = task_page.findAll('a')
 
@@ -644,49 +650,4 @@ class Contest(object):
                 click.secho("failed preparing: " + base_url + task_info['url'], fg='red')
     # }}}
 
-    def __login(self, session):# {{{
-        if self.type == 'atcoder':
-            LOGIN_URL = "https://atcoder.jp/login"
-
-            # csrf_token取得
-            r = session.get(LOGIN_URL)
-            s = BeautifulSoup(r.text, 'lxml')
-            csrf_token = s.find(attrs={'name': 'csrf_token'}).get('value')
-
-            # パラメータセット
-            login_info = {
-                "csrf_token": csrf_token,
-                "username": config.atcoder_username,
-                "password": config.atcoder_password
-            }
-        elif self.type == 'codeforces':
-            LOGIN_URL = "http://codeforces.com/enter"
-
-            # csrf_token取得
-            r = session.get(LOGIN_URL)
-            s = BeautifulSoup(r.text, 'lxml')
-            csrf_token = s.find(attrs={'class': 'csrf-token'}).get('data-csrf')
-
-            # パラメータセット
-            login_info = {
-                'csrf_token': csrf_token,
-                'action': 'enter',
-                'ftaa' : 'jp14jktv73egplz2is',
-                'bfaa' : 'cc5b70fc5cbc458bb9c010b167bc3592',
-                'handleOrEmail': config.codeforces_username,
-                'password': config.codeforces_password,
-                'remember': 'on',
-                '_tta': '376'
-            }
-        else:
-            raise Exception('not implemented')
-
-        result = session.post(LOGIN_URL, data=login_info)
-        result.raise_for_status()
-        if self.type == 'atcoder':
-            click.secho(f'login status in __login(): {"Sign Out" in result.text}', fg='green')
-        elif self.type == 'codeforces':
-            click.secho(f'login status in __login(): {"Logout" in result.text}', fg='green')
-
-# }}}
 # vim:set foldmethod=marker:

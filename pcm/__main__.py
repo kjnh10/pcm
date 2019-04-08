@@ -93,8 +93,13 @@ def _prepare_problem(prob_name):
 @click.argument('code_filename', type=str, default='')
 @click.option('--case', '-c', type=str, default='')
 @click.option('--debug/--nodebug', '-d/-nd', default=True)
+@click.option('--timeout', '-t', type=float, default=-1)
 @pass_config
-def tt(config, code_filename, case, debug):# {{{
+def tt(config, code_filename, case, debug, timeout):# {{{
+    print('tt', config)
+    if (timeout!=-1):
+        config.core['test']['timeout_sec']=timeout
+
     task_id, code_dir, code_filename, test_dir = _get_code_info(code_filename)
     if config.verbose:
         print('code_dir: ' + code_dir)
@@ -228,7 +233,8 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
     return True
 # }}}
 
-def _run_code(code_filename, input_file):# {{{
+@pass_config
+def _run_code(config, code_filename, input_file):# {{{
     proc = subprocess.Popen(
         [
             code_filename,
@@ -239,7 +245,7 @@ def _run_code(code_filename, input_file):# {{{
         stderr=subprocess.PIPE,
     )
     try:
-        outs, errs = proc.communicate(timeout=2)
+        outs, errs = proc.communicate(timeout=config.core['test']['timeout_sec'])
         TLE_flag = False
     except subprocess.TimeoutExpired:
         proc.kill()
@@ -253,8 +259,11 @@ def _run_code(code_filename, input_file):# {{{
 @click.argument('code_filename', type=str, default="")
 @click.option('--pretest/--no-pretest', '-t/-nt', default=True)
 @click.option('--debug/--nodebug', '-d/-nd', default=False)
+@click.option('--timeout', '-t', type=float, default=-1)
 @pass_config
 def sb(config, code_filename, pretest, debug):
+    if (timeout!=-1):
+        config.core['test']['timeout_sec']=timeout
     contest = _reload_contest_class()
     task_id, code_dir, code_filename, test_dir = _get_code_info(code_filename)
 

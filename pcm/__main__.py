@@ -566,8 +566,7 @@ class Contest(object):
             click.secho(f"unknown type of url: {self.url}", fg='red')
             sys.exit()# }}}
 
-
-    def __is_logined(self):
+    def __is_logined(self):# {{{
         resp = self.session.request('GET', self.url)
         if self.type == 'atcoder':
             click.secho(f'login status in __is_logined(): {"Sign Out" in resp.text}', fg='green')
@@ -575,7 +574,7 @@ class Contest(object):
         elif self.type == 'codeforces':
             click.secho(f'login status in __is_logined(): {"Logout" in resp.text}', fg='green')
             return ("Logout" in resp.text)
-
+# }}}
 
     def __get_task_info_map(self):# {{{
         # reload cache if it exists.

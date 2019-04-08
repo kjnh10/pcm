@@ -666,7 +666,12 @@ class Contest(object):
         for task_id, task_info in self.task_info_map.items():
             task_url = base_url + task_info['url']
             task_dir = self.work_dir + '/' + task_id
-            shutil.copytree(script_path+'/template/', f'{task_dir}/')
+
+            config_template_path = pathlib.Path.home() / '.config/pcm/template/'
+            if os.path.exists(config_template_path):
+                shutil.copytree(config_template_path, f'{task_dir}/')
+            else:
+                shutil.copytree(script_path+'/template/', f'{task_dir}/')
             os.chdir(task_dir)
 
             try:

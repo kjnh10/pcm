@@ -8,7 +8,6 @@ import pickle
 import subprocess
 import signal
 from bs4 import BeautifulSoup
-# from pcm.atcoder_tools.core.AtCoder import AtCoder
 from onlinejudge._implementation.main import main as oj
 import onlinejudge._implementation.utils as oj_utils
 import onlinejudge.service.atcoder

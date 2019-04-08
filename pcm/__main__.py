@@ -9,7 +9,6 @@ import subprocess
 import signal
 import toml
 from bs4 import BeautifulSoup
-from attrdict import AttrDict
 from onlinejudge._implementation.main import main as oj
 import onlinejudge._implementation.utils as oj_utils
 import onlinejudge.service.atcoder
@@ -17,7 +16,7 @@ ALPHABETS = [chr(i) for i in range(ord('A'), ord('Z')+1)]  # can also use string
 script_path = os.path.abspath(os.path.dirname(__file__))  # script path}}}
 
 # set click
-class Config(AttrDict):# {{{
+class Config(object):# {{{
     def __init__(self):
         self.verbose = False
 
@@ -43,7 +42,7 @@ def cli(config, verbose, home_directory):
         merge(tmp_config, user_config)
     else:
         pass
-    config = AttrDict(tmp_config)
+    config.core = tmp_config
 
     # read from command line
     config.verbose = verbose

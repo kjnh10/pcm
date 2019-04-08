@@ -1,0 +1,11 @@
+[submit]
+  [submit.language.atcoder]
+  cpp = '3003' # C++14 (GCC 5.4.1)
+  py = '3510'  # pypy
+
+  [submit.language.codeforces]
+  cpp = '50'  # GNU G++14 6.4.0
+  py = '41'   # pypy if you prefer python3, use '31'
+
+[test]
+  timeout_sec=2

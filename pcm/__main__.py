@@ -7,7 +7,9 @@ import fnmatch
 import pickle
 import subprocess
 import signal
+import toml
 from bs4 import BeautifulSoup
+from attrdict import AttrDict
 from onlinejudge._implementation.main import main as oj
 import onlinejudge._implementation.utils as oj_utils
 import onlinejudge.service.atcoder
@@ -15,7 +17,7 @@ ALPHABETS = [chr(i) for i in range(ord('A'), ord('Z')+1)]  # can also use string
 script_path = os.path.abspath(os.path.dirname(__file__))  # script path}}}
 
 # set click
-class Config(object):# {{{
+class Config(AttrDict):# {{{
     def __init__(self):
         self.verbose = False
 
@@ -25,6 +27,25 @@ pass_config = click.make_pass_decorator(Config, ensure=True)
 @click.option('--home-directory', type=click.Path())
 @pass_config
 def cli(config, verbose, home_directory):
+    # read config from setting file 
+    default_config_path = pathlib.Path(os.path.dirname(__file__)) / 'config.toml'
+    tmp_config = toml.load(open(default_config_path))
+
+    user_config_path = pathlib.Path.home() / '.config/pcm/config.toml'
+    if os.path.exists(user_config_path):
+        user_config = toml.load(open(user_config_path))
+        def merge(current, new):
+            for key, value in new.items():
+                if (type(value)==dict):
+                    merge(current[key], new[key])
+                else:
+                    current[key] = value
+        merge(tmp_config, user_config)
+    else:
+        pass
+    config = AttrDict(tmp_config)
+
+    # read from command line
     config.verbose = verbose
     if home_directory is None:
         home_directory = '.'

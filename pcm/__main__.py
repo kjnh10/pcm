@@ -109,7 +109,7 @@ def tt(config, code_filename, case, debug, timeout):# {{{
     if case == '': # test all case
         _test_task(code_dir, code_filename, test_dir, debug)
     else:
-        if case in ("1", "2", "3", "4", "5", "6"):
+        if case in set(map(str, range(1, 101))):
             case = f'sample-{case}'
         infile = test_dir + case + '.in'
         expfile = test_dir + case + '.out'

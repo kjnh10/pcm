@@ -76,6 +76,8 @@ def pp(config, contest_identifier, work_dir_name, force):
 @click.option('-n', '--prob_name', type=str, default='prob')
 @pass_config
 def ppp(config, task_url, prob_name):
+    # TODO: 実装をppと統一する。pppをベースにしたい。
+    # TODO: task_info_mapのようなものを生成する。submitを行えるようにするため。
     _prepare_problem(prob_name)
     os.chdir(prob_name)
     if task_url != '':
@@ -83,7 +85,11 @@ def ppp(config, task_url, prob_name):
         oj(['download', task_url]) # get test cases
 
 def _prepare_problem(prob_name):
-    shutil.copytree(script_path+'/template/', f'./{prob_name}/')
+    config_template_path = pathlib.Path.home() / '.config/pcm/template/'
+    if os.path.exists(config_template_path):
+        shutil.copytree(config_template_path, f'{prob_name}/')
+    else:
+        shutil.copytree(script_path+'/template/', f'./{prob_name}/')
     if not os.path.exists('./.pcm'):
         os.makedirs('./.pcm')
 # }}}

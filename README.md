@@ -1,12 +1,13 @@
-# Overview
+## Overview
 
 This is a command line tool to manage programming contest and provides some commands like below.
 
 * prepare your work directory for a contest. of course downloading samples.
 * test your code with sample case.
-* submit yourcode to the contest site.
+* submit yourcode to the contest site. (only for AtCoder and codeforces for now)
 
-Actually, this is just a my own wrapper of kmyk/online-judge-tools.
+Actually, this is just a my own wrapper of kmyk/online-judge-tools.  
+
 
 ## Installation
 
@@ -16,6 +17,8 @@ cd pcm
 pip install ./
 # pip install --editable ./  # if you want to customize, use this one.
 ```
+
+Though mainly tested for ubuntu or mac, this will also work for windows.
 
 ## Usage Sample
 
@@ -48,8 +51,12 @@ cd ../abc001/B
 
 ```
 
+you can also specify single problem with ppp command
+```bash
+pcm ppp https://atcoder.jp/contests/caddi2018/tasks/caddi2018_a -n A
+```
+
 ## Work dirctory structure
-'codes' direcotry is copied from `pcm/pcm/tmplate/codes`.
 
 ``` bash
 
@@ -88,45 +95,17 @@ tree  # at abc001/
 │   │   └── sample-3.out
 │   └── 視程の通報
 ├── C
-│   ├── codes
-│   │   ├── a.out
-│   │   ├── cxx-prettyprint
-│   │   │   └── prettyprint.hpp
-│   │   ├── dump.hpp
-│   │   ├── solve.cpp
-│   │   └── solve.py
-│   ├── test
-│   │   ├── sample-1.in
-│   │   ├── sample-1.out
-│   │   ├── sample-2.in
-│   │   ├── sample-2.out
-│   │   ├── sample-3.in
-│   │   ├── sample-3.out
-│   │   ├── sample-4.in
-│   │   ├── sample-4.out
-│   │   ├── sample-5.in
-│   │   ├── sample-5.out
-│   │   ├── sample-6.in
-│   │   ├── sample-6.out
-│   │   ├── sample-7.in
-│   │   ├── sample-7.out
-│   │   ├── sample-8.in
-│   │   └── sample-8.out
-│   └── 風力観測
+├     ....
 └── D
-    ├── codes
-    │   ├── a.out
-    │   ├── cxx-prettyprint
-    │   │   └── prettyprint.hpp
-    │   ├── dump.hpp
-    │   ├── solve.cpp
-    │   └── solve.py
-    ├── test
-    │   ├── sample-1.in
-    │   ├── sample-1.out
-    │   ├── sample-2.in
-    │   ├── sample-2.out
-    │   ├── sample-3.in
-    │   └── sample-3.out
-    └── 感雨時刻の整理
+├     ....
 ```
+
+'codes' direcotry is copied from `pcm/pcm/template/codes`.  
+if you want to customize template, you can put your template in `~/.config/pcm/template/codes`.  
+if `~/.config/pcm/template/codes` exists, 'codes' will be copied from this directory.
+
+## Contribution
+Feel free to send pull requests or raise issues.
+
+## Licence
+MIT License

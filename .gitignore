@@ -128,3 +128,4 @@ venv.bak/
 
 pcm/tmp/
 pcm/.vscode/
+test/tmp/

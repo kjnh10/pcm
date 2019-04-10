@@ -143,7 +143,7 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
     # run program
     click.secho('-'*10 + case + '-'*10, fg='blue')
     if extension == "py":
-        returncode, outs, errs, TLE_flag = _run_code(codefile, open(infile, "r"))
+        returncode, outs, errs, TLE_flag = _run_code(code_filename=codefile, input_file=open(infile, "r"))
 
     elif extension == "cpp":
         click.secho('compile start.....', blink=True)
@@ -154,8 +154,8 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
             command = [
                     'g++',
                     "-o",
-                    code_dir / 'a.out',
-                    codefile,
+                    str(code_dir / 'a.out'),
+                    str(codefile),
                     '-std=c++14',
                     '-O2',
                     '-g3',
@@ -240,14 +240,17 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
 
 @pass_config
 def _run_code(config, code_filename, input_file):# {{{
+    command = []
+    if (code_filename.suffix=='.py'):
+        command.append('python')
+    command.append(str(code_filename))
+    command.append('pcm') # tell the sctipt that pcm is calling
     proc = subprocess.Popen(
-        [
-            code_filename,
-            "pcm"  # tell the sctipt that pcm is calling
-        ],
+        command,
         stdin=input_file,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
+        shell=True,  # for windows
     )
     try:
         outs, errs = proc.communicate(timeout=config.core['test']['timeout_sec'])

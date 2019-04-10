@@ -267,7 +267,7 @@ def _run_code(config, code_filename, input_file):# {{{
 @click.option('--debug/--nodebug', '-d/-nd', default=False)
 @click.option('--timeout', '-t', type=float, default=-1)
 @pass_config
-def sb(config, code_filename, pretest, debug):
+def sb(config, code_filename, pretest, debug, timeout):
     if (timeout!=-1):
         config.core['test']['timeout_sec']=timeout
     contest = _reload_contest_class()

@@ -1,7 +1,7 @@
 import click  # {{{
 import os, sys
 import shutil
-import pathlib
+from pathlib import Path
 import requests
 import fnmatch
 import pickle
@@ -13,7 +13,7 @@ from onlinejudge._implementation.main import main as oj
 import onlinejudge._implementation.utils as oj_utils
 import onlinejudge.service.atcoder
 ALPHABETS = [chr(i) for i in range(ord('A'), ord('Z')+1)]  # can also use string module
-script_path = os.path.abspath(os.path.dirname(__file__))  # script path}}}
+script_path = Path(os.path.abspath(os.path.dirname(__file__)))  # script path}}}
 
 # set click
 class Config(object):# {{{
@@ -27,10 +27,10 @@ pass_config = click.make_pass_decorator(Config, ensure=True)
 @pass_config
 def cli(config, verbose, home_directory):
     # read config from setting file 
-    default_config_path = pathlib.Path(os.path.dirname(__file__)) / 'config.toml'
+    default_config_path = Path(os.path.dirname(__file__)) / 'config.toml'
     tmp_config = toml.load(open(default_config_path))
 
-    user_config_path = pathlib.Path.home() / '.config/pcm/config.toml'
+    user_config_path = Path.home() / '.config/pcm/config.toml'
     if os.path.exists(user_config_path):
         user_config = toml.load(open(user_config_path))
         def merge(current, new):
@@ -85,11 +85,11 @@ def ppp(config, task_url, prob_name):
         oj(['download', task_url]) # get test cases
 
 def _prepare_problem(prob_name):
-    config_template_path = pathlib.Path.home() / '.config/pcm/template/'
+    config_template_path = Path.home() / '.config/pcm/template/'
     if os.path.exists(config_template_path):
         shutil.copytree(config_template_path, f'{prob_name}/')
     else:
-        shutil.copytree(script_path+'/template/', f'./{prob_name}/')
+        shutil.copytree(script_path / 'template', f'./{prob_name}/')
     if not os.path.exists('./.pcm'):
         os.makedirs('./.pcm')
 # }}}
@@ -102,7 +102,6 @@ def _prepare_problem(prob_name):
 @click.option('--timeout', '-t', type=float, default=-1)
 @pass_config
 def tt(config, code_filename, case, debug, timeout):# {{{
-    print('tt', config)
     if (timeout!=-1):
         config.core['test']['timeout_sec']=timeout
 
@@ -117,8 +116,8 @@ def tt(config, code_filename, case, debug, timeout):# {{{
     else:
         if case in set(map(str, range(1, 101))):
             case = f'sample-{case}'
-        infile = test_dir + case + '.in'
-        expfile = test_dir + case + '.out'
+        infile = test_dir / f"{case}.in"
+        expfile = test_dir / f"{case}.out"
         _test_case(code_dir, code_filename, case, infile, expfile, debug)
 # }}}
 
@@ -130,15 +129,15 @@ def _test_task(code_dir, code_filename, testdir, debug=True):# {{{
         if not fnmatch.fnmatch(filename, '*.in'):
             continue
         case = filename[:-3]
-        infile = testdir + case + '.in'
-        expfile = testdir + case + '.out'  # 拡張子をexpにしたいが。。
+        infile = testdir / f"{case}.in"
+        expfile = testdir / f"{case}.out"  # 拡張子をexpにしたいが。。
         if not _test_case(code_dir, code_filename, case, infile, expfile, debug):
             res = False
     return res
 # }}}
 
 def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
-    codefile = code_dir + '/' + code_filename
+    codefile = code_dir / code_filename
     extension = code_filename[code_filename.rfind('.') + 1:]
 
     # run program
@@ -148,14 +147,14 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
 
     elif extension == "cpp":
         click.secho('compile start.....', blink=True)
-        exe = pathlib.Path(code_dir + '/a.out')
-        if (exe.exists() and pathlib.Path(codefile).stat().st_mtime <= exe.stat().st_mtime):
+        exe = Path(code_dir / 'a.out')
+        if (exe.exists() and Path(codefile).stat().st_mtime <= exe.stat().st_mtime):
             click.secho(f'compile skipped since {codefile} is older than a.out')
         else:
             command = [
                     'g++',
                     "-o",
-                    code_dir + '/a.out',
+                    code_dir / 'a.out',
                     codefile,
                     '-std=c++14',
                     '-O2',
@@ -182,7 +181,7 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
                 print(outs.decode('utf-8'))
             click.secho('compile finised')
 
-        returncode, outs, errs, TLE_flag = _run_code(code_dir + '/a.out', open(infile, "r"))
+        returncode, outs, errs, TLE_flag = _run_code(code_dir / 'a.out', open(infile, "r"))
 
     # print input
     with open(infile, 'r') as f:
@@ -209,7 +208,7 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
 
     # print error message
     print('*'*7 + ' stderr ' + '*'*7)
-    print(errs.replace(code_dir, ""))
+    print(errs.replace(str(code_dir), ""))
 
     # compare result and expected
     if TLE_flag:
@@ -274,7 +273,7 @@ def sb(config, code_filename, pretest, debug, timeout):
     task_id, code_dir, code_filename, test_dir = _get_code_info(code_filename)
 
     extension = code_filename[code_filename.rfind('.') + 1:]
-    with open(code_dir + '/' + code_filename, "r") as f:
+    with open(code_dir / code_filename, "r") as f:
         code = f.read()
 
     if pretest:
@@ -305,25 +304,25 @@ def ga(config, limit_count, extension):
 def gt(config, extension, new):
     if new:
         if not os.path.exists(f"solve.{extension}"):
-            shutil.copy(script_path+f'/template/solve.{extension}', f"solve.{extension}")
+            shutil.copy(script_path / f'template/solve.{extension}', f"solve.{extension}")
             click.secho(f"generated new solve.{extension}", fg='green')
         else:
             click.secho(f"already existed", fg='green')
         return
 
-    p = list(pathlib.Path('.').glob("*.cpp"))
+    p = list(Path('.').glob("*.cpp"))
     if len(p)>0:
         filename = str(p[0])
-        shutil.copy(script_path+f'/template/solve.{extension}', filename)
+        shutil.copy(script_path / f'template/solve.{extension}', filename)
         click.secho(f"overrided {filename} with template", fg='green')
     else:
-        shutil.copy(script_path+f'/template/solve.{extension}', f"solve.{extension}")
+        shutil.copy(script_path / f'template/solve.{extension}', f"solve.{extension}")
         click.secho(f"not found {extension} file\n", fg='red')
         click.secho(f"generated new solve.{extension}", fg='green')
 
     # vscodeのsettingも更新する。
-    shutil.copytree(script_path+f'/template/.vscode/', ".vscode/")
-    shutil.copy(script_path+'/template/dump.hpp', 'dump.hpp')
+    shutil.copytree(script_path / f'template/.vscode/', ".vscode/")
+    shutil.copy(script_path / 'template/dump.hpp', 'dump.hpp')
     click.secho(f"copied .vscode and dump.hpp", fg='green')
 
 # }}}
@@ -350,7 +349,7 @@ def _pcm_root_dir():# {{{
         if sum([1 if f == '.pcm' else 0 for f in os.listdir('./')]):
             now = os.getcwd()
             os.chdir(pwd)
-            return now
+            return Path(now)
         else:
             if os.getcwd() == "/":
                 print("it seems you aren't in directory maintained by pcm")
@@ -364,14 +363,14 @@ def _pcm_root_dir():# {{{
 
 def _reload_contest_class():  # {{{
     contest_dir = _pcm_root_dir()
-    with open(contest_dir + '/.pcm/.contest_info', mode="r") as f:
+    with open(contest_dir / '.pcm/.contest_info', mode="r") as f:
         contest_url = f.readline()
     return Contest(contest_url, contest_dir)
 # }}}
 
 def _get_code_info(code_filename):# {{{
     if code_filename == "": # when code_filename not specified
-        code_dir = os.getcwd()
+        code_dir = Path(os.getcwd())
         try:
             code_filename = _get_last_modified_file()
             click.secho(f"you did not specify code_filename.so pcm will use {code_filename}\n which is the one you updated at last", fg='yellow')
@@ -380,23 +379,23 @@ def _get_code_info(code_filename):# {{{
             return
 
     elif os.path.exists(f'./{code_filename}'): # まずはcurrent directory以下を探す。
-        code_dir = os.getcwd()
+        code_dir = Path(os.getcwd())
     else:
-        code_dir = _search_parent_dir(code_filename)
+        code_dir = Path(_search_parent_dir(code_filename))
         if code_dir is None:
             click.secho("you are not in a pcm managed directory", fg='red')
             return
 
-    prob_dir = code_dir[:code_dir.rfind('/')]
-    test_dir = f"{prob_dir}/test/"
-    task_id = prob_dir[prob_dir.rfind('/')+1:]
+    prob_dir = code_dir.parent
+    test_dir = prob_dir / "test"
+    task_id = prob_dir.name
     return task_id, code_dir, code_filename, test_dir
     # }}}
 
 def _get_last_modified_file():# {{{
     candidates = []
-    candidates += [(p.stat().st_mtime, str(p)) for p in pathlib.Path('.').glob(f'*.cpp')]
-    candidates += [(p.stat().st_mtime, str(p)) for p in pathlib.Path('.').glob(f'*.py')]
+    candidates += [(p.stat().st_mtime, str(p)) for p in Path('.').glob(f'*.cpp')]
+    candidates += [(p.stat().st_mtime, str(p)) for p in Path('.').glob(f'*.py')]
     candidates.sort(reverse=True)
     if len(candidates)>0:
         code_filename = str(candidates[0][1])
@@ -417,9 +416,9 @@ class Contest(object):
             self.session = session
             if not self.__is_logined():
                 click.secho(f'you are not logged in to {self.type}. if you want to join a contest realtime or submit, you need to "oj login"', fg='red')
-        self.work_dir = os.path.abspath(work_dir if work_dir else self.name)
-        self.config_dir = self.work_dir + '/.pcm'
-        self.task_info_cache = self.work_dir + "/.pcm/task_info_map"
+        self.work_dir = Path(os.path.abspath(work_dir if work_dir else self.name))
+        self.config_dir = self.work_dir / '.pcm'
+        self.task_info_cache = self.work_dir / ".pcm/task_info_map"
         self.task_list_url = self.__get_task_list_url()
         self.task_info_map = self.__get_task_info_map()  # {task_id:{url:<url>, description:<description>}}
     # }}}
@@ -436,7 +435,7 @@ class Contest(object):
                 return
 
         os.makedirs(self.config_dir)
-        with open(self.config_dir + "/.contest_info", mode="w") as f:
+        with open(self.config_dir / ".contest_info", mode="w") as f:
             f.write(self.url)
 
         self.task_info_map = self.__get_task_info_map()  # 古いバージョンの形式のcacheが入っている可能性があるためprepareの時はもう一度読み込む。
@@ -516,7 +515,7 @@ class Contest(object):
             self.__get_answer(extension=extension, task_id=task_id, limit_count=limit_count, candidate_users=excelent_users)
 
     def __get_answer(self, extension, task_id, limit_count, candidate_users):
-            answer_dir = self.work_dir + "/" + task_id + "/answers/"
+            answer_dir = self.work_dir / task_id / "answers"
             if not os.path.exists(answer_dir):
                 os.makedirs(answer_dir)
 
@@ -671,20 +670,20 @@ class Contest(object):
 
         for task_id, task_info in self.task_info_map.items():
             task_url = base_url + task_info['url']
-            task_dir = self.work_dir + '/' + task_id
+            task_dir = self.work_dir / task_id
 
-            config_template_path = pathlib.Path.home() / '.config/pcm/template/'
+            config_template_path = Path.home() / '.config/pcm/template/'
             if os.path.exists(config_template_path):
                 shutil.copytree(config_template_path, f'{task_dir}/')
             else:
-                shutil.copytree(script_path+'/template/', f'{task_dir}/')
+                shutil.copytree(script_path / 'template', f'{task_dir}/')
             os.chdir(task_dir)
 
             try:
-                shutil.rmtree(f"{task_dir}/test") # templateからのコピーでtest directoryが作られているので消しておく。
+                shutil.rmtree(task_dir / 'test') # templateからのコピーでtest directoryが作られているので消しておく。
                 click.secho(f"oj will try to download {task_url}...", fg='yellow')
                 oj(['download', task_url]) # get test cases
-                pathlib.Path(task_info['description'].replace("/", "-")).touch()
+                Path(task_info['description'].replace("/", "-")).touch()
             except:
                 click.secho("failed preparing: " + base_url + task_info['url'], fg='red')
     # }}}

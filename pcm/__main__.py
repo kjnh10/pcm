@@ -246,7 +246,6 @@ def _run_code(config, code_filename, input_file):# {{{
     command.append(str(code_filename))
     command.append('pcm') # tell the sctipt that pcm is calling
     proc = subprocess.Popen(
-        command,
         ' '.join(command),
         stdin=input_file,
         stdout=subprocess.PIPE,

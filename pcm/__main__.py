@@ -174,7 +174,7 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
             outs, errs = proc.communicate()
             if proc.returncode:
                 click.secho("compile error\n", fg='red')
-                print(errs.decode('utf-8').replace(code_dir, ""))
+                print(errs.decode('utf-8').replace(str(code_dir), ""))
                 sys.exit()
 
             if outs:
@@ -247,6 +247,7 @@ def _run_code(config, code_filename, input_file):# {{{
     command.append('pcm') # tell the sctipt that pcm is calling
     proc = subprocess.Popen(
         command,
+        ' '.join(command),
         stdin=input_file,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,

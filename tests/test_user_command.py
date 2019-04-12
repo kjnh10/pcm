@@ -24,6 +24,8 @@ def test_pp():
             )
     assert(res==True)
 
+    shutil.rmtree(script_path / 'tmp/test_pp/abc001', ignore_errors=True)
+
 
 def test_tt():
     os.chdir(script_path / 'tmp/test_tt/abc001/A/codes')

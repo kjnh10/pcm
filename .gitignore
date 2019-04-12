@@ -124,7 +124,7 @@ venv.bak/
 .mypy_cache/
 
 .idea/
-*.out
+a.out
 
 pcm/tmp/
 pcm/.vscode/

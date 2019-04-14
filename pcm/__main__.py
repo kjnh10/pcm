@@ -300,37 +300,6 @@ def ga(config, limit_count, extension):
     contest = _reload_contest_class()
     contest.get_answers(limit_count, extension)
 # }}}
-
-# get template: gt {{{
-@cli.command()
-@click.argument('extension', type=str, default='cpp')
-@click.option('--new/--replace', '-n/-r', default=False)
-@pass_config
-def gt(config, extension, new):
-    if new:
-        if not os.path.exists(f"solve.{extension}"):
-            shutil.copy(script_path / f'template/solve.{extension}', f"solve.{extension}")
-            click.secho(f"generated new solve.{extension}", fg='green')
-        else:
-            click.secho(f"already existed", fg='green')
-        return
-
-    p = list(Path('.').glob("*.cpp"))
-    if len(p)>0:
-        filename = str(p[0])
-        shutil.copy(script_path / f'template/solve.{extension}', filename)
-        click.secho(f"overrided {filename} with template", fg='green')
-    else:
-        shutil.copy(script_path / f'template/solve.{extension}', f"solve.{extension}")
-        click.secho(f"not found {extension} file\n", fg='red')
-        click.secho(f"generated new solve.{extension}", fg='green')
-
-    # vscodeのsettingも更新する。
-    shutil.copytree(script_path / f'template/.vscode/', ".vscode/")
-    shutil.copy(script_path / 'template/dump.hpp', 'dump.hpp')
-    click.secho(f"copied .vscode and dump.hpp", fg='green')
-
-# }}}
 #}}}
 
 # private functions

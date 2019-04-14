@@ -7,9 +7,8 @@ using namespace std;
 
 #define dump(...)  \
   {  \
-    DUMPOUT<<"  "; \
     DUMPOUT<<#__VA_ARGS__; \
-    DUMPOUT<<":=> "; \
+    DUMPOUT<<": "; \
     dump_func(__VA_ARGS__); DUMPOUT<<"in ["<<__LINE__<<":"<<__FUNCTION__<<"]"<<endl;  \
   }
 

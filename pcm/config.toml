@@ -1,3 +1,5 @@
+template_dir = '~/.config/pcm/template'
+
 [submit]
   [submit.language.atcoder]
   cpp = '3003' # C++14 (GCC 5.4.1)

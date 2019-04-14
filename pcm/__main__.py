@@ -44,6 +44,11 @@ def cli(config, verbose, home_directory):
         pass
     config.core = tmp_config
 
+    if os.path.exists(Path(config.core['template_dir']).expanduser()):
+        config.core['template_dir'] = Path(config.core['template_dir']).expanduser()
+    else:
+        config.core['template_dir'] = Path(script_path / 'template_sample')
+
     # read from command line
     config.verbose = verbose
     if home_directory is None:
@@ -78,18 +83,15 @@ def pp(config, contest_identifier, work_dir_name, force):
 def ppp(config, task_url, prob_name):
     # TODO: 実装をppと統一する。pppをベースにしたい。
     # TODO: task_info_mapのようなものを生成する。submitを行えるようにするため。
-    _prepare_problem(prob_name)
+    _prepare_problem(prob_name=prob_name)
     os.chdir(prob_name)
     if task_url != '':
         shutil.rmtree('./test')
         oj(['download', task_url]) # get test cases
 
-def _prepare_problem(prob_name):
-    config_template_path = Path.home() / '.config/pcm/template/'
-    if os.path.exists(config_template_path):
-        shutil.copytree(config_template_path, f'{prob_name}/')
-    else:
-        shutil.copytree(script_path / 'template', f'./{prob_name}/')
+@pass_config
+def _prepare_problem(config, prob_name):
+    shutil.copytree(config.core['template_dir'], f'{prob_name}/')
     if not os.path.exists('./.pcm'):
         os.makedirs('./.pcm')
 # }}}
@@ -662,7 +664,8 @@ class Contest(object):
 
     # }}}
 
-    def __prepare_tasks(self):  # {{{
+    @pass_config
+    def __prepare_tasks(config, self):  # {{{
         if self.type == 'atcoder':
             base_url = "https://atcoder.jp"
         elif self.type == 'codeforces':
@@ -675,11 +678,7 @@ class Contest(object):
             task_url = base_url + task_info['url']
             task_dir = self.work_dir / task_id
 
-            config_template_path = Path.home() / '.config/pcm/template/'
-            if os.path.exists(config_template_path):
-                shutil.copytree(config_template_path, f'{task_dir}/')
-            else:
-                shutil.copytree(script_path / 'template', f'{task_dir}/')
+            shutil.copytree(config.core['template_dir'], f'{task_dir}/')
             os.chdir(task_dir)
 
             try:

@@ -78,11 +78,24 @@ def pp(config, contest_identifier, work_dir_name, force):
 # prepare problem: ppp {{{
 @cli.command()
 @click.argument('task_url', type=str, default='')
-@click.option('-n', '--prob_name', type=str, default='prob')
+@click.option('-n', '--prob_name', type=str, default='')
+@click.option('--force/--no-force', "-f/-nf", default=False)
 @pass_config
-def ppp(config, task_url, prob_name):
+def ppp(config, task_url, prob_name, force):
     # TODO: 実装をppと統一する。pppをベースにしたい。
     # TODO: task_info_mapのようなものを生成する。submitを行えるようにするため。
+    if task_url != '':
+        prob_name = task_url[task_url.rfind('/')+1:]
+    else:
+        prob_name = 'prob'
+
+    if Path(prob_name).exists():
+        if force:
+            Path(prob_name).rmdir()
+        else:
+            print(f'{prob_name} directory already exists')
+            return
+
     _prepare_problem(prob_name=prob_name)
     os.chdir(prob_name)
     if task_url != '':
@@ -92,8 +105,6 @@ def ppp(config, task_url, prob_name):
 @pass_config
 def _prepare_problem(config, prob_name):
     shutil.copytree(config.core['template_dir'], f'{prob_name}/')
-    if not os.path.exists('./.pcm'):
-        os.makedirs('./.pcm')
 # }}}
 
 # test: tt {{{

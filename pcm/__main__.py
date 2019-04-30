@@ -281,11 +281,11 @@ def _run_code(config, code_filename, input_file):# {{{
 @click.argument('code_filename', type=str, default="")
 @click.option('--pretest/--no-pretest', '-t/-nt', default=True)
 @click.option('--debug/--nodebug', '-d/-nd', default=False)
-@click.option('--timeout', '-t', type=float, default=-1)
 @pass_config
-def sb(config, code_filename, pretest, debug, timeout):
-    if (timeout!=-1):
-        config.core['test']['timeout_sec']=timeout
+def sb(config, code_filename, pretest, debug):
+    if not click.confirm('Are you sure to submit?'):
+        return
+
     contest = _reload_contest_class()
     task_id, code_dir, code_filename, test_dir = _get_code_info(code_filename)
 
@@ -299,8 +299,7 @@ def sb(config, code_filename, pretest, debug, timeout):
             click.secho("pretest not passed and exit", fg="red")
             return
 
-    if click.confirm('Are you sure to submit?'):
-        contest.submit(task_id, extension, code)
+    contest.submit(task_id, extension, code)
 #}}}
 
 # get answers: ga {{{

@@ -260,11 +260,11 @@ def _run_code(config, code_filename, input_file):# {{{
     command.append(str(code_filename))
     command.append('pcm') # tell the sctipt that pcm is calling
     proc = subprocess.Popen(
-        ' '.join(command),
+        command,
         stdin=input_file,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        shell=True,  # for windows
+        # shell=True,  # for windows
     )
     try:
         outs, errs = proc.communicate(timeout=config.core['test']['timeout_sec'])

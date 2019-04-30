@@ -84,10 +84,11 @@ def pp(config, contest_identifier, work_dir_name, force):
 def ppp(config, task_url, prob_name, force):
     # TODO: 実装をppと統一する。pppをベースにしたい。
     # TODO: task_info_mapのようなものを生成する。submitを行えるようにするため。
-    if task_url != '':
-        prob_name = task_url[task_url.rfind('/')+1:]
-    else:
-        prob_name = 'prob'
+    if prob_name == '':
+        if task_url != '':
+            prob_name = task_url[task_url.rfind('/')+1:]
+        else:
+            prob_name = 'prob'
 
     if Path(prob_name).exists():
         if force:

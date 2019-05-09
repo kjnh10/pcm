@@ -482,7 +482,7 @@ class Contest(object):
         if self.type=='atcoder':
             # get redcoderlist
             excelent_users = []
-            for page in [1, 2]:
+            for page in [1, 2, 3, 4]:
                 rank_url = f"https://atcoder.jp/ranking?page={page}"
                 rank_page = BeautifulSoup(requests.get(rank_url).content, 'lxml')
                 excelent_users_buf = [tag.get('href') for tag in rank_page.findAll('a', class_='username')]
@@ -537,9 +537,10 @@ class Contest(object):
                                 link = a.get('href')
                                 if "users" in str(link):
                                     user_name = link[link.rfind('/')+1:]
-                            if user_name in candidate_users:
+
+                            if (user_name in candidate_users) or True:  # fileter 条件
                                 answer = answer_page.find(id='submission-code').get_text()
-                                with open(answer_dir + answer_id + "_" + user_name + "." + extension, mode='w') as f:
+                                with open(answer_dir / f"{answer_id}_{user_name}.{extension}", mode='w') as f:
                                     f.write(answer)
                                 count += 1
 

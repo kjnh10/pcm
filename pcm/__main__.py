@@ -8,11 +8,11 @@ import pickle
 import subprocess
 import signal
 import toml
+import re
 from bs4 import BeautifulSoup
 from onlinejudge._implementation.main import main as oj
 import onlinejudge._implementation.utils as oj_utils
 import onlinejudge.service.atcoder
-ALPHABETS = [chr(i) for i in range(ord('A'), ord('Z')+1)]  # can also use string module
 script_path = Path(os.path.abspath(os.path.dirname(__file__)))  # script path}}}
 
 # set click
@@ -614,7 +614,7 @@ class Contest(object):
         task_urls = []
         if (self.type=='atcoder') or (self.type=='codeforces'):
             for l in links:
-                if l.get_text().strip() in ALPHABETS:
+                if re.match(r"[A-Z][1-2]?$", l.get_text().strip()):
                     task_urls.append(l.get('href'))
 
             # get task_id, description
@@ -622,10 +622,10 @@ class Contest(object):
             for url in task_urls:
                 description = ""
                 for l in links:
-                    link_text = l.get_text().strip()
-                    if l.get('href') == url and link_text in ALPHABETS:
+                    link_text = l.get_text().strip()  # like A or A1
+                    if l.get('href') == url and re.match(r"[A-Z][1-2]?$", link_text):
                         task_id = link_text
-                    elif (l.get('href') == url) and (not link_text in ALPHABETS): # 問題名がA,B,C,D・だととれない。。
+                    elif (l.get('href') == url):
                         description = link_text
 
                 task_info_map[task_id] = {'url':url, 'description':description, 'problem_id':url[url.rfind("/")+1:]}

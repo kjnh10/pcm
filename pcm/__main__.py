@@ -239,6 +239,10 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
         print('\n')
         return False
 
+    # 最後の空白行は無視する。
+    if (stdout[-1]==''): stdout.pop()
+    if (exp[-1]==''): exp.pop()
+
     if len(stdout) != len(exp):
         click.secho('WA\n', fg='red')
         return False

@@ -213,7 +213,7 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
     except FileNotFoundError:
         print('*'*7 + ' expected ' + '*'*7)
         click.secho(f"expected file: {expfile} not found\n", fg='yellow')
-        exp = ""
+        exp = ['']
 
     # print result
     print('*'*7 + ' stdout ' + '*'*7)

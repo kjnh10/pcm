@@ -287,7 +287,7 @@ def _run_code(config, code_filename, input_file):# {{{
 @click.option('--debug/--nodebug', '-d/-nd', default=False)
 @pass_config
 def sb(config, code_filename, pretest, debug):
-    if not click.confirm('Are you sure to submit?'):
+    if (not pretest) and (not click.confirm('Are you sure to submit?')):  # no-pretestの場合は遅延を避けるため最初に質問する。
         return
 
     contest = _reload_contest_class()
@@ -303,7 +303,8 @@ def sb(config, code_filename, pretest, debug):
             click.secho("pretest not passed and exit", fg="red")
             return
 
-    contest.submit(task_id, extension, code)
+    if (not pretest) or (not click.confirm('Are you sure to submit?')):  # pretestの場合は最終確認をする。
+        contest.submit(task_id, extension, code)
 #}}}
 
 # get answers: ga {{{

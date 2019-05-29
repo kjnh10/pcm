@@ -102,7 +102,28 @@ tree  # at abc001/
 
 'codes' direcotry is copied from `pcm/pcm/template/codes`.  
 if you want to customize template, you can put your template in `~/.config/pcm/template/codes`.  
-if `~/.config/pcm/template/codes` exists, 'codes' will be copied from this directory.
+if `~/.config/pcm/template/codes` exists, 'codes' will be copied from this directory.  
+Or you can also specify any direcotry you like as you will see below.  
+
+## Customization
+
+you can customeize your setting by putting `~/.config/pcm/config.toml`.
+
+``` toml
+template_dir = '~/.config/pcm/template'  # you may copy sample template from pcm/pcm/template_sample at first.
+
+[submit]
+  [submit.language.atcoder]
+  cpp = '3003' # C++14 (GCC 5.4.1)
+  py = '3510'  # pypy
+
+  [submit.language.codeforces]
+  cpp = '50'  # GNU G++14 6.4.0
+  py = '41'   # pypy if you prefer python3, use '31'
+
+[test]
+  timeout_sec=2
+```
 
 ## Contribution
 Feel free to send pull requests or raise issues.

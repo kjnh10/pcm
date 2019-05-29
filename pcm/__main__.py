@@ -8,6 +8,7 @@ import pickle
 import subprocess
 import signal
 import toml
+import time
 import re
 from bs4 import BeautifulSoup
 from onlinejudge._implementation.main import main as oj
@@ -165,6 +166,7 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
         if (exe.exists() and Path(codefile).stat().st_mtime <= exe.stat().st_mtime):
             click.secho(f'compile skipped since {codefile} is older than a.out')
         else:
+            start = time.time()
             command = [
                     'g++',
                     "-o",
@@ -194,6 +196,8 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
             if outs:
                 print(outs.decode('utf-8'))
             click.secho('compile finised')
+            elapsed_time = time.time() - start
+            print ("elapsed_time:{0}".format(elapsed_time) + "[sec]")
 
         returncode, outs, errs, TLE_flag = _run_code(code_dir / 'a.out', open(infile, "r"))
 

@@ -169,18 +169,17 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
             start = time.time()
             command = [
                     'g++',
-                    "-o",
-                    str(code_dir / 'a.out'),
                     str(codefile),
+                    "-o", str(code_dir / 'a.out'),
                     '-std=c++14',
-                    '-O2',
-                    '-g3',
-                    '-fsanitize=undefined', # 未定義動作の検出
-                    # '-D_GLIBCXX_DEBUG',
                     ]
+            command.append('-DPCM') # for dump
+            command.append('-Wall') # for debug
             if debug:
-                command.append('-DPCM') # for debug
-                command.append('-Wall') # for debug
+                command.append('-fsanitize=undefined') # # 未定義動作の検出
+                # command.append('-g3') # for gdb
+                # command.append('-D_GLIBCXX_DEBUG')
+                # command.append('-O2')
 
             proc = subprocess.Popen(
                     command,

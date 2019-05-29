@@ -35,9 +35,6 @@ def F(): return float(sys.stdin.readline())
 def DP(N, M, first): return [[first] * M for n in range(N)]
 def DP3(N, M, L, first): return [[[first] * L for n in range(M)] for _ in range(N)]
 from inspect import currentframe
-def dump(*args):
-    names = {id(v):k for k,v in currentframe().f_back.f_locals.items()}
-    print(', '.join(names.get(id(arg),'???')+' => '+repr(arg) for arg in args), file=sys.stderr)
 # }}}
 
 def local_input():# {{{
@@ -56,7 +53,13 @@ def solve():
 if __name__ == "__main__":# {{{
     try:
         local_input()
+        def dump(*args):
+            names = {id(v):k for k,v in currentframe().f_back.f_locals.items()}
+            print(', '.join(names.get(id(arg),'???')+' => '+repr(arg) for arg in args), file=sys.stderr)
     except:
-        pass
+        def dump(*args):
+            pass
+
     solve()
+
 # vim: set foldmethod=marker:}}}

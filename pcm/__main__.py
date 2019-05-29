@@ -47,7 +47,7 @@ def cli(config, verbose, home_directory):
     if os.path.exists(Path(config.core['template_dir']).expanduser()):
         config.core['template_dir'] = Path(config.core['template_dir']).expanduser()
     else:
-        config.core['template_dir'] = Path(script_path / 'template_sample')
+        config.core['template_dir'] = Path(script_path / 'default_template')
 
     # read from command line
     config.verbose = verbose

@@ -182,18 +182,17 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
                 # command.append('-O2')
 
             proc = subprocess.Popen(
-                    command,
+                    command,  # g++ solve.cpp -o a.out -std=c++14 -DPCM -Wall -fsanitize=undefined
                     stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
                     )
             outs, errs = proc.communicate()
             if proc.returncode:
                 click.secho("compile error\n", fg='red')
-                print(errs.decode('utf-8').replace(str(code_dir), ""))
                 sys.exit()
 
             if outs:
                 print(outs.decode('utf-8'))
+
             click.secho('compile finised')
             elapsed_time = time.time() - start
             print ("elapsed_time:{0}".format(elapsed_time) + "[sec]")
@@ -206,7 +205,6 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
         print(f.read())
 
     # print expected
-
     try:
         with open(expfile, 'r') as f:
             print('*'*7 + ' expected ' + '*'*7)
@@ -225,7 +223,10 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
 
     # print error message
     print('*'*7 + ' stderr ' + '*'*7)
-    print(errs.replace(str(code_dir), ""))
+    # click.secho(errs.replace(str(code_dir), ""), fg='red')
+    for line in errs.split('\n'):
+        line = line.replace(str(code_dir), "")
+        click.secho(line, fg='yellow')
 
     # compare result and expected
     if TLE_flag:

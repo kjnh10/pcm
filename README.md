@@ -42,11 +42,13 @@ pcm tt -c 1  # to test #1 case
 pcm tt -t 3  # set TLE time to 3 sec. (The default is 2 sec.)
 
 # submit your code
-pcm sb  # with test before submitting. you can't submit if tests fail.
-pcm sb -nt  # wihtout test.
+pcm sb solve.py  # with test before submitting. you can't submit if tests fail.
+# pcm sb  # you can omit filename, then pcm will submit the file you edited last.
+# pcm sb -nt  # wihtout test.
+# pcm sb -l py3  # you can specify language. see /pcm/config.toml for other language you can use.
 
 
-cd ../abc001/B
+cd ../abc001/B  # continue to next problem..
 .
 .
 .
@@ -112,16 +114,30 @@ Or you can also specify any direcotry you like as you will see below.
 you can customeize your setting by putting `~/.config/pcm/config.toml`.
 
 ``` toml
-template_dir = '~/.config/pcm/template'  # you may copy sample template from pcm/pcm/template_sample at first.
+template_dir = '~/.config/pcm/template'
 
 [submit]
-  [submit.language.atcoder]
+  [submit.default_lang.atcoder]
   cpp = '3003' # C++14 (GCC 5.4.1)
   py = '3510'  # pypy
 
-  [submit.language.codeforces]
+  [submit.default_lang.codeforces]
   cpp = '50'  # GNU G++14 6.4.0
   py = '41'   # pypy if you prefer python3, use '31'
+
+  [submit.language.atcoder]  # you can use this keys like 'pcm sb -l pypy'
+  gcc = '3003'
+  clang = '3004'
+  py = '3023'
+  py3 = '3023'
+  pypy = '3510'
+
+  [submit.language.codeforces]
+  py = '31'
+  py3 = '31'
+  pypy = '41'
+  gcc = '50'
+  clang = '52'
 
 [test]
   timeout_sec=2

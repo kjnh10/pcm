@@ -287,10 +287,11 @@ def _run_code(config, code_filename, input_file):# {{{
 # submit: sb {{{
 @cli.command()
 @click.argument('code_filename', type=str, default="")
+@click.option('--language', '-l', default='auto-detect')
 @click.option('--pretest/--no-pretest', '-t/-nt', default=True)
 @click.option('--debug/--nodebug', '-d/-nd', default=False)
 @pass_config
-def sb(config, code_filename, pretest, debug):
+def sb(config, code_filename, language, pretest, debug):
     if (not pretest) and (not click.confirm('Are you sure to submit?')):  # no-pretestの場合は遅延を避けるため最初に質問する。
         return
 
@@ -307,8 +308,8 @@ def sb(config, code_filename, pretest, debug):
             click.secho("pretest not passed and exit", fg="red")
             return
 
-        contest.submit(task_id, extension, code)
     if (not pretest) or (click.confirm('Are you sure to submit?')):  # pretestの場合は最終確認をする。
+        contest.submit(task_id, extension, code, language)
 #}}}
 
 # get answers: ga {{{
@@ -439,26 +440,35 @@ class Contest(object):
         self.__prepare_tasks()
         # }}}
 
-    def submit(self, task_id, extension, code):# {{{
+    @pass_config
+    def submit(config, self, task_id, extension, code, language):# {{{
+        if language == 'auto-detect':
+            try:
+                lang_id = config.pref['submit']['default_lang'][self.type][extension]
+            except KeyError as e:
+                click.secho(f'{extension} not found in possible extensions. if you want to add {extension}, you can add it in ~/.config/pcm/config.toml', fg='red')
+                print('current possible extensions')
+                print(config.pref['submit']['default_lang'][self.type])
+                return
+        else:
+            try:
+                lang_id = config.pref['submit']['language'][self.type][language]
+            except KeyError as e:
+                click.secho(f'{language} not found in possible language. if you want to add {language}, you can add it in ~/.config/pcm/config.toml', fg='red')
+                print('current possible language')
+                print(config.pref['submit']['language'][self.type])
+                return
+
         if self.type=='atcoder':
-            ext_to_lang_id = {'py': '3510', 'cpp': '3003'}  # pypy3, (C++14 (GCC 5.4.1))
-            lang_id = ext_to_lang_id[extension]
             problem_id = self.task_info_map[task_id]["problem_id"]
             onlinejudge.service.atcoder.AtCoderProblem(contest_id=self.name, problem_id=problem_id).submit_code(code, lang_id, self.session)
         elif self.type=='codeforces':
             base_submit_url = f"http://codeforces.com/contest/{self.name}/submit"
-            ext_to_lang_id = {
-                    'py': '31', # python3,   pypy=>41
-                    'cpp': '50',  # GNU G++14 6.4.0
-                    }
-            lang_id = ext_to_lang_id[extension]
-
             # get csrf_token
             r = self.session.get(base_submit_url)
             soup = BeautifulSoup(r.text, "lxml")
             csrf_token = soup.find(name="span", class_="csrf-token").get('data-csrf')
             assert(csrf_token)
-
             payload = {
                         "csrf_token":csrf_token,
                         "ftaa":"2gm68wq1kofdqv7d71",

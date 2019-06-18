@@ -252,7 +252,7 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
         return False
     else:
         for i in range(len(stdout)):
-            if stdout[i] != exp[i]:
+            if stdout[i].replace('\r', '') != exp[i]:
                 click.secho('WA\n\n', fg='red')
                 return False
         else:

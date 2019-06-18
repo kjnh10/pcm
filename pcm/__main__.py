@@ -43,12 +43,12 @@ def cli(config, verbose, home_directory):
         merge(tmp_config, user_config)
     else:
         pass
-    config.core = tmp_config
+    config.pref = tmp_config
 
-    if os.path.exists(Path(config.core['template_dir']).expanduser()):
-        config.core['template_dir'] = Path(config.core['template_dir']).expanduser()
+    if os.path.exists(Path(config.pref['template_dir']).expanduser()):
+        config.pref['template_dir'] = Path(config.pref['template_dir']).expanduser()
     else:
-        config.core['template_dir'] = Path(script_path / 'default_template')
+        config.pref['template_dir'] = Path(script_path / 'default_template')
 
     # read from command line
     config.verbose = verbose
@@ -106,7 +106,7 @@ def ppp(config, task_url, prob_name, force):
 
 @pass_config
 def _prepare_problem(config, prob_name):
-    shutil.copytree(config.core['template_dir'], f'{prob_name}/')
+    shutil.copytree(config.pref['template_dir'], f'{prob_name}/')
 # }}}
 
 # test: tt {{{
@@ -118,7 +118,7 @@ def _prepare_problem(config, prob_name):
 @pass_config
 def tt(config, code_filename, case, debug, timeout):# {{{
     if (timeout!=-1):
-        config.core['test']['timeout_sec']=timeout
+        config.pref['test']['timeout_sec']=timeout
 
     task_id, code_dir, code_filename, test_dir = _get_code_info(code_filename)
     if config.verbose:
@@ -275,7 +275,7 @@ def _run_code(config, code_filename, input_file):# {{{
         # shell=True,  # for windows
     )
     try:
-        outs, errs = proc.communicate(timeout=config.core['test']['timeout_sec'])
+        outs, errs = proc.communicate(timeout=config.pref['test']['timeout_sec'])
         TLE_flag = False
     except subprocess.TimeoutExpired:
         proc.kill()
@@ -668,7 +668,7 @@ class Contest(object):
             task_url = base_url + task_info['url']
             task_dir = self.work_dir / task_id
 
-            shutil.copytree(config.core['template_dir'], f'{task_dir}/')
+            shutil.copytree(config.pref['template_dir'], f'{task_dir}/')
             os.chdir(task_dir)
 
             try:

@@ -307,8 +307,8 @@ def sb(config, code_filename, pretest, debug):
             click.secho("pretest not passed and exit", fg="red")
             return
 
-    if (not pretest) or (not click.confirm('Are you sure to submit?')):  # pretestの場合は最終確認をする。
         contest.submit(task_id, extension, code)
+    if (not pretest) or (click.confirm('Are you sure to submit?')):  # pretestの場合は最終確認をする。
 #}}}
 
 # get answers: ga {{{

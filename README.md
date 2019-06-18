@@ -12,10 +12,11 @@ Actually, this is just a my own wrapper of kmyk/online-judge-tools.
 ## Installation
 
 ```bash
+cd <anywhere you like>
 git clone https://github.com/kjnh10/pcm.git
 cd pcm
 pip install ./
-# pip install --editable ./  # if you want to customize, use this one.
+# pip install ./ --editable # if you want to customize, use this one.
 ```
 
 Though mainly tested for ubuntu or mac, this will also work for windows.
@@ -28,7 +29,7 @@ cd your/workdirectory
 # prepare your work space. (only for Atcoder and codeforces)
 pcm pp https://atcoder.jp/contests/abc001
 # pcm pp http://codeforces.com/contest/1138
-# you can shortcut for abc, arc, agc 
+# you can shortcut for abc, arc, agc like below.
 # pcm pp abc001
 
 # Edir your A/solve.py or A/solve.cpp with your favorite editor
@@ -38,9 +39,10 @@ cd abc001/A # you need in abc001/A direcotry to test and submit codes for proble
 # test your code
 pcm tt  # for all sample cases
 pcm tt -c 1  # to test #1 case
+pcm tt -t 3  # set TLE time to 3 sec. (The default is 2 sec.)
 
 # submit your code
-pcm sb  # with test before submitting.
+pcm sb  # with test before submitting. you can't submit if tests fail.
 pcm sb -nt  # wihtout test.
 
 

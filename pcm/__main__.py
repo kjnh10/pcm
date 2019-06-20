@@ -369,9 +369,9 @@ def _get_code_info(code_filename):# {{{
     if code_filename == "": # when code_filename not specified
         try:
             code_file = _get_last_modified_file()
-            click.secho(f"you did not specify code filename. so pcm will use {code_filename}\n which is the one you updated at last", fg='yellow')
+            click.secho(f"you did not specify code filename. so pcm will use {code_filename} which is the one you updated at last.", fg='yellow')
         except:
-            click.secho(f"not found *.cpp or *.py files under current working directory", fg='red')
+            click.secho(f"not found *.cpp or *.py files under current working directory.", fg='red')
             exit()
 
     else:
@@ -465,7 +465,8 @@ class Contest(object):
 
         if self.type=='atcoder':
             problem_id = self.task_info_map[task_id]["problem_id"]
-            onlinejudge.service.atcoder.AtCoderProblem(contest_id=self.name, problem_id=problem_id).submit_code(code, lang_id, self.session)
+            res = onlinejudge.service.atcoder.AtCoderProblem(contest_id=self.name, problem_id=problem_id).submit_code(code, lang_id, self.session)
+            print(res)
         elif self.type=='codeforces':
             base_submit_url = f"http://codeforces.com/contest/{self.name}/submit"
             # get csrf_token

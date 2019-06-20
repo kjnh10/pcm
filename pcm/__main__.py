@@ -364,36 +364,40 @@ def _reload_contest_class():  # {{{
 # }}}
 
 def _get_code_info(code_filename):# {{{
+    code_file = None
+
     if code_filename == "": # when code_filename not specified
-        code_dir = Path(os.getcwd())
         try:
-            code_filename = _get_last_modified_file()
-            click.secho(f"you did not specify code_filename.so pcm will use {code_filename}\n which is the one you updated at last", fg='yellow')
+            code_file = _get_last_modified_file()
+            click.secho(f"you did not specify code filename. so pcm will use {code_filename}\n which is the one you updated at last", fg='yellow')
         except:
-            click.secho("you are not in a pcm valid problem directory", fg='red')
-            return
+            click.secho(f"not found *.cpp or *.py files under current working directory", fg='red')
+            exit()
 
-    elif os.path.exists(f'./{code_filename}'): # まずはcurrent directory以下を探す。
-        code_dir = Path(os.getcwd())
     else:
-        code_dir = Path(_search_parent_dir(code_filename))
-        if code_dir is None:
-            click.secho("you are not in a pcm managed directory", fg='red')
-            return
+        for p in Path('.').rglob(code_filename):
+            code_file = p
+            break
+        if code_file == None:
+            click.secho(f"not found {code_filename} searching under {Path('.').resolve()}.", fg='red')
+            exit()
 
-    prob_dir = code_dir.parent
-    test_dir = prob_dir / "test"
-    task_id = prob_dir.name
+    code_file = code_file.resolve()
+    code_filename = code_file.name
+    code_dir = code_file.parent
+    test_dir = code_dir.parent / "test"
+    task_id = code_dir.parent.name
+
     return task_id, code_dir, code_filename, test_dir
     # }}}
 
-def _get_last_modified_file():# {{{
+def _get_last_modified_file() -> Path:  # {{{
     candidates = []
-    candidates += [(p.stat().st_mtime, str(p)) for p in Path('.').glob(f'*.cpp')]
-    candidates += [(p.stat().st_mtime, str(p)) for p in Path('.').glob(f'*.py')]
+    candidates += [(p.stat().st_mtime, p) for p in Path('.').rglob(f'*.cpp')]
+    candidates += [(p.stat().st_mtime, p) for p in Path('.').rglob(f'*.py')]
     candidates.sort(reverse=True)
     if len(candidates)>0:
-        code_filename = str(candidates[0][1])
+        code_filename = candidates[0][1]
         return code_filename
     else:
         raise Exception("no valid code file found")

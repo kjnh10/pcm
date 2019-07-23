@@ -468,6 +468,7 @@ class Contest(object):
             res = onlinejudge.service.atcoder.AtCoderProblem(contest_id=self.name, problem_id=problem_id).submit_code(code, lang_id, self.session)
             print(res)
         elif self.type=='codeforces':
+            # TODO: onlinejudgeの機能を使用するようにする。
             base_submit_url = f"http://codeforces.com/contest/{self.name}/submit"
             # get csrf_token
             r = self.session.get(base_submit_url)
@@ -494,6 +495,7 @@ class Contest(object):
             if error:
                 click.secho(error.text, fg='red')
             elif(r.url[r.url.rfind("/")+1:]=="my"):  # if submitted successfully, returned url will be http://codeforces.com/contest/****/my
+                print(r.url)
                 click.secho('successfully submitted maybe...', fg='green')
             else:
                 click.secho('submittion failed maybe...', fg='red')

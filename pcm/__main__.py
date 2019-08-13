@@ -132,6 +132,9 @@ def tt(config, code_filename, case, debug, timeout):# {{{
         if case in set(map(str, range(1, 101))):
             case = f'sample-{case}'
         infile = test_dir / f"{case}.in"
+        if (not infile.exists()):
+            click.secho(f"{infile.name} not found.", fg='yellow')
+            return
         expfile = test_dir / f"{case}.out"
         _test_case(code_dir, code_filename, case, infile, expfile, debug)
 # }}}

@@ -468,7 +468,7 @@ class Contest(object):
 
         if self.type=='atcoder':
             problem_id = self.task_info_map[task_id]["problem_id"]
-            res = onlinejudge.service.atcoder.AtCoderProblem(contest_id=self.name, problem_id=problem_id).submit_code(code, lang_id, self.session)
+            res = onlinejudge.service.atcoder.AtCoderProblem(contest_id=self.name, problem_id=problem_id).submit_code(code=code, language_id=lang_id, session=self.session)
             print(res)
         elif self.type=='codeforces':
             # TODO: onlinejudgeの機能を使用するようにする。

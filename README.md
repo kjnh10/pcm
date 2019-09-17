@@ -15,8 +15,7 @@ Actually, this is just a my own wrapper of kmyk/online-judge-tools.
 cd <anywhere you like>
 git clone https://github.com/kjnh10/pcm.git
 cd pcm
-pip install ./
-# pip install --editable ./ # if you want to customize, use this one.
+pip install --editable ./ # if you want to customize, use this one.
 ```
 
 Though mainly tested for ubuntu or mac, this will also work for windows.

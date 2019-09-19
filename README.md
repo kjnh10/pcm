@@ -8,6 +8,8 @@ This is a command line tool to manage programming contest and provides some comm
 
 Actually, this is just a my own wrapper of kmyk/online-judge-tools.  
 
+## Demo
+![screencast](https://github.com/kjnh10/pcm/blob/sample-gif-test/demo.gif)
 
 ## Installation
 

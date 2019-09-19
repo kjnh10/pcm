@@ -12,12 +12,15 @@ Actually, this is just a my own wrapper of kmyk/online-judge-tools.
 ![screencast](https://github.com/kjnh10/pcm/blob/sample-gif-test/demo.gif)
 
 ## Installation
+You need python3. (tested for Linux and Windows.)
 
 ```bash
-cd <anywhere you like>
+pip install pcm # That's it.Done.
+
+# if you want to develop
 git clone https://github.com/kjnh10/pcm.git
 cd pcm
-pip install --editable ./ # if you want to customize, use this one.
+pip install --editable ./
 ```
 
 Though mainly tested for ubuntu or mac, this will also work for windows.

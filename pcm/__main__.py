@@ -154,38 +154,39 @@ def _test_task(code_dir, code_filename, testdir, debug=True):# {{{
     return res
 # }}}
 
-def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
+def _test_case(code_dir, code_filename, case_name, infile, expfile, debug=True):# {{{
     codefile = code_dir / code_filename
     extension = code_filename[code_filename.rfind('.') + 1:]
 
     # run program
-    click.secho('-'*10 + case + '-'*10, fg='blue')
+    click.secho('-'*10 + case_name + '-'*10, fg='blue')
     if extension == "py":
-        returncode, outs, errs, TLE_flag = _run_code(code_filename=codefile, input_file=open(infile, "r"))
+        returncode, outs, errs, TLE_flag = _run_exe(exe_filename=codefile, input_file=open(infile, "r"))
 
     elif extension == "cpp":
         click.secho('compile start.....', blink=True)
-        exe = Path(code_dir / 'a.out')
+        exe = Path(code_dir / f'{codefile.stem}.out')
         if (exe.exists() and Path(codefile).stat().st_mtime <= exe.stat().st_mtime):
-            click.secho(f'compile skipped since {codefile} is older than a.out')
+            click.secho(f'compile skipped since {codefile} is older than {codefile.stem}.out')
         else:
             start = time.time()
             command = [
                     'g++',
                     str(codefile),
-                    "-o", str(code_dir / 'a.out'),
+                    "-o", str(code_dir / f'{codefile.stem}.out'),
                     '-std=c++14',
                     ]
             command.append('-DPCM') # for dump
             command.append('-Wall') # for debug
             if debug:
                 command.append('-fsanitize=undefined') # # 未定義動作の検出
+                command.append('-fsanitize=address') #
                 # command.append('-g3') # for gdb
                 # command.append('-D_GLIBCXX_DEBUG')
                 # command.append('-O2')
 
             proc = subprocess.Popen(
-                    command,  # g++ solve.cpp -o a.out -std=c++14 -DPCM -Wall -fsanitize=undefined
+                    command,  # g++ solve.cpp -o {codefile.stem}.out -std=c++14 -DPCM -Wall -fsanitize=undefined
                     stdout=subprocess.PIPE,
                     )
             outs, errs = proc.communicate()
@@ -200,7 +201,7 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
             elapsed_time = time.time() - start
             print ("elapsed_time:{0}".format(elapsed_time) + "[sec]")
 
-        returncode, outs, errs, TLE_flag = _run_code(code_dir / 'a.out', open(infile, "r"))
+        returncode, outs, errs, TLE_flag = _run_exe(code_dir / f'{codefile.stem}.out', open(infile, "r"))
 
     # print input
     with open(infile, 'r') as f:
@@ -234,7 +235,7 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
     # compare result and expected
     if TLE_flag:
         click.secho('TLE\n', fg='red')
-        return False
+        return "TLE"
 
     if returncode != 0:
         SIGMAP = dict(
@@ -244,7 +245,7 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
         click.secho(f'RE', fg='red')
         click.secho(f':{SIGMAP[abs(returncode)]}' if abs(returncode) in SIGMAP.keys() else str(abs(returncode)), fg='red')
         print('\n')
-        return False
+        return "RuntimeError"
 
     # 最後の空白行は無視する。
     if (stdout[-1]==''): stdout.pop()
@@ -252,23 +253,87 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
 
     if len(stdout) != len(exp):
         click.secho('WA\n', fg='red')
-        return False
+        return outs
     else:
         for i in range(len(stdout)):
             if stdout[i].replace('\r', '') != exp[i]:
                 click.secho('WA\n\n', fg='red')
-                return False
+                return outs
         else:
             click.secho('AC\n', fg='green')
-    return True
+    return outs
 # }}}
 
 @pass_config
-def _run_code(config, code_filename, input_file):# {{{
+def _run_exe(config, exe_filename, input_file):# {{{
     command = []
-    if (code_filename.suffix=='.py'):
+    if (exe_filename.suffix=='.py'):
         command.append('python')
-    command.append(str(code_filename))
+    command.append(str(exe_filename))
+    command.append('pcm') # tell the sctipt that pcm is calling
+    proc = subprocess.Popen(
+        command,
+        stdin=input_file,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        # shell=True,  # for windows
+    )
+    try:
+        outs, errs = proc.communicate(timeout=config.pref['test']['timeout_sec'])
+        TLE_flag = False
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        outs, errs = proc.communicate()
+        TLE_flag = True
+    return proc.returncode, outs.decode('utf-8'), errs.decode('utf-8'), TLE_flag  # }}}
+# }}}
+
+# test: rt {{{
+@cli.command()
+@click.argument('code_filename', type=str, default='')
+@click.option('--generator', '-g', type=str, default='gen.py')
+@click.option('--by', '-b', type=str, default='naive.cpp')
+@click.option('--debug/--nodebug', '-d/-nd', default=True)
+@click.option('--timeout', '-t', type=float, default=-1)
+@pass_config
+def rt(config, code_filename, generator, by, debug, timeout):# {{{
+    if (timeout!=-1):
+        config.pref['test']['timeout_sec']=timeout
+
+    task_id, code_dir, code_filename, test_dir = _get_code_info(code_filename)
+    if config.verbose:
+        print('code_dir: ' + code_dir)
+        print('code_filename: ' + code_filename)
+        print('test_dir: ' + test_dir)
+
+    while True:
+        subprocess.run("python ../test/gen.py > ../test/random.in", shell=True)
+        infile = test_dir / "random.in"
+        if (not infile.exists()):
+            click.secho(f"{infile.name} not found.", fg='yellow')
+            return
+
+        if (by=='large'):
+            out1 = _test_case(code_dir, code_filename, 'random', infile, '', debug)
+            if (out1 in ('TLE', 'RuntimeError')):
+                return 0;
+        else:
+            out1 = _test_case(code_dir, code_filename, 'random', infile, '', debug)
+            out2 = _test_case(code_dir, by, 'random', infile, '', debug)
+            print(f"out1: {out1}")
+            print(f"out2: {out2}")
+            if (out1!=out2):
+                with open('../test/random.out', mode='w') as f:
+                    f.write(out2)
+                return 0;
+# }}}
+
+@pass_config
+def _run_exe(config, exe_filename, input_file):# {{{
+    command = []
+    if (exe_filename.suffix=='.py'):
+        command.append('python')
+    command.append(str(exe_filename))
     command.append('pcm') # tell the sctipt that pcm is calling
     proc = subprocess.Popen(
         command,

@@ -300,7 +300,7 @@ def rt(config, code_filename, generator, by, debug, timeout):# {{{
     if (timeout!=-1):
         config.pref['test']['timeout_sec']=timeout
 
-    task_id, code_dir, code_filename, test_dir = _get_code_info(code_filename)
+    task_id, code_dir, code_filename, test_dir = _get_code_info(code_filename, exclude_filename_pattern=[by])
     if config.verbose:
         print('code_dir: ' + code_dir)
         print('code_filename: ' + code_filename)
@@ -318,8 +318,8 @@ def rt(config, code_filename, generator, by, debug, timeout):# {{{
             if (out1 in ('TLE', 'RuntimeError')):
                 return 0;
         else:
-            out1 = _test_case(code_dir, code_filename, 'random', infile, '', debug)
-            out2 = _test_case(code_dir, by, 'random', infile, '', debug)
+            out1 = _test_case(code_dir, code_filename, f'random-{code_filename}', infile, '', debug)
+            out2 = _test_case(code_dir, by, f'random-{by}', infile, '', debug)
             print(f"out1: {out1}")
             print(f"out2: {out2}")
             if (out1!=out2):
@@ -431,14 +431,15 @@ def _reload_contest_class():  # {{{
     return Contest(contest_url, contest_dir)
 # }}}
 
-def _get_code_info(code_filename):# {{{
+def _get_code_info(code_filename, exclude_filename_pattern=None):# {{{
     code_file = None
 
     if code_filename == "": # when code_filename not specified
         try:
-            code_file = _get_last_modified_file()
+            code_file = _get_last_modified_file(exclude_filename_pattern)
             click.secho(f"you did not specify code filename. so pcm will use {code_filename} which is the one you updated at last.", fg='yellow')
-        except:
+        except Exception as e:
+            print(e)
             click.secho(f"not found *.cpp or *.py files under current working directory.", fg='red')
             exit()
 
@@ -459,10 +460,17 @@ def _get_code_info(code_filename):# {{{
     return task_id, code_dir, code_filename, test_dir
     # }}}
 
-def _get_last_modified_file() -> Path:  # {{{
+def _get_last_modified_file(exclude_filename_pattern=None) -> Path:  # {{{
     candidates = []
     candidates += [(p.stat().st_mtime, p) for p in Path('.').rglob(f'*.cpp')]
     candidates += [(p.stat().st_mtime, p) for p in Path('.').rglob(f'*.py')]
+    for pattern in exclude_filename_pattern:
+        next_candidates = []
+        for cand in candidates:
+            if not re.search(pattern, str(cand[1])):
+                next_candidates.append(cand)
+        candidates = next_candidates
+
     candidates.sort(reverse=True)
     if len(candidates)>0:
         code_filename = candidates[0][1]

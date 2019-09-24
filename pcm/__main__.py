@@ -289,15 +289,15 @@ def _run_exe(config, exe_filename, input_file):# {{{
     return proc.returncode, outs.decode('utf-8'), errs.decode('utf-8'), TLE_flag  # }}}
 # }}}
 
-# test: rt {{{
+# random test: rt {{{
 @cli.command()
 @click.argument('code_filename', type=str, default='')
-@click.option('--generator', '-g', type=str, default='gen.py')
 @click.option('--by', '-b', type=str, default='naive.cpp')
+@click.option('--generator', '-g', type=str, default='gen.py')
 @click.option('--debug/--nodebug', '-d/-nd', default=True)
 @click.option('--timeout', '-t', type=float, default=-1)
 @pass_config
-def rt(config, code_filename, generator, by, debug, timeout):# {{{
+def rt(config, code_filename, by, generator, debug, timeout):# {{{
     if (timeout!=-1):
         config.pref['test']['timeout_sec']=timeout
 
@@ -308,7 +308,7 @@ def rt(config, code_filename, generator, by, debug, timeout):# {{{
         print('test_dir: ' + test_dir)
 
     while True:
-        subprocess.run("python ../test/gen.py > ../test/random.in", shell=True)
+        subprocess.run(f"python ../test/{generator} > ../test/random.in", shell=True)  # TODO:どこにいるかに依存しないコードにしたい。
         infile = test_dir / "random.in"
         if (not infile.exists()):
             click.secho(f"{infile.name} not found.", fg='yellow')

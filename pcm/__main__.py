@@ -115,27 +115,41 @@ def _prepare_problem(config, prob_name):
 @click.option('--case', '-c', type=str, default='')
 @click.option('--debug/--nodebug', '-d/-nd', default=True)
 @click.option('--timeout', '-t', type=float, default=-1)
+@click.option('--by', '-b', type=str, default='naive.*')
+@click.option('--generator', '-g', type=str, default='gen.py')
 @pass_config
-def tt(config, code_filename, case, debug, timeout):# {{{
+def tt(config, code_filename:str, case:str, by:str, generator:str, debug:bool, timeout:float): # {{{
     if (timeout!=-1):
         config.pref['test']['timeout_sec']=timeout
-
-    task_id, code_dir, code_filename, test_dir = _get_code_info(code_filename)
-    if config.verbose:
-        print('code_dir: ' + code_dir)
-        print('code_filename: ' + code_filename)
-        print('test_dir: ' + test_dir)
+    task_id, code_dir, code_filename, test_dir = _get_code_info(code_filename, exclude_filename_pattern=[by])  # TODO: naive_code_fileと同様のコードで十分
 
     if case == '': # test all case
         _test_task(code_dir, code_filename, test_dir, debug)
     else:
         if case in set(map(str, range(1, 101))):
             case = f'sample-{case}'
-        infile = test_dir / f"{case}.in"
-        if (not infile.exists()):
-            click.secho(f"{infile.name} not found.", fg='yellow')
-            return
-        expfile = test_dir / f"{case}.out"
+            infile = test_dir / f"{case}.in"
+            expfile = test_dir / f"{case}.out"
+            if (not infile.exists()):
+                click.secho(f"{infile.name} not found.", fg='yellow')
+                return
+        elif Path(case).suffix in ['.py']:  # TODO: cpp fileでもテストケース生成を出来るようにする？
+            # for random test
+            naive_code_file = _get_last_modified_file(match_filename_pattern=[by])
+            case_generator_file = test_dir / generator
+
+            subprocess.run(f"python {test_dir/case} > {test_dir/'random.in'} ", shell=True)
+            case = 'random'
+            infile = test_dir / f"{case}.in"
+
+            expfile = test_dir / f"{case}.out"
+            returncode, outs, errs, TLE_flag = _run_code(naive_code_file, infile=infile)
+            with open(expfile, mode='w') as f:
+                if TLE_flag:
+                    f.write('TLE for naive code. if you extend timeout time, use -t option like -t 5')
+                else:
+                    f.write(outs)
+
         _test_case(code_dir, code_filename, case, infile, expfile, debug)
 # }}}
 
@@ -225,7 +239,7 @@ def _test_case(code_dir, code_filename, case_name, infile, expfile, debug=True):
 @pass_config
 def _run_code(config, codefile : Path, infile : Path, debug=True):  # {{{
     if codefile.suffix == ".py":
-        return _run_exe(exe_filename=codefile, input_file=open(infile, "r"))
+        return _run_exe(exefile=codefile, input_file=open(infile, "r"))
     elif codefile.suffix == ".cpp":
         click.secho('compile start.....', blink=True)
         exe = codefile.parent.parent / 'bin' / f'{codefile.stem}.out'
@@ -265,6 +279,9 @@ def _run_code(config, codefile : Path, infile : Path, debug=True):  # {{{
             elapsed_time = time.time() - start
             print ("elapsed_time:{0}".format(elapsed_time) + "[sec]")
         return _run_exe(exe, open(infile, "r"))
+    else:
+        raise Exception(f"{codefile} is not a valid code file")
+    # }}}
 
 @pass_config
 def _run_exe(config, exefile, input_file):# {{{
@@ -287,32 +304,8 @@ def _run_exe(config, exefile, input_file):# {{{
         proc.kill()
         outs, errs = proc.communicate()
         TLE_flag = True
-    return proc.returncode, outs.decode('utf-8'), errs.decode('utf-8'), TLE_flag  # }}}
+    return (proc.returncode, outs.decode('utf-8'), errs.decode('utf-8'), TLE_flag)  # }}}
 
-# }}}
-
-@pass_config
-def _run_exe(config, exe_filename, input_file):# {{{
-    command = []
-    if (exe_filename.suffix=='.py'):
-        command.append('python')
-    command.append(str(exe_filename))
-    command.append('pcm') # tell the sctipt that pcm is calling
-    proc = subprocess.Popen(
-        command,
-        stdin=input_file,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        # shell=True,  # for windows
-    )
-    try:
-        outs, errs = proc.communicate(timeout=config.pref['test']['timeout_sec'])
-        TLE_flag = False
-    except subprocess.TimeoutExpired:
-        proc.kill()
-        outs, errs = proc.communicate()
-        TLE_flag = True
-    return proc.returncode, outs.decode('utf-8'), errs.decode('utf-8'), TLE_flag  # }}}
 # }}}
 
 # random test: rt {{{
@@ -476,7 +469,7 @@ def _get_last_modified_file(match_filename_pattern=[], exclude_filename_pattern=
     candidates.sort(reverse=True)
     if len(candidates)>0:
         code_filename = candidates[0][1]
-        return code_filename
+        return code_filename.resolve()
     else:
         raise Exception("no valid code file found")
 # }}}

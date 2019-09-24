@@ -760,7 +760,7 @@ class Contest(object):
             os.chdir(task_dir)
 
             try:
-                shutil.rmtree(task_dir / 'test') # templateからのコピーでtest directoryが作られているので消しておく。
+                subprocess.run(f"rm {task_dir/'test'}/sample*", shell=True)  # gen.pyは消さないようにする。
                 click.secho(f"oj will try to download {task_url}...", fg='yellow')
                 oj(['download', task_url]) # get test cases
                 Path(task_info['description'].replace("/", "-")).touch()

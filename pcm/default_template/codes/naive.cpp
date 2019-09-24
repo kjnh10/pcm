@@ -51,7 +51,7 @@ struct Fast { Fast(){ std::cin.tie(0); ios::sync_with_stdio(false); } } fast;
 //}}}
 
 int solve(){
-  // write your naive code for pp rt // random test
+  cout << "you need to write AC code here for random test" << endl;
   return 0;
 }
 

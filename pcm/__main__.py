@@ -149,6 +149,9 @@ def tt(config, code_filename:str, case:str, by:str, generator:str, debug:bool, t
                     f.write('TLE for naive code. if you extend timeout time, use -t option like -t 5')
                 else:
                     f.write(outs)
+        else:
+            infile = test_dir / f"{case}.in"
+            expfile = test_dir / f"{case}.out"
 
         _test_case(code_dir, code_filename, case, infile, expfile, debug)
 # }}}

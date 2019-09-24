@@ -115,27 +115,41 @@ def _prepare_problem(config, prob_name):
 @click.option('--case', '-c', type=str, default='')
 @click.option('--debug/--nodebug', '-d/-nd', default=True)
 @click.option('--timeout', '-t', type=float, default=-1)
+@click.option('--by', '-b', type=str, default='naive.*')
+@click.option('--generator', '-g', type=str, default='gen.py')
 @pass_config
-def tt(config, code_filename, case, debug, timeout):# {{{
+def tt(config, code_filename:str, case:str, by:str, generator:str, debug:bool, timeout:float): # {{{
     if (timeout!=-1):
         config.pref['test']['timeout_sec']=timeout
-
-    task_id, code_dir, code_filename, test_dir = _get_code_info(code_filename)
-    if config.verbose:
-        print('code_dir: ' + code_dir)
-        print('code_filename: ' + code_filename)
-        print('test_dir: ' + test_dir)
+    task_id, code_dir, code_filename, test_dir = _get_code_info(code_filename, exclude_filename_pattern=[by])  # TODO: naive_code_fileと同様のコードで十分
 
     if case == '': # test all case
         _test_task(code_dir, code_filename, test_dir, debug)
     else:
         if case in set(map(str, range(1, 101))):
             case = f'sample-{case}'
-        infile = test_dir / f"{case}.in"
-        if (not infile.exists()):
-            click.secho(f"{infile.name} not found.", fg='yellow')
-            return
-        expfile = test_dir / f"{case}.out"
+            infile = test_dir / f"{case}.in"
+            expfile = test_dir / f"{case}.out"
+            if (not infile.exists()):
+                click.secho(f"{infile.name} not found.", fg='yellow')
+                return
+        elif Path(case).suffix in ['.py']:  # TODO: cpp fileでもテストケース生成を出来るようにする？
+            # for random test
+            naive_code_file = _get_last_modified_file(match_filename_pattern=[by])
+            case_generator_file = test_dir / generator
+
+            subprocess.run(f"python {test_dir/case} > {test_dir/'random.in'} ", shell=True)
+            case = 'random'
+            infile = test_dir / f"{case}.in"
+
+            expfile = test_dir / f"{case}.out"
+            returncode, outs, errs, TLE_flag = _run_code(naive_code_file, infile=infile)
+            with open(expfile, mode='w') as f:
+                if TLE_flag:
+                    f.write('TLE for naive code. if you extend timeout time, use -t option like -t 5')
+                else:
+                    f.write(outs)
+
         _test_case(code_dir, code_filename, case, infile, expfile, debug)
 # }}}
 
@@ -154,53 +168,12 @@ def _test_task(code_dir, code_filename, testdir, debug=True):# {{{
     return res
 # }}}
 
-def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
-    codefile = code_dir / code_filename
-    extension = code_filename[code_filename.rfind('.') + 1:]
+def _test_case(code_dir, code_filename, case_name, infile, expfile, debug=True):# {{{
+    codefile = code_dir/code_filename
 
     # run program
-    click.secho('-'*10 + case + '-'*10, fg='blue')
-    if extension == "py":
-        returncode, outs, errs, TLE_flag = _run_code(code_filename=codefile, input_file=open(infile, "r"))
-
-    elif extension == "cpp":
-        click.secho('compile start.....', blink=True)
-        exe = Path(code_dir / 'a.out')
-        if (exe.exists() and Path(codefile).stat().st_mtime <= exe.stat().st_mtime):
-            click.secho(f'compile skipped since {codefile} is older than a.out')
-        else:
-            start = time.time()
-            command = [
-                    'g++',
-                    str(codefile),
-                    "-o", str(code_dir / 'a.out'),
-                    '-std=c++14',
-                    ]
-            command.append('-DPCM') # for dump
-            command.append('-Wall') # for debug
-            if debug:
-                command.append('-fsanitize=undefined') # # 未定義動作の検出
-                # command.append('-g3') # for gdb
-                # command.append('-D_GLIBCXX_DEBUG')
-                # command.append('-O2')
-
-            proc = subprocess.Popen(
-                    command,  # g++ solve.cpp -o a.out -std=c++14 -DPCM -Wall -fsanitize=undefined
-                    stdout=subprocess.PIPE,
-                    )
-            outs, errs = proc.communicate()
-            if proc.returncode:
-                click.secho("compile error\n", fg='red')
-                sys.exit()
-
-            if outs:
-                print(outs.decode('utf-8'))
-
-            click.secho('compile finised')
-            elapsed_time = time.time() - start
-            print ("elapsed_time:{0}".format(elapsed_time) + "[sec]")
-
-        returncode, outs, errs, TLE_flag = _run_code(code_dir / 'a.out', open(infile, "r"))
+    click.secho('-'*10 + case_name + '-'*10, fg='blue')
+    returncode, outs, errs, TLE_flag = _run_code(codefile, infile=infile)
 
     # print input
     with open(infile, 'r') as f:
@@ -224,7 +197,7 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
     print(outs)
     stdout = outs.split('\n')
 
-    # print error message
+    # print stderr message
     print('*'*7 + ' stderr ' + '*'*7)
     # click.secho(errs.replace(str(code_dir), ""), fg='red')
     for line in errs.split('\n'):
@@ -234,7 +207,7 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
     # compare result and expected
     if TLE_flag:
         click.secho('TLE\n', fg='red')
-        return False
+        return "TLE"
 
     if returncode != 0:
         SIGMAP = dict(
@@ -244,7 +217,7 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
         click.secho(f'RE', fg='red')
         click.secho(f':{SIGMAP[abs(returncode)]}' if abs(returncode) in SIGMAP.keys() else str(abs(returncode)), fg='red')
         print('\n')
-        return False
+        return "RuntimeError"
 
     # 最後の空白行は無視する。
     if (stdout[-1]==''): stdout.pop()
@@ -252,23 +225,70 @@ def _test_case(code_dir, code_filename, case, infile, expfile, debug=True):# {{{
 
     if len(stdout) != len(exp):
         click.secho('WA\n', fg='red')
-        return False
+        return outs
     else:
         for i in range(len(stdout)):
             if stdout[i].replace('\r', '') != exp[i]:
                 click.secho('WA\n\n', fg='red')
-                return False
+                return outs
         else:
             click.secho('AC\n', fg='green')
-    return True
+    return outs
 # }}}
 
 @pass_config
-def _run_code(config, code_filename, input_file):# {{{
+def _run_code(config, codefile : Path, infile : Path, debug=True):  # {{{
+    if codefile.suffix == ".py":
+        return _run_exe(exefile=codefile, input_file=open(infile, "r"))
+    elif codefile.suffix == ".cpp":
+        click.secho('compile start.....', blink=True)
+        exe = codefile.parent.parent / 'bin' / f'{codefile.stem}.out'
+        exe.parent.mkdir(exist_ok=True)
+        if (exe.exists() and Path(codefile).stat().st_mtime <= exe.stat().st_mtime):
+            click.secho(f'compile skipped since {codefile} is older than {codefile.stem}.out')
+        else:
+            start = time.time()
+            command = [
+                    'g++',
+                    str(codefile),
+                    "-o", str(exe),
+                    '-std=c++14',
+                    ]
+            command.append('-DPCM') # for dump
+            command.append('-Wall') # for debug
+            if debug:
+                command.append('-fsanitize=undefined') # 未定義動作の検出
+                command.append('-fsanitize=address') #
+                # command.append('-g3') # for gdb
+                # command.append('-D_GLIBCXX_DEBUG')
+                # command.append('-O2')
+
+            proc = subprocess.Popen(
+                    command,  # g++ solve.cpp -o {codefile.stem}.out -std=c++14 -DPCM -Wall -fsanitize=undefined
+                    stdout=subprocess.PIPE,
+                    )
+            outs, errs = proc.communicate()
+            if proc.returncode:
+                click.secho("compile error\n", fg='red')
+                sys.exit()
+
+            if outs:
+                print(outs.decode('utf-8'))
+
+            click.secho('compile finised')
+            elapsed_time = time.time() - start
+            print ("elapsed_time:{0}".format(elapsed_time) + "[sec]")
+        return _run_exe(exe, open(infile, "r"))
+    else:
+        raise Exception(f"{codefile} is not a valid code file")
+    # }}}
+
+@pass_config
+def _run_exe(config, exefile, input_file):# {{{
     command = []
-    if (code_filename.suffix=='.py'):
+    if (exefile.suffix=='.py'):
         command.append('python')
-    command.append(str(code_filename))
+    command.append(str(exefile))
     command.append('pcm') # tell the sctipt that pcm is calling
     proc = subprocess.Popen(
         command,
@@ -284,7 +304,48 @@ def _run_code(config, code_filename, input_file):# {{{
         proc.kill()
         outs, errs = proc.communicate()
         TLE_flag = True
-    return proc.returncode, outs.decode('utf-8'), errs.decode('utf-8'), TLE_flag  # }}}
+    return (proc.returncode, outs.decode('utf-8'), errs.decode('utf-8'), TLE_flag)  # }}}
+
+# }}}
+
+# random test: rt {{{
+@cli.command()
+@click.argument('code_filename', type=str, default='')
+@click.option('--by', '-b', type=str, default='naive.*')
+@click.option('--generator', '-g', type=str, default='gen.py')
+@click.option('--debug/--nodebug', '-d/-nd', default=True)
+@click.option('--timeout', '-t', type=float, default=-1)
+@pass_config
+def rt(config, code_filename:str, by:str, generator:str, debug:bool, timeout:float):# {{{
+    if (timeout!=-1):
+        config.pref['test']['timeout_sec']=timeout
+
+    naive_code_file = _get_last_modified_file(match_filename_pattern=[by])
+    task_id, code_dir, code_filename, test_dir = _get_code_info(code_filename, exclude_filename_pattern=[by])  # TODO: naive_code_fileと同様のコードで十分
+
+    case_generator_file = test_dir / generator
+    infile = test_dir / "random.in"
+
+    while True:
+        subprocess.run(f"python {str(case_generator_file)} > {str(infile)}", shell=True)
+        if (not infile.exists()):
+            click.secho(f"{infile.name} not found.", fg='yellow')
+            return
+
+        if (by=='large'):
+            out1 = _test_case(code_dir, code_filename, 'random', infile, '', debug)
+            if (out1 in ('TLE', 'RuntimeError')):
+                return 0;
+        else:
+            out1 = _test_case(code_dir, code_filename, f'random-{code_filename}', infile, '', debug)
+            out2 = _test_case(code_dir, naive_code_file.name, f'random-{by}', infile, '', debug)
+            print(f"{code_filename}: {out1}")
+            print(f"{naive_code_file.name}: {out2}")
+            if (out1!=out2):
+                with open('../test/random.out', mode='w') as f:
+                    f.write(out2)
+                return 0;
+# }}}
 # }}}
 
 # submit: sb {{{
@@ -324,7 +385,6 @@ def ga(config, limit_count, extension):
     contest = _reload_contest_class()
     contest.get_answers(limit_count, extension)
 # }}}
-#}}}
 
 # private functions
 def _search_parent_dir(code_filename):# {{{
@@ -366,14 +426,15 @@ def _reload_contest_class():  # {{{
     return Contest(contest_url, contest_dir)
 # }}}
 
-def _get_code_info(code_filename):# {{{
+def _get_code_info(code_filename, exclude_filename_pattern=[]):# {{{
     code_file = None
 
     if code_filename == "": # when code_filename not specified
         try:
-            code_file = _get_last_modified_file()
+            code_file = _get_last_modified_file(match_filename_pattern=['*.cpp', '*.py'], exclude_filename_pattern=exclude_filename_pattern)
             click.secho(f"you did not specify code filename. so pcm will use {code_filename} which is the one you updated at last.", fg='yellow')
-        except:
+        except Exception as e:
+            print(e)
             click.secho(f"not found *.cpp or *.py files under current working directory.", fg='red')
             exit()
 
@@ -394,14 +455,21 @@ def _get_code_info(code_filename):# {{{
     return task_id, code_dir, code_filename, test_dir
     # }}}
 
-def _get_last_modified_file() -> Path:  # {{{
+def _get_last_modified_file(match_filename_pattern=[], exclude_filename_pattern=[]) -> Path:  # {{{
     candidates = []
-    candidates += [(p.stat().st_mtime, p) for p in Path('.').rglob(f'*.cpp')]
-    candidates += [(p.stat().st_mtime, p) for p in Path('.').rglob(f'*.py')]
+    for m_pat in match_filename_pattern:
+        candidates += [(p.stat().st_mtime, p) for p in Path('.').rglob(m_pat)]
+    for pattern in exclude_filename_pattern:
+        next_candidates = []
+        for cand in candidates:
+            if not re.search(pattern, str(cand[1])):
+                next_candidates.append(cand)
+        candidates = next_candidates
+
     candidates.sort(reverse=True)
     if len(candidates)>0:
         code_filename = candidates[0][1]
-        return code_filename
+        return code_filename.resolve()
     else:
         raise Exception("no valid code file found")
 # }}}

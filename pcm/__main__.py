@@ -323,7 +323,7 @@ def _run_exe(config, exe_filename, input_file):# {{{
 @click.option('--debug/--nodebug', '-d/-nd', default=True)
 @click.option('--timeout', '-t', type=float, default=-1)
 @pass_config
-def rt(config, code_filename:str, by:str, generator:str, debug:bool, timeout:int):# {{{
+def rt(config, code_filename:str, by:str, generator:str, debug:bool, timeout:float):# {{{
     if (timeout!=-1):
         config.pref['test']['timeout_sec']=timeout
 

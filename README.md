@@ -40,10 +40,18 @@ pcm pp https://atcoder.jp/contests/abc001
 
 cd abc001/A # you need in abc001/A direcotry to test and submit codes for problem A.
 
-# test your code
+# test your code with downloaded cases and handmade cases.
 pcm tt  # for all sample cases
 pcm tt -c 1  # to test #1 case
 pcm tt -t 3  # set TLE time to 3 sec. (The default is 2 sec.)
+pcm tt -c 1 -t 3 # of course, you can specify multiple options.
+
+# test your code with randomly genarated cases. (checking your code in contest with your naive code, finding errors after contest with a AC code, hacks)
+# At first you need to write test/gen.py
+# If you write naive.cpp or naive.py, exp file will be automatically genarated
+pcm tt -c gen.py  # gen.py will make random.in and naive.cpp or naive.py will make random.out with random.in. then test.
+pcm tt -g gen-small.py -by naive2.cpp  # also you can specify genarator file and naive code file. this is true for rt command below.
+pcm rt  # cotinue genarating a case and compare you code result and naive code result until they are different.
 
 # submit your code
 pcm sb solve.py  # with test before submitting. you can't submit if tests fail.

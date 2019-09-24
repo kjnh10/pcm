@@ -165,7 +165,8 @@ def _test_case(code_dir, code_filename, case_name, infile, expfile, debug=True):
 
     elif extension == "cpp":
         click.secho('compile start.....', blink=True)
-        exe = Path(code_dir / f'{codefile.stem}.out')
+        exe = code_dir.parent / 'bin' / f'{codefile.stem}.out'
+        exe.parent.mkdir(exist_ok=True)
         if (exe.exists() and Path(codefile).stat().st_mtime <= exe.stat().st_mtime):
             click.secho(f'compile skipped since {codefile} is older than {codefile.stem}.out')
         else:
@@ -173,7 +174,7 @@ def _test_case(code_dir, code_filename, case_name, infile, expfile, debug=True):
             command = [
                     'g++',
                     str(codefile),
-                    "-o", str(code_dir / f'{codefile.stem}.out'),
+                    "-o", str(exe),
                     '-std=c++14',
                     ]
             command.append('-DPCM') # for dump
@@ -201,7 +202,7 @@ def _test_case(code_dir, code_filename, case_name, infile, expfile, debug=True):
             elapsed_time = time.time() - start
             print ("elapsed_time:{0}".format(elapsed_time) + "[sec]")
 
-        returncode, outs, errs, TLE_flag = _run_exe(code_dir / f'{codefile.stem}.out', open(infile, "r"))
+        returncode, outs, errs, TLE_flag = _run_exe(exe, open(infile, "r"))
 
     # print input
     with open(infile, 'r') as f:

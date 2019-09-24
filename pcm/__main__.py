@@ -291,6 +291,30 @@ def _run_exe(config, exefile, input_file):# {{{
 
 # }}}
 
+@pass_config
+def _run_exe(config, exe_filename, input_file):# {{{
+    command = []
+    if (exe_filename.suffix=='.py'):
+        command.append('python')
+    command.append(str(exe_filename))
+    command.append('pcm') # tell the sctipt that pcm is calling
+    proc = subprocess.Popen(
+        command,
+        stdin=input_file,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        # shell=True,  # for windows
+    )
+    try:
+        outs, errs = proc.communicate(timeout=config.pref['test']['timeout_sec'])
+        TLE_flag = False
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        outs, errs = proc.communicate()
+        TLE_flag = True
+    return proc.returncode, outs.decode('utf-8'), errs.decode('utf-8'), TLE_flag  # }}}
+# }}}
+
 # random test: rt {{{
 @cli.command()
 @click.argument('code_filename', type=str, default='')
@@ -329,29 +353,6 @@ def rt(config, code_filename:str, by:str, generator:str, debug:bool, timeout:int
                     f.write(out2)
                 return 0;
 # }}}
-
-@pass_config
-def _run_exe(config, exe_filename, input_file):# {{{
-    command = []
-    if (exe_filename.suffix=='.py'):
-        command.append('python')
-    command.append(str(exe_filename))
-    command.append('pcm') # tell the sctipt that pcm is calling
-    proc = subprocess.Popen(
-        command,
-        stdin=input_file,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        # shell=True,  # for windows
-    )
-    try:
-        outs, errs = proc.communicate(timeout=config.pref['test']['timeout_sec'])
-        TLE_flag = False
-    except subprocess.TimeoutExpired:
-        proc.kill()
-        outs, errs = proc.communicate()
-        TLE_flag = True
-    return proc.returncode, outs.decode('utf-8'), errs.decode('utf-8'), TLE_flag  # }}}
 # }}}
 
 # submit: sb {{{
@@ -391,7 +392,6 @@ def ga(config, limit_count, extension):
     contest = _reload_contest_class()
     contest.get_answers(limit_count, extension)
 # }}}
-#}}}
 
 # private functions
 def _search_parent_dir(code_filename):# {{{

@@ -121,7 +121,7 @@ def _prepare_problem(config, prob_name):
 def tt(config, code_filename:str, case:str, by:str, generator:str, debug:bool, timeout:float): # {{{
     if (timeout!=-1):
         config.pref['test']['timeout_sec']=timeout
-    task_id, code_dir, code_filename, test_dir = _get_code_info(code_filename, exclude_filename_pattern=[by])  # TODO: naive_code_fileと同様のコードで十分
+    task_id, code_dir, code_filename, test_dir = _get_code_info(code_filename)  # TODO: naive_code_fileと同様のコードで十分
 
     if case == '': # test all case
         _test_task(code_dir, code_filename, test_dir, debug)

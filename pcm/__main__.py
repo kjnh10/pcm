@@ -432,7 +432,7 @@ def _reload_contest_class():  # {{{
     return Contest(contest_url, contest_dir)
 # }}}
 
-def _get_code_info(code_filename, exclude_filename_pattern=None):# {{{
+def _get_code_info(code_filename, exclude_filename_pattern=[]):# {{{
     code_file = None
 
     if code_filename == "": # when code_filename not specified
@@ -461,7 +461,7 @@ def _get_code_info(code_filename, exclude_filename_pattern=None):# {{{
     return task_id, code_dir, code_filename, test_dir
     # }}}
 
-def _get_last_modified_file(exclude_filename_pattern=None) -> Path:  # {{{
+def _get_last_modified_file(exclude_filename_pattern=[]) -> Path:  # {{{
     candidates = []
     candidates += [(p.stat().st_mtime, p) for p in Path('.').rglob(f'*.cpp')]
     candidates += [(p.stat().st_mtime, p) for p in Path('.').rglob(f'*.py')]

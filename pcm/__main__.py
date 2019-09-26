@@ -10,11 +10,14 @@ import signal
 import toml
 import time
 import re
+from typing import TYPE_CHECKING, List, Optional, Type
 from bs4 import BeautifulSoup
 from onlinejudge._implementation.main import main as oj
 import onlinejudge._implementation.utils as oj_utils
 import onlinejudge.service.atcoder
 script_path = Path(os.path.abspath(os.path.dirname(__file__)))  # script path}}}
+from .codefile import CodeFile
+from .utils import get_last_modified_file
 
 # set click
 class Config(object):# {{{
@@ -116,15 +119,15 @@ def _prepare_problem(config, prob_name):
 @click.option('--debug/--nodebug', '-d/-nd', default=True)
 @click.option('--timeout', '-t', type=float, default=-1)
 @click.option('--by', '-b', type=str, default='naive.*')
-@click.option('--generator', '-g', type=str, default='gen.py')
 @pass_config
-def tt(config, code_filename:str, case:str, by:str, generator:str, debug:bool, timeout:float): # {{{
+def tt(config, code_filename:str, case:str, by:str, debug:bool, timeout:float): # {{{
     if (timeout!=-1):
         config.pref['test']['timeout_sec']=timeout
-    task_id, code_dir, code_filename, test_dir = _get_code_info(code_filename)  # TODO: naive_code_fileと同様のコードで十分
+    solve_codefile = CodeFile()
+    test_dir = solve_codefile.test_dir
 
     if case == '': # test all case
-        _test_task(code_dir, code_filename, test_dir, debug)
+        _test_all_case(solve_codefile, debug)
     else:
         if case in set(map(str, range(1, 101))):
             case = f'sample-{case}'
@@ -133,17 +136,14 @@ def tt(config, code_filename:str, case:str, by:str, generator:str, debug:bool, t
             if (not infile.exists()):
                 click.secho(f"{infile.name} not found.", fg='yellow')
                 return
-        elif Path(case).suffix in ['.py']:  # TODO: cpp fileでもテストケース生成を出来るようにする？
+        elif Path(case).suffix in ['.py']:
             # for random test
-            naive_code_file = _get_last_modified_file(match_filename_pattern=[by])
-            case_generator_file = test_dir / generator
-
+            naive_codefile = CodeFile(by)
             subprocess.run(f"python {test_dir/case} > {test_dir/'random.in'} ", shell=True)
             case = 'random'
             infile = test_dir / f"{case}.in"
-
             expfile = test_dir / f"{case}.out"
-            returncode, outs, errs, TLE_flag = _run_code(naive_code_file, infile=infile)
+            returncode, outs, errs, TLE_flag = _run_code(naive_codefile, infile=infile)
             with open(expfile, mode='w') as f:
                 if TLE_flag:
                     f.write('TLE for naive code. if you extend timeout time, use -t option like -t 5')
@@ -153,27 +153,25 @@ def tt(config, code_filename:str, case:str, by:str, generator:str, debug:bool, t
             infile = test_dir / f"{case}.in"
             expfile = test_dir / f"{case}.out"
 
-        _test_case(code_dir, code_filename, case, infile, expfile, debug)
+        _test_case(solve_codefile, case, infile, expfile, debug)
 # }}}
 
-def _test_task(code_dir, code_filename, testdir, debug=True):# {{{
-    files = os.listdir(testdir)
+def _test_all_case(codefile: CodeFile, debug=True) -> bool: # {{{
+    files = os.listdir(codefile.test_dir)
     files.sort()
     res = True
     for filename in files:
         if not fnmatch.fnmatch(filename, '*.in'):
             continue
         case = filename[:-3]
-        infile = testdir / f"{case}.in"
-        expfile = testdir / f"{case}.out"  # 拡張子をexpにしたいが。。
-        if not _test_case(code_dir, code_filename, case, infile, expfile, debug):
+        infile = codefile.test_dir / f"{case}.in"
+        expfile = codefile.test_dir / f"{case}.out"  # 拡張子をexpにしたいが。。
+        if not _test_case(codefile, case, infile, expfile, debug):
             res = False
     return res
 # }}}
 
-def _test_case(code_dir, code_filename, case_name, infile, expfile, debug=True):# {{{
-    codefile = code_dir/code_filename
-
+def _test_case(codefile: CodeFile, case_name: str, infile: Path, expfile: Path, debug=True) -> str: # {{{
     # run program
     click.secho('-'*10 + case_name + '-'*10, fg='blue')
     returncode, outs, errs, TLE_flag = _run_code(codefile, infile=infile)
@@ -202,9 +200,8 @@ def _test_case(code_dir, code_filename, case_name, infile, expfile, debug=True):
 
     # print stderr message
     print('*'*7 + ' stderr ' + '*'*7)
-    # click.secho(errs.replace(str(code_dir), ""), fg='red')
     for line in errs.split('\n'):
-        line = line.replace(str(code_dir), "")
+        line = line.replace(str(codefile.code_dir), "")
         click.secho(line, fg='yellow')
 
     # compare result and expected
@@ -240,20 +237,20 @@ def _test_case(code_dir, code_filename, case_name, infile, expfile, debug=True):
 # }}}
 
 @pass_config
-def _run_code(config, codefile : Path, infile : Path, debug=True):  # {{{
-    if codefile.suffix == ".py":
+def _run_code(config, codefile : CodeFile, infile : Path, debug=True):  # {{{
+    if codefile.path.suffix == ".py":
         return _run_exe(exefile=codefile, input_file=open(infile, "r"))
-    elif codefile.suffix == ".cpp":
+    elif codefile.path.suffix == ".cpp":
         click.secho('compile start.....', blink=True)
-        exe = codefile.parent.parent / 'bin' / f'{codefile.stem}.out'
+        exe = codefile.bin_dir / f'{codefile.stem}.out'
         exe.parent.mkdir(exist_ok=True)
-        if (exe.exists() and Path(codefile).stat().st_mtime <= exe.stat().st_mtime):
-            click.secho(f'compile skipped since {codefile} is older than {codefile.stem}.out')
+        if (exe.exists() and codefile.path.stat().st_mtime <= exe.stat().st_mtime):
+            click.secho(f'compile skipped since {codefile.path} is older than {codefile.path.stem}.out')
         else:
             start = time.time()
             command = [
                     'g++',
-                    str(codefile),
+                    str(codefile.path),
                     "-o", str(exe),
                     '-std=c++14',
                     ]
@@ -267,7 +264,7 @@ def _run_code(config, codefile : Path, infile : Path, debug=True):  # {{{
                 # command.append('-O2')
 
             proc = subprocess.Popen(
-                    command,  # g++ solve.cpp -o {codefile.stem}.out -std=c++14 -DPCM -Wall -fsanitize=undefined
+                    command,  # g++ solve.cpp -o {codefile.path.stem}.out -std=c++14 -DPCM -Wall -fsanitize=undefined
                     stdout=subprocess.PIPE,
                     )
             outs, errs = proc.communicate()
@@ -283,7 +280,7 @@ def _run_code(config, codefile : Path, infile : Path, debug=True):  # {{{
             print ("elapsed_time:{0}".format(elapsed_time) + "[sec]")
         return _run_exe(exe, open(infile, "r"))
     else:
-        raise Exception(f"{codefile} is not a valid code file")
+        raise Exception(f"{codefile.path} is not a valid code file")
     # }}}
 
 @pass_config
@@ -322,9 +319,9 @@ def _run_exe(config, exefile, input_file):# {{{
 def rt(config, code_filename:str, by:str, generator:str, debug:bool, timeout:float):# {{{
     if (timeout!=-1):
         config.pref['test']['timeout_sec']=timeout
-
-    naive_code_file = _get_last_modified_file(match_filename_pattern=[by])
-    task_id, code_dir, code_filename, test_dir = _get_code_info(code_filename, exclude_filename_pattern=[by])  # TODO: naive_code_fileと同様のコードで十分
+    solve_codefile = CodeFile(exclude_filename_pattern=by)
+    naive_codefile = CodeFile(match_filename_pattern=by)
+    test_dir = solve_codefile.test_dir
 
     case_generator_file = test_dir / generator
     infile = test_dir / "random.in"
@@ -340,12 +337,12 @@ def rt(config, code_filename:str, by:str, generator:str, debug:bool, timeout:flo
             if (out1 in ('TLE', 'RuntimeError')):
                 return 0;
         else:
-            out1 = _test_case(code_dir, code_filename, f'random-{code_filename}', infile, '', debug)
-            out2 = _test_case(code_dir, naive_code_file.name, f'random-{by}', infile, '', debug)
-            print(f"{code_filename}: {out1}")
-            print(f"{naive_code_file.name}: {out2}")
+            out1 = _test_case(solve_codefile, f'random-{code_filename}', infile, '', debug)
+            out2 = _test_case(naive_codefile, f'random-{by}', infile, '', debug)
+            print(f"{solve_codefile.path.name}: {out1}")
+            print(f"{naive_codefile.path.name}: {out2}")
             if (out1!=out2):
-                with open('../test/random.out', mode='w') as f:
+                with open(test_dir/'random.out', mode='w') as f:
                     f.write(out2)
                 return 0;
 # }}}
@@ -429,53 +426,6 @@ def _reload_contest_class():  # {{{
     return Contest(contest_url, contest_dir)
 # }}}
 
-def _get_code_info(code_filename, exclude_filename_pattern=[]):# {{{
-    code_file = None
-
-    if code_filename == "": # when code_filename not specified
-        try:
-            code_file = _get_last_modified_file(match_filename_pattern=['*.cpp', '*.py'], exclude_filename_pattern=exclude_filename_pattern)
-            click.secho(f"you did not specify code filename. so pcm will use {code_filename} which is the one you updated at last.", fg='yellow')
-        except Exception as e:
-            print(e)
-            click.secho(f"not found *.cpp or *.py files under current working directory.", fg='red')
-            exit()
-
-    else:
-        for p in Path('.').rglob(code_filename):
-            code_file = p
-            break
-        if code_file == None:
-            click.secho(f"not found {code_filename} searching under {Path('.').resolve()}.", fg='red')
-            exit()
-
-    code_file = code_file.resolve()
-    code_filename = code_file.name
-    code_dir = code_file.parent
-    test_dir = code_dir.parent / "test"
-    task_id = code_dir.parent.name
-
-    return task_id, code_dir, code_filename, test_dir
-    # }}}
-
-def _get_last_modified_file(match_filename_pattern=[], exclude_filename_pattern=[]) -> Path:  # {{{
-    candidates = []
-    for m_pat in match_filename_pattern:
-        candidates += [(p.stat().st_mtime, p) for p in Path('.').rglob(m_pat)]
-    for pattern in exclude_filename_pattern:
-        next_candidates = []
-        for cand in candidates:
-            if not re.search(pattern, str(cand[1])):
-                next_candidates.append(cand)
-        candidates = next_candidates
-
-    candidates.sort(reverse=True)
-    if len(candidates)>0:
-        code_filename = candidates[0][1]
-        return code_filename.resolve()
-    else:
-        raise Exception("no valid code file found")
-# }}}
 
 class Contest(object):
     def __init__(self, contest_identifier, work_dir=""):# {{{

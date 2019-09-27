@@ -359,21 +359,21 @@ def sb(config, code_filename, language, pretest, debug):
     if (not pretest) and (not click.confirm('Are you sure to submit?')):  # no-pretestの場合は遅延を避けるため最初に質問する。
         return
 
+    codefile = CodeFile(code_filename)
+    extension = codefile.path.suffix[1:]
     contest = _reload_contest_class()
-    task_id, code_dir, code_filename, test_dir = _get_code_info(code_filename)
 
-    extension = code_filename[code_filename.rfind('.') + 1:]
-    with open(code_dir / code_filename, "r") as f:
-        code = f.read()
+    with open(codefile.path, "r") as f:
+        code_string = f.read()
 
     if pretest:
         click.secho("pretest started\n", fg='green')
-        if not _test_task(code_dir, code_filename, test_dir, debug):
+        if not _test_all_case(codefile, debug):
             click.secho("pretest not passed and exit", fg="red")
             return
 
     if (not pretest) or (click.confirm('Are you sure to submit?')):  # pretestの場合は最終確認をする。
-        contest.submit(task_id, extension, code, language)
+        contest.submit(codefile.task_alphabet, extension, code_string, language)
 #}}}
 
 # get answers: ga {{{
@@ -469,7 +469,7 @@ class Contest(object):
         # }}}
 
     @pass_config
-    def submit(config, self, task_id, extension, code, language):# {{{
+    def submit(config, self, task_id: str, extension: str, code: str, language: str): # {{{
         if language == 'auto-detect':
             try:
                 lang_id = config.pref['submit']['default_lang'][self.type][extension]

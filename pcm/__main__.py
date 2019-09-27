@@ -239,7 +239,7 @@ def _test_case(codefile: CodeFile, case_name: str, infile: Path, expfile: Path, 
 @pass_config
 def _run_code(config, codefile : CodeFile, infile : Path, debug=True):  # {{{
     if codefile.path.suffix == ".py":
-        return _run_exe(exefile=codefile, input_file=open(infile, "r"))
+        return _run_exe(exefile=codefile.path, input_file=open(infile, "r"))
     elif codefile.path.suffix == ".cpp":
         click.secho('compile start.....', blink=True)
         exe = codefile.bin_dir / f'{codefile.stem}.out'

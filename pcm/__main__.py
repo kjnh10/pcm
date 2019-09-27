@@ -123,7 +123,7 @@ def _prepare_problem(config, prob_name):
 def tt(config, code_filename:str, case:str, by:str, debug:bool, timeout:float): # {{{
     if (timeout!=-1):
         config.pref['test']['timeout_sec']=timeout
-    solve_codefile = CodeFile()
+    solve_codefile = CodeFile(code_filename)
     test_dir = solve_codefile.test_dir
 
     if case == '': # test all case

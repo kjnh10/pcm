@@ -242,7 +242,7 @@ def _run_code(config, codefile : CodeFile, infile : Path, debug=True):  # {{{
         return _run_exe(exefile=codefile.path, input_file=open(infile, "r"))
     elif codefile.path.suffix == ".cpp":
         click.secho('compile start.....', blink=True)
-        exe = codefile.bin_dir / f'{codefile.stem}.out'
+        exe = codefile.bin_dir / f'{codefile.path.stem}.out'
         exe.parent.mkdir(exist_ok=True)
         if (exe.exists() and codefile.path.stat().st_mtime <= exe.stat().st_mtime):
             click.secho(f'compile skipped since {codefile.path} is older than {codefile.path.stem}.out')
@@ -333,7 +333,7 @@ def rt(config, code_filename:str, by:str, generator:str, debug:bool, timeout:flo
             return
 
         if (by=='large'):
-            out1 = _test_case(code_dir, code_filename, 'random', infile, '', debug)
+            out1 = _test_case(solve_codefile, 'random', infile, '', debug)
             if (out1 in ('TLE', 'RuntimeError')):
                 return 0;
         else:

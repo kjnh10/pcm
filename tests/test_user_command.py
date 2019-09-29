@@ -37,8 +37,8 @@ def test_tt():
     print('---------stderr-------------')
     print(proc.stderr.decode('utf-8'))
     assert(len(re.findall('.*solve\.cpp.*', proc.stdout.decode('utf-8'), re.MULTILINE))>=1)
-    assert(len(re.findall('^AC.*', proc.stdout.decode('utf-8'), re.MULTILINE))==1)
-    assert(len(re.findall('^WA.*', proc.stdout.decode('utf-8'), re.MULTILINE))==2)
+    assert(len(re.findall('^--AC.*', proc.stdout.decode('utf-8'), re.MULTILINE))==1)
+    assert(len(re.findall('^--WA.*', proc.stdout.decode('utf-8'), re.MULTILINE))==2)
 
 
 def test_tt_python():
@@ -48,8 +48,8 @@ def test_tt_python():
     print(proc.stdout.decode('utf-8'))
     print('---------stderr-------------')
     print(proc.stderr.decode('utf-8'))
-    assert(len(re.findall('^AC.*', proc.stdout.decode('utf-8'), re.MULTILINE))==1)
-    assert(len(re.findall('^WA.*', proc.stdout.decode('utf-8'), re.MULTILINE))==2)
+    assert(len(re.findall('^--AC.*', proc.stdout.decode('utf-8'), re.MULTILINE))==1)
+    assert(len(re.findall('^--WA.*', proc.stdout.decode('utf-8'), re.MULTILINE))==2)
 
 
 # def test_sb():

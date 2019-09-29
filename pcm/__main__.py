@@ -166,7 +166,7 @@ def _test_all_case(codefile: CodeFile, debug=True) -> bool: # {{{
         case = filename[:-3]
         infile = codefile.test_dir / f"{case}.in"
         expfile = codefile.test_dir / f"{case}.out"  # 拡張子をexpにしたいが。。
-        if not _test_case(codefile, case, infile, expfile, debug):
+        if _test_case(codefile, case, infile, expfile, debug)!='AC':
             res = False
     return res
 # }}}
@@ -182,6 +182,7 @@ def _test_case(codefile: CodeFile, case_name: str, infile: Path, expfile: Path, 
         print(f.read())
 
     # print expected
+    expfile_exist = True
     try:
         with open(expfile, 'r') as f:
             print('*'*7 + ' expected ' + '*'*7)
@@ -192,6 +193,7 @@ def _test_case(codefile: CodeFile, case_name: str, infile: Path, expfile: Path, 
         print('*'*7 + ' expected ' + '*'*7)
         click.secho(f"expected file: {expfile} not found\n", fg='yellow')
         exp = ['']
+        expfile_exist = False
 
     # print result
     print('*'*7 + ' stdout ' + '*'*7)
@@ -203,10 +205,13 @@ def _test_case(codefile: CodeFile, case_name: str, infile: Path, expfile: Path, 
     for line in errs.split('\n'):
         line = line.replace(str(codefile.code_dir), "")
         click.secho(line, fg='yellow')
+        if re.search('runtime error', line):
+            click.secho('--RE--\n', fg='red')
+            return 'RE'
 
     # compare result and expected
     if TLE_flag:
-        click.secho('TLE\n', fg='red')
+        click.secho('--TLE--\n', fg='red')
         return "TLE"
 
     if returncode != 0:
@@ -217,23 +222,29 @@ def _test_case(codefile: CodeFile, case_name: str, infile: Path, expfile: Path, 
         click.secho(f'RE', fg='red')
         click.secho(f':{SIGMAP[abs(returncode)]}' if abs(returncode) in SIGMAP.keys() else str(abs(returncode)), fg='red')
         print('\n')
-        return "RuntimeError"
+        return 'RE'
 
     # 最後の空白行は無視する。
     if (stdout[-1]==''): stdout.pop()
     if (exp[-1]==''): exp.pop()
 
-    if len(stdout) != len(exp):
-        click.secho('WA\n', fg='red')
-        return outs
+    if not expfile_exist:
+        click.secho('--NOEXP--\n', fg='yellow')
+        return 'NOEXP'
+    elif re.search('TLE.*naive.*', exp[0]):
+        click.secho('TLENAIVE\n', fg='yellow')
+        return 'TLENAIVE'
+    elif len(stdout) != len(exp):
+        click.secho('--WA--\n', fg='red')
+        return 'WA'
     else:
         for i in range(len(stdout)):
             if stdout[i].replace('\r', '') != exp[i]:
-                click.secho('WA\n\n', fg='red')
-                return outs
+                click.secho('--WA--\n\n', fg='red')
+                return 'WA'
         else:
-            click.secho('AC\n', fg='green')
-    return outs
+            click.secho('--AC--\n', fg='green')
+            return 'AC'
 # }}}
 
 @pass_config
@@ -284,7 +295,7 @@ def _run_code(config, codefile : CodeFile, infile : Path, debug=True):  # {{{
     # }}}
 
 @pass_config
-def _run_exe(config, exefile, input_file):# {{{
+def _run_exe(config, exefile, input_file): # {{{
     command = []
     if (exefile.suffix=='.py'):
         command.append('python')
@@ -313,10 +324,11 @@ def _run_exe(config, exefile, input_file):# {{{
 @click.argument('code_filename', type=str, default='')
 @click.option('--by', '-b', type=str, default='naive.*')
 @click.option('--generator', '-g', type=str, default='gen.py')
+@click.option('--compare/--nocompare', '-c/-nc', default=True)  # naive codeを実行しない。
 @click.option('--debug/--nodebug', '-d/-nd', default=True)
 @click.option('--timeout', '-t', type=float, default=-1)
 @pass_config
-def rt(config, code_filename:str, by:str, generator:str, debug:bool, timeout:float):# {{{
+def rt(config, code_filename:str, by:str, generator:str, compare:bool, debug:bool, timeout:float):# {{{
     if (timeout!=-1):
         config.pref['test']['timeout_sec']=timeout
     solve_codefile = CodeFile(exclude_filename_pattern=by)
@@ -325,26 +337,25 @@ def rt(config, code_filename:str, by:str, generator:str, debug:bool, timeout:flo
 
     case_generator_file = test_dir / generator
     infile = test_dir / "random.in"
+    expfile = test_dir/"random.out"
+    if expfile.exists(): expfile.unlink()
 
     while True:
         subprocess.run(f"python {str(case_generator_file)} > {str(infile)}", shell=True)
-        if (not infile.exists()):
-            click.secho(f"{infile.name} not found.", fg='yellow')
-            return
+        if compare:
+            return_code, out, err, TLE_flag = _run_code(naive_codefile, infile)
+            with open(expfile, mode='w') as f:
+                if TLE_flag:
+                    f.write('TLE for naive code. if you extend timeout time, use -t option like -t 5\n')
+                elif return_code != 0:
+                    f.write('Some error happens when executing your naive code.\n')
+                else:
+                    f.write(out)
 
-        if (by=='large'):
-            out1 = _test_case(solve_codefile, 'random', infile, '', debug)
-            if (out1 in ('TLE', 'RuntimeError')):
-                return 0;
-        else:
-            out1 = _test_case(solve_codefile, f'random-{code_filename}', infile, '', debug)
-            out2 = _test_case(naive_codefile, f'random-{by}', infile, '', debug)
-            print(f"{solve_codefile.path.name}: {out1}")
-            print(f"{naive_codefile.path.name}: {out2}")
-            if (out1!=out2):
-                with open(test_dir/'random.out', mode='w') as f:
-                    f.write(out2)
-                return 0;
+        result = _test_case(solve_codefile, f'random-{code_filename}', infile, expfile, debug)
+        okresult = ['AC', 'TLENAIVE', 'NOEXP']
+        if not (result in okresult):
+            return
 # }}}
 # }}}
 

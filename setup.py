@@ -9,7 +9,7 @@ setup(
     url='https://github.com/kjnh10/pcm',
     packages=find_packages(),
     include_package_data=True,
-    install_requires=['Click>=7.0', 'online-judge-tools', 'toml'],
+    install_requires=['Click>=7.0', 'online-judge-tools>=7.1.0', 'toml'],
     entry_points={'console_scripts': ['pcm=pcm.__main__:cli']},
     python_requires='>=3.5',
 )

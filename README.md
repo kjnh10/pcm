@@ -52,6 +52,7 @@ pcm tt -c 1 -t 3 # of course, you can specify multiple options.
 pcm tt -c gen.py  # gen.py will make random.in and naive.cpp or naive.py will make random.out with random.in. then test.
 pcm tt -g gen-small.py -by naive2.cpp  # also you can specify genarator file and naive code file. this is true for rt command below.
 pcm rt  # cotinue genarating a case and compare you code result and naive code result until they are different.
+pcm rt -nc # cotinue genarating a case without executing naive code and comparing. This is for testing large case (which is TLE for naive code) in terms of TLE, overflow and so on.
 
 # submit your code
 pcm sb solve.py  # with test before submitting. you can't submit if tests fail.

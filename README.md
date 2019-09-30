@@ -1,3 +1,5 @@
+[!(https://img.shields.io/pypi/v/pcm)](https://pypi.org/project/pcm/)
+
 ## Overview
 
 This is a command line tool to manage programming contest and provides some commands like below.

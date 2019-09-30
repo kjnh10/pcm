@@ -1,3 +1,5 @@
+[![PyPI](https://img.shields.io/pypi/v/pcm)](https://pypi.org/project/pcm/)
+
 ## Overview
 
 This is a command line tool to manage programming contest and provides some commands like below.
@@ -14,7 +16,7 @@ This is just my own wrapper of [kmyk/online-judge-tools](https://github.com/kmyk
 ![screencast](https://github.com/kjnh10/pcm/blob/sample-gif-test/demo.gif)
 
 ## Installation
-You need python3. (tested for Linux and Windows.)
+You need python 3.5 later (tested for Linux and Windows.)
 
 ```bash
 pip install pcm # That's it.Done.
@@ -35,29 +37,33 @@ pcm pp https://atcoder.jp/contests/abc001
 # pcm pp http://codeforces.com/contest/1138
 # you can shortcut for abc, arc, agc like below.
 # pcm pp abc001
+# to join a contest on realtime, you need to login 'oj login https://atcoder.jp' or 'oj login https://codeforces.com' beforehand.
 
-# Edir your A/solve.py or A/solve.cpp with your favorite editor
+# edir your A/solve.py or A/solve.cpp with your favorite editor
 
-cd abc001/A # you need in abc001/A direcotry to test and submit codes for problem A.
+cd abc001/A # you need to be in abc001/A or abc001/A/codes to test and submit codes for problem A.
 
 # test your code with downloaded cases and handmade cases.
-pcm tt  # for all sample cases
-pcm tt -c 1  # to test #1 case
-pcm tt -t 3  # set TLE time to 3 sec. (The default is 2 sec.)
-pcm tt -c 1 -t 3 # of course, you can specify multiple options.
+pcm tt <filename>          # test filename for all sample cases. <filename> (like solve.cpp) will be searched under current directory recursively.
+# pcm tt                   # you can omit <filename>. last updated file within *.cpp and *.py files under current directory recursively will be selected.
+# pcm tt --case sample-1   # test #1 case
+# pcm tt -c sample-1       # shortcut version
+# pcm tt -c 1              # shorter version
+# pcm tt -t 3              # you can set TLE time limit. in this sample to 3 second. (default is 2 second.)
+# pcm tt -c 1 -t 3         # of course, you can specify multiple options. this is same for other commands.
 
-# test your code with randomly genarated cases. (checking your code in contest with your naive code, finding errors after contest with a AC code, hacks)
-# At first you need to write test/gen.py
-# If you write naive.cpp or naive.py, exp file will be automatically genarated
-pcm tt -c gen.py  # gen.py will make random.in and naive.cpp or naive.py will make random.out with random.in. then test.
+# test your code with randomly genarated cases. (checking your code in contest with your naive code, finding errors after contest with a AC code, and even Hacks)
+# at first you need to write test/gen.py.
+# if you write naive.cpp or naive.py, exp file will be automatically genarated.
+pcm tt -c gen.py                  # gen.py will make random.in and naive.cpp or naive.py will make random.out with random.in. then test.
 pcm tt -c gen.py --by naive2.cpp  # also you can specify naive code file for generating expected with --by option. this is same for rt command below.
-pcm rt  # cotinue genarating a case and compare you code result and naive code result until they are different.
-pcm rt -nc # --nocompare option: cotinue genarating a case without executing naive code and comparing. This is for testing large case (which is TLE for naive code) in terms of TLE, overflow and so on.
+pcm rt                            # cotinue genarating a case and compare you code result and naive code result until they are different.
+pcm rt -nc                        # --nocompare option: cotinue genarating a case without executing naive code. This is for testing large case (which wll be TLE for a naive code) in terms of TLE, overflow and so on.
 
 # submit your code
-pcm sb solve.py  # with test before submitting. you can't submit if tests fail.
-# pcm sb  # you can omit filename, then pcm will submit the file you edited last.
-# pcm sb -nt  # wihtout test.
+pcm sb solve.py  # submit your code after testing. you can't submit if tests fail.
+# pcm sb         # you can omit filename, then pcm will submit the file you edited last.
+# pcm sb -nt     # wihtout test.
 # pcm sb -l py3  # you can specify language. see /pcm/config.toml for other language you can use.
 
 

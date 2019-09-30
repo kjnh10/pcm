@@ -1,4 +1,4 @@
-[!(https://img.shields.io/pypi/v/pcm)](https://pypi.org/project/pcm/)
+[![PyPI](https://img.shields.io/pypi/v/pcm)](https://pypi.org/project/pcm/)
 
 ## Overview
 

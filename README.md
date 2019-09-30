@@ -2,11 +2,13 @@
 
 This is a command line tool to manage programming contest and provides some commands like below.
 
-* prepare your work directory for a contest. of course downloading samples.
+* prepare your work directory for a contest. of course downloading samples. (only for AtCoder and codeforces for now)
+* prepare your work directory for a problem. of course downloading samples. (for any contest kmyk/online-judge-tools works for)
 * test your code with sample case.
+* test your code with randomly genarated cases.
 * submit yourcode to the contest site. (only for AtCoder and codeforces for now)
 
-Actually, this is just a my own wrapper of kmyk/online-judge-tools.  
+This is just my own wrapper of [kmyk/online-judge-tools](https://github.com/kmyk/online-judge-tools).  
 
 ## Demo
 ![screencast](https://github.com/kjnh10/pcm/blob/sample-gif-test/demo.gif)
@@ -22,8 +24,6 @@ git clone https://github.com/kjnh10/pcm.git
 cd pcm
 pip install --editable ./
 ```
-
-Though mainly tested for ubuntu or mac, this will also work for windows.
 
 ## Usage Sample
 
@@ -50,9 +50,9 @@ pcm tt -c 1 -t 3 # of course, you can specify multiple options.
 # At first you need to write test/gen.py
 # If you write naive.cpp or naive.py, exp file will be automatically genarated
 pcm tt -c gen.py  # gen.py will make random.in and naive.cpp or naive.py will make random.out with random.in. then test.
-pcm tt -g gen-small.py -by naive2.cpp  # also you can specify genarator file and naive code file. this is true for rt command below.
+pcm tt -c gen.py --by naive2.cpp  # also you can specify naive code file for generating expected with --by option. this is same for rt command below.
 pcm rt  # cotinue genarating a case and compare you code result and naive code result until they are different.
-pcm rt -nc # cotinue genarating a case without executing naive code and comparing. This is for testing large case (which is TLE for naive code) in terms of TLE, overflow and so on.
+pcm rt -nc # --nocompare option: cotinue genarating a case without executing naive code and comparing. This is for testing large case (which is TLE for naive code) in terms of TLE, overflow and so on.
 
 # submit your code
 pcm sb solve.py  # with test before submitting. you can't submit if tests fail.
@@ -80,14 +80,17 @@ pcm ppp https://atcoder.jp/contests/caddi2018/tasks/caddi2018_a -n A
 tree  # at abc001/
 .
 ├── A
+│   ├── bin
 │   ├── codes
-│   │   ├── a.out
-│   │   ├── cxx-prettyprint
+│   │   ├── lib
+│   │   │   ├── dump.hpp
 │   │   │   └── prettyprint.hpp
-│   │   ├── dump.hpp
+│   │   ├── naive.cpp
+│   │   ├── naive.py
 │   │   ├── solve.cpp
 │   │   └── solve.py
 │   ├── test
+│   │   ├── gen.py
 │   │   ├── sample-1.in
 │   │   ├── sample-1.out
 │   │   ├── sample-2.in
@@ -96,14 +99,17 @@ tree  # at abc001/
 │   │   └── sample-3.out
 │   └── 積雪深差
 ├── B
+│   ├── bin
 │   ├── codes
-│   │   ├── a.out
-│   │   ├── cxx-prettyprint
+│   │   ├── lib
+│   │   │   ├── dump.hpp
 │   │   │   └── prettyprint.hpp
-│   │   ├── dump.hpp
+│   │   ├── naive.cpp
+│   │   ├── naive.py
 │   │   ├── solve.cpp
 │   │   └── solve.py
 │   ├── test
+│   │   ├── gen.py
 │   │   ├── sample-1.in
 │   │   ├── sample-1.out
 │   │   ├── sample-2.in
@@ -114,7 +120,6 @@ tree  # at abc001/
 ├── C
 ├     ....
 └── D
-├     ....
 ```
 
 'codes' direcotry is copied from `pcm/pcm/template/codes`.  

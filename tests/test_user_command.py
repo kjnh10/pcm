@@ -2,8 +2,9 @@ import os
 import shutil
 from pathlib import Path
 import subprocess
-from pcm.__main__ import pp, ppp, sb, tt, ga
+from pcm.__main__ import cli, pp, ppp, sb, tt, ga
 import click
+from click.testing import CliRunner
 import re
 
 script_path = Path(os.path.dirname(__file__))
@@ -52,17 +53,23 @@ def test_tt_python():
     assert(len(re.findall('^--WA.*', proc.stdout.decode('utf-8'), re.MULTILINE))==2)
 
 
-# def test_sb():
-#     os.chdir(script_path / 'tmp/test_tt/abc001/A/codes')
-#     os.utime('solve.cpp', None)  # update st_mtime for solve.cpp to be used
-#     proc = __run_command('pcm sb')
-#     # TODO:yesをどうするか。
+def test_sb_atcoder():
+    os.chdir(script_path / 'tmp/test_sb/abc001/A/codes')
+    os.utime('solve.cpp', None)  # update st_mtime for solve.py to be used
+    runner = CliRunner()
+    result = runner.invoke(cli, args=['sb'], input='y')
+    print(result.stdout)
+    assert(result.exception == None)
+    assert(re.search('.*AtCoderSubmission.from_url(.*)', result.stdout, re.S)!=None)
 
-def __run_command(command):
+
+def __run_command(command, stdin=None, check=True):
     res = subprocess.run(
             command,
+            stdin = stdin,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            check=check,
             shell=True,
             )
     return res
@@ -86,4 +93,4 @@ def __is_same_dir(A, B):
 
 
 if __name__ == "__main__":
-    test_tt()
+    test_sb()

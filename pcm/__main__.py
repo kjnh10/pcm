@@ -16,7 +16,7 @@ from onlinejudge._implementation.main import main as oj
 import onlinejudge._implementation.utils as oj_utils
 import onlinejudge.service.atcoder
 script_path = Path(os.path.abspath(os.path.dirname(__file__)))  # script path}}}
-from .codefile import CodeFile
+from .codefile import CodeFile, RunResult
 from .utils import get_last_modified_file
 
 # set click
@@ -143,12 +143,12 @@ def tt(config, code_filename:str, case:str, by:str, debug:bool, timeout:float): 
             case = 'random'
             infile = test_dir / f"{case}.in"
             expfile = test_dir / f"{case}.out"
-            returncode, outs, errs, TLE_flag = _run_code(naive_codefile, infile=infile)
+            run_result = _run_code(naive_codefile, infile=infile)
             with open(expfile, mode='w') as f:
-                if TLE_flag:
+                if run_result.TLE_flag:
                     f.write('TLE for naive code. if you extend timeout time, use -t option like -t 5')
                 else:
-                    f.write(outs)
+                    f.write(run_result.stdout)
         else:
             infile = test_dir / f"{case}.in"
             expfile = test_dir / f"{case}.out"
@@ -174,7 +174,8 @@ def _test_all_case(codefile: CodeFile, debug=True) -> bool: # {{{
 def _test_case(codefile: CodeFile, case_name: str, infile: Path, expfile: Path, debug=True) -> str: # {{{
     # run program
     click.secho('-'*10 + case_name + '-'*10, fg='blue')
-    returncode, outs, errs, TLE_flag = _run_code(codefile, infile=infile)
+    run_result = _run_code(codefile, infile=infile)
+    print(f"exec time: {run_result.exec_time} [sec]")
 
     # print input
     with open(infile, 'r') as f:
@@ -197,12 +198,12 @@ def _test_case(codefile: CodeFile, case_name: str, infile: Path, expfile: Path, 
 
     # print result
     print('*'*7 + ' stdout ' + '*'*7)
-    print(outs)
-    stdout = outs.split('\n')
+    print(run_result.stdout)
+    stdout = run_result.stdout.split('\n')
 
     # print stderr message
     print('*'*7 + ' stderr ' + '*'*7)
-    for line in errs.split('\n'):
+    for line in run_result.stderr.split('\n'):
         line = line.replace(str(codefile.code_dir), "")
         click.secho(line, fg='yellow')
         if re.search('runtime error', line):
@@ -210,17 +211,17 @@ def _test_case(codefile: CodeFile, case_name: str, infile: Path, expfile: Path, 
             return 'RE'
 
     # compare result and expected
-    if TLE_flag:
+    if run_result.TLE_flag:
         click.secho('--TLE--\n', fg='red')
         return "TLE"
 
-    if returncode != 0:
+    if run_result.returncode != 0:
         SIGMAP = dict(
             (int(k), v) for v, k in reversed(sorted(signal.__dict__.items()))
             if v.startswith('SIG') and not v.startswith('SIG_')
         )
         click.secho(f'RE', fg='red')
-        click.secho(f':{SIGMAP[abs(returncode)]}' if abs(returncode) in SIGMAP.keys() else str(abs(returncode)), fg='red')
+        click.secho(f':{SIGMAP[abs(run_result.returncode)]}' if abs(run_result.returncode) in SIGMAP.keys() else str(abs(run_result.returncode)), fg='red')
         print('\n')
         return 'RE'
 
@@ -248,7 +249,7 @@ def _test_case(codefile: CodeFile, case_name: str, infile: Path, expfile: Path, 
 # }}}
 
 @pass_config
-def _run_code(config, codefile : CodeFile, infile : Path, debug=True):  # {{{
+def _run_code(config, codefile : CodeFile, infile : Path, debug=True) -> RunResult:  # {{{
     if codefile.path.suffix == ".py":
         return _run_exe(exefile=codefile.path, input_file=open(infile, "r"))
     elif codefile.path.suffix == ".cpp":
@@ -288,14 +289,15 @@ def _run_code(config, codefile : CodeFile, infile : Path, debug=True):  # {{{
 
             click.secho('compile finised')
             elapsed_time = time.time() - start
-            print ("elapsed_time:{0}".format(elapsed_time) + "[sec]")
+            print("compile took:{0}".format(elapsed_time) + "[sec]")
         return _run_exe(exe, open(infile, "r"))
     else:
         raise Exception(f"{codefile.path} is not a valid code file")
     # }}}
 
 @pass_config
-def _run_exe(config, exefile, input_file): # {{{
+def _run_exe(config, exefile: Path, input_file: Path) -> RunResult: # {{{
+    res = RunResult()
     command = []
     if (exefile.suffix=='.py'):
         command.append('python')
@@ -309,13 +311,19 @@ def _run_exe(config, exefile, input_file): # {{{
         # shell=True,  # for windows
     )
     try:
-        outs, errs = proc.communicate(timeout=config.pref['test']['timeout_sec'])
-        TLE_flag = False
+        start = time.time()
+        outs, eress = proc.communicate(timeout=config.pref['test']['timeout_sec'])
+        res.exec_time = time.time() - start
+        res.TLE_flag = False
     except subprocess.TimeoutExpired:
         proc.kill()
-        outs, errs = proc.communicate()
-        TLE_flag = True
-    return (proc.returncode, outs.decode('utf-8'), errs.decode('utf-8'), TLE_flag)  # }}}
+        outs, eress = proc.communicate()
+        res.exe_time = 'TLE'
+        res.TLE_flag = True
+    res.returncode = proc.returncode
+    res.stdout = outs.decode('utf-8')
+    res.stderes = eress.decode('utf-8')
+    return res # }}}
 
 # }}}
 
@@ -343,14 +351,14 @@ def rt(config, code_filename:str, by:str, generator:str, compare:bool, debug:boo
     while True:
         subprocess.run(f"python {str(case_generator_file)} > {str(infile)}", shell=True)
         if compare:
-            return_code, out, err, TLE_flag = _run_code(naive_codefile, infile)
+            run_result = _run_code(naive_codefile, infile)
             with open(expfile, mode='w') as f:
-                if TLE_flag:
+                if run_result.TLE_flag:
                     f.write('TLE for naive code. if you extend timeout time, use -t option like -t 5\n')
-                elif return_code != 0:
+                elif run_result.return_code != 0:
                     f.write('Some error happens when executing your naive code.\n')
                 else:
-                    f.write(out)
+                    f.write(run_result.stdout)
 
         result = _test_case(solve_codefile, f'random-{code_filename}', infile, expfile, debug)
         okresult = ['AC', 'TLENAIVE', 'NOEXP']

@@ -1,5 +1,4 @@
 name: Python package
-
 on: [push]
 
 jobs:
@@ -23,6 +22,7 @@ jobs:
         pip install --editable ./
         sudo apt install g++
         sudo apt install build-essential
+        oj login https://atcoder.jp -u kjnh10 -p ${{ secrets.atcoder_pass }}
     - name: Lint with flake8
       run: |
         pip install flake8

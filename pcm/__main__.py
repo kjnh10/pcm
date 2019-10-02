@@ -312,17 +312,17 @@ def _run_exe(config, exefile: Path, input_file: Path) -> RunResult: # {{{
     )
     try:
         start = time.time()
-        outs, eress = proc.communicate(timeout=config.pref['test']['timeout_sec'])
+        outs, errs = proc.communicate(timeout=config.pref['test']['timeout_sec'])
         res.exec_time = time.time() - start
         res.TLE_flag = False
     except subprocess.TimeoutExpired:
         proc.kill()
-        outs, eress = proc.communicate()
+        outs, errs = proc.communicate()
         res.exe_time = 'TLE'
         res.TLE_flag = True
     res.returncode = proc.returncode
     res.stdout = outs.decode('utf-8')
-    res.stderes = eress.decode('utf-8')
+    res.stderr = errs.decode('utf-8')
     return res # }}}
 
 # }}}
@@ -355,7 +355,7 @@ def rt(config, code_filename:str, by:str, generator:str, compare:bool, debug:boo
             with open(expfile, mode='w') as f:
                 if run_result.TLE_flag:
                     f.write('TLE for naive code. if you extend timeout time, use -t option like -t 5\n')
-                elif run_result.return_code != 0:
+                elif run_result.returncode != 0:
                     f.write('Some error happens when executing your naive code.\n')
                 else:
                     f.write(run_result.stdout)

@@ -11,5 +11,5 @@ setup(
     include_package_data=True,
     install_requires=['Click>=7.0', 'online-judge-tools>=7.1.0', 'toml'],
     entry_points={'console_scripts': ['pcm=pcm.__main__:cli']},
-    python_requires='>=3.5',
+    python_requires='>=3.6',
 )

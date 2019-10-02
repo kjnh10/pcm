@@ -93,4 +93,4 @@ def __is_same_dir(A, B):
 
 
 if __name__ == "__main__":
-    test_sb()
+    test_sb_atcoder()

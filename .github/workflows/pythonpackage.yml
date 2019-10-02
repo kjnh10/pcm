@@ -61,5 +61,6 @@ jobs:
       - name: Publish
         run: |
           pip install twine
+          pip install wheel
           python setup.py bdist_wheel
           twine upload --repository pypi dist/*

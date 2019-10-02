@@ -16,7 +16,7 @@ This is just my own wrapper of [kmyk/online-judge-tools](https://github.com/kmyk
 ![screencast](https://github.com/kjnh10/pcm/blob/sample-gif-test/demo.gif)
 
 ## Installation
-You need python 3.5 later (tested for Linux and Windows.)
+You need python 3.6 later (tested for Linux and Windows.)
 
 ```bash
 pip install pcm # That's it.Done.

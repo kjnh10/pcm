@@ -2,7 +2,10 @@ from setuptools import setup, find_packages
 
 setup(
     name='pcm',
-    version='0.4.0',
+    use_scm_version=True,
+    setup_requires=[
+        "setuptools_scm"
+    ],
     description="tiny programing contest manager",
     author='kjnh10',
     author_email='kojinho10@gmail.com',

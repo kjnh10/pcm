@@ -1,4 +1,5 @@
 from random import randint, choice, sample, choices
+from typing import TYPE_CHECKING, List, Optional, Type
 
 L = [3, 5, 7, 9]
 # print(randint(1, 100))  # # [1, 100]
@@ -7,10 +8,12 @@ L = [3, 5, 7, 9]
 # print(sample(L, k=len(L)))  # random permutation
 # print(choices(L, k=2))  # 復元抽出
 
-def randperm(n:int):
+
+def randperm(n: int):
     return sample(list(range(1, n+1)), k=n)
 
-def randseq(n:int, l:int, r:int, distinct=False):
+
+def randseq(n: int, l: int, r: int, distinct=False):
     res = []
     used = set()
     if (n>r-l+1) and distinct:
@@ -25,11 +28,14 @@ def randseq(n:int, l:int, r:int, distinct=False):
             used.add(v)
     return res
 
+
 def printtree(n: int):
     pass
 
+
 def printgraph(n: int, m: int):
     pass
+
 
 def pl(x: List):
     print(' '.join(map(str, x)))

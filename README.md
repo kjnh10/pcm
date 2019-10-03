@@ -1,4 +1,7 @@
+[![PyPI](https://img.shields.io/pypi/pyversions/pcm.svg)](#)
+[![PyPI](https://img.shields.io/pypi/status/pcm.svg)](#)
 [![PyPI](https://img.shields.io/pypi/v/pcm)](https://pypi.org/project/pcm/)
+[![PyPI](https://img.shields.io/pypi/l/pcm.svg)](#)
 
 ## Overview
 

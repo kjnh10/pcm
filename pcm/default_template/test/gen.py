@@ -4,7 +4,7 @@ L = [3, 5, 7, 9]
 # print(randint(1, 100))  # # [1, 100]
 # print(choice(L))  # 1つ選択
 # print(sample(L, k=2))  # 非復元抽出
-print(sample(L, k=len(L)))  # random permutation
+# print(sample(L, k=len(L)))  # random permutation
 # print(choices(L, k=2))  # 復元抽出
 
 def randperm(n:int):
@@ -30,6 +30,9 @@ def printtree(n: int):
 
 def printgraph(n: int, m: int):
     pass
+
+def pl(x: List):
+    print(' '.join(map(str, x)))
 
 # N = randint(1, 100000)
 # K = randint(1, 100000)

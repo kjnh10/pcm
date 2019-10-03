@@ -15,4 +15,14 @@ setup(
     install_requires=['Click>=7.0', 'online-judge-tools>=7.1.0', 'toml'],
     entry_points={'console_scripts': ['pcm=pcm.__main__:cli']},
     python_requires='>=3.6',
+    classifiers = [
+        "Development Status :: 4 - Beta",
+        "Environment :: Console",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        ],
 )
+

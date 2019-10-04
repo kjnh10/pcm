@@ -143,7 +143,7 @@ def tt(config, code_filename:str, case:str, by:str, debug:bool, timeout:float): 
             case = 'random'
             infile = test_dir / f"{case}.in"
             expfile = test_dir / f"{case}.out"
-            run_result = _run_code(naive_codefile, infile=infile)
+            run_result = _run_code(naive_codefile, infile)
             with open(expfile, mode='w') as f:
                 if run_result.TLE_flag:
                     f.write('TLE for naive code. if you extend timeout time, use -t option like -t 5')
@@ -174,7 +174,7 @@ def _test_all_case(codefile: CodeFile, debug=True) -> bool: # {{{
 def _test_case(codefile: CodeFile, case_name: str, infile: Path, expfile: Path, debug=True) -> str: # {{{
     # run program
     click.secho('-'*10 + case_name + '-'*10, fg='blue')
-    run_result = _run_code(codefile, infile=infile)
+    run_result = _run_code(codefile, infile)
     print(f"exec time: {run_result.exec_time} [sec]")
 
     # print input
@@ -187,9 +187,9 @@ def _test_case(codefile: CodeFile, case_name: str, infile: Path, expfile: Path, 
     try:
         with open(expfile, 'r') as f:
             print('*'*7 + ' expected ' + '*'*7)
-            exp = f.read()
-            print(exp)
-            exp = exp.split('\n')
+            exp_str = f.read()
+            print(exp_str)
+            exp = exp_str.split('\n')
     except FileNotFoundError:
         print('*'*7 + ' expected ' + '*'*7)
         click.secho(f"expected file: {expfile} not found\n", fg='yellow')
@@ -249,9 +249,9 @@ def _test_case(codefile: CodeFile, case_name: str, infile: Path, expfile: Path, 
 # }}}
 
 @pass_config
-def _run_code(config, codefile : CodeFile, infile : Path, debug=True) -> RunResult:  # {{{
+def _run_code(config, codefile: CodeFile, infile: Path, debug=True) -> RunResult:  # {{{
     if codefile.path.suffix == ".py":
-        return _run_exe(exefile=codefile.path, input_file=open(infile, "r"))
+        return _run_exe(codefile.path, infile)
     elif codefile.path.suffix == ".cpp":
         click.secho('compile start.....', blink=True)
         exe = codefile.bin_dir / f'{codefile.path.stem}.out'
@@ -290,13 +290,12 @@ def _run_code(config, codefile : CodeFile, infile : Path, debug=True) -> RunResu
             click.secho('compile finised')
             elapsed_time = time.time() - start
             print("compile took:{0}".format(elapsed_time) + "[sec]")
-        return _run_exe(exe, open(infile, "r"))
+        return _run_exe(exe, infile)
     else:
         raise Exception(f"{codefile.path} is not a valid code file")
     # }}}
-
 @pass_config
-def _run_exe(config, exefile: Path, input_file: Path) -> RunResult: # {{{
+def _run_exe(config, exefile: Path, infile: Path) -> RunResult: # {{{
     res = RunResult()
     command = []
     if (exefile.suffix=='.py'):
@@ -305,7 +304,7 @@ def _run_exe(config, exefile: Path, input_file: Path) -> RunResult: # {{{
     command.append('pcm') # tell the sctipt that pcm is calling
     proc = subprocess.Popen(
         command,
-        stdin=input_file,
+        stdin=open(infile, "r"),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         # shell=True,  # for windows

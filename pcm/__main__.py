@@ -138,17 +138,22 @@ def tt(config, code_filename:str, case:str, by:str, debug:bool, timeout:float): 
                 return
         elif Path(case).suffix in ['.py']:
             # for random test
-            naive_codefile = CodeFile(by)
             subprocess.run(f"python {test_dir/case} > {test_dir/'random.in'} ", shell=True)
             case = 'random'
             infile = test_dir / f"{case}.in"
             expfile = test_dir / f"{case}.out"
-            run_result = _run_code(naive_codefile, infile)
-            with open(expfile, mode='w') as f:
-                if run_result.TLE_flag:
-                    f.write('TLE for naive code. if you extend timeout time, use -t option like -t 5')
-                else:
-                    f.write(run_result.stdout)
+
+            try:
+                naive_codefile = CodeFile(by)
+            except FileNotFoundError:
+                click.secho(f'naive code file not found by {by}', fg='yellow')
+            else:
+                run_result = _run_code(naive_codefile, infile)
+                with open(expfile, mode='w') as f:
+                    if run_result.TLE_flag:
+                        f.write('TLE for naive code. if you extend timeout time, use -t option like -t 5')
+                    else:
+                        f.write(run_result.stdout)
         else:
             infile = test_dir / f"{case}.in"
             expfile = test_dir / f"{case}.out"
@@ -232,6 +237,9 @@ def _test_case(codefile: CodeFile, case_name: str, infile: Path, expfile: Path, 
     if not expfile_exist:
         click.secho('--NOEXP--\n', fg='yellow')
         return 'NOEXP'
+    elif len(exp) == 0 and len(stdout) > 0:
+        click.secho('--WA--\n', fg='red')
+        return 'WA'
     elif re.search('TLE.*naive.*', exp[0]):
         click.secho('TLENAIVE\n', fg='yellow')
         return 'TLENAIVE'

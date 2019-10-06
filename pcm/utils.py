@@ -29,4 +29,5 @@ def get_last_modified_file(match_filename_pattern=[], exclude_filename_pattern=[
         codefile = candidates[0][1]
         return codefile.resolve()
     else:
-        raise Exception("no valid code file found")
+        raise FileNotFoundError("no valid code file found")
+

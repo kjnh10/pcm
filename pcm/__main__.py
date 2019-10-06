@@ -362,7 +362,19 @@ def rt(config, code_filename:str, by:str, generator:str, compare:bool, debug:boo
         result = _test_case(solve_codefile, f'random-{code_filename}', infile, expfile, debug)
         okresult = ['AC', 'TLENAIVE', 'NOEXP']
         if not (result in okresult):
-            return
+            num_to_save = 1
+            L = [f.stem for f in test_dir.glob('random-*.in')]
+            L.sort()
+            if (L):
+                num_to_save = int(L[-1].replace('random-', '').replace('.in', '')) + 1
+
+            shutil.copyfile(infile, test_dir/f'random-{num_to_save}.in')
+            print(f'input of this case saved to random-{num_to_save}.in')
+            if (expfile.exists()):
+                shutil.copyfile(expfile, test_dir/f'random-{num_to_save}.out')
+                print(f'expected of this case saved to random-{num_to_save}.out')
+
+            break
 # }}}
 # }}}
 

@@ -3,10 +3,10 @@ from .utils import get_last_modified_file
 
 
 class CodeFile(type(Path())):
-    def __init__(self, match_filename_pattern=['*.cpp', '*.py'], exclude_filename_pattern=[]):
+    def __init__(self, match_filename_pattern=['*.cpp', '*.py'], exclude_filename_pattern=[], search_root: Path = Path('.')):
         if (match_filename_pattern==''):
             match_filename_pattern = ['*.cpp', '*.py']
-        self.path = get_last_modified_file(match_filename_pattern, exclude_filename_pattern)
+        self.path = get_last_modified_file(match_filename_pattern, exclude_filename_pattern, search_root)
         self.code_dir = self.path.parent
         self.prob_dir = self.code_dir.parent
         self.test_dir = self.prob_dir / 'test'

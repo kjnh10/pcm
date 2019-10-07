@@ -10,13 +10,13 @@ def set_stdin(test_case):
     stdin = sys.stdin.fileno()
     os.dup2(fdr, stdin)
 
-def get_last_modified_file(match_filename_pattern=[], exclude_filename_pattern=[]) -> Path:
+def get_last_modified_file(match_filename_pattern=[], exclude_filename_pattern=[], search_root: Path = Path('.')) -> Path:
     if (type(match_filename_pattern)==str): match_filename_pattern = [match_filename_pattern]
     if (type(exclude_filename_pattern)==str): exclude_filename_pattern = [exclude_filename_pattern]
 
     candidates = []
     for m_pat in match_filename_pattern:
-        candidates += [(p.stat().st_mtime, p) for p in Path('.').rglob(m_pat)]
+        candidates += [(p.stat().st_mtime, p) for p in search_root.rglob(m_pat)]
     for pattern in exclude_filename_pattern:
         next_candidates = []
         for cand in candidates:

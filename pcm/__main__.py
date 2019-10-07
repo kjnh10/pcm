@@ -125,13 +125,13 @@ def _prepare_problem(config, prob_name):
 def tt(config, code_filename:str, case:str, debug:bool, timeout:float, by:str, loop:bool): # {{{
     if (timeout!=-1):
         config.pref['test']['timeout_sec']=timeout
-    solve_codefile = CodeFile(code_filename)
-    test_dir = solve_codefile.test_dir
 
-    if case == '': # test all case
-        _test_all_case(solve_codefile, debug)
-    else:
-        if Path(case).suffix not in ['.py', '.cpp', '.*']:
+    if Path(case).suffix not in ['.py', '.cpp', '.*']:
+        solve_codefile = CodeFile(code_filename)
+        test_dir = solve_codefile.test_dir
+        if case == '': # test all case
+            _test_all_case(solve_codefile, debug)
+        else:
             if case in set(map(str, range(1, 101))):
                 case = f'sample-{case}'
                 infile = test_dir / f"{case}.in"
@@ -143,58 +143,60 @@ def tt(config, code_filename:str, case:str, debug:bool, timeout:float, by:str, l
                 infile = test_dir / f"{case}.in"
                 expfile = test_dir / f"{case}.out"
             _test_case(solve_codefile, case, infile, expfile, debug)
-        else:
-            # random test
+    else:
+        # random test
+        solve_codefile = CodeFile(exclude_filename_pattern=(by if by else []))
+        test_dir = solve_codefile.test_dir
+        generator_codefile = CodeFile(case, search_root=Path('..'))
+        if by:
+            try:
+                naive_codefile = CodeFile(match_filename_pattern=by)
+            except FileNotFoundError:
+                click.secho(f'naive code file not found by {by}', fg='yellow')
+                return 1
+
+        while True:
+            gen_result = _run_code(generator_codefile)
+            if gen_result.returncode != 0:
+                print('failed runnning generator file {generator_codefile.name}')
+                print(gen_result.stderr)
+                return
+
+            with open(test_dir/'random.in', mode='w') as f:
+                f.write(gen_result.stdout)
+                
+            infile = test_dir / f"random.in"
+            expfile = test_dir / f"random.out"
+            if expfile.exists(): expfile.unlink()
+
             if by:
-                try:
-                    naive_codefile = CodeFile(by)
-                except FileNotFoundError:
-                    click.secho(f'naive code file not found by {by}', fg='yellow')
-                    return 1
-            generator_codefile = CodeFile(case, search_root=Path('..'))
+                run_result = _run_code(naive_codefile, infile, debug=debug)
+                with open(expfile, mode='w') as f:
+                    if run_result.TLE_flag:
+                        f.write('TLE for naive code. if you extend timeout time, use -t option like -t 5\n')
+                    elif run_result.returncode != 0:
+                        f.write('Some error happens when executing your naive code.\n')
+                    else:
+                        f.write(run_result.stdout)
 
-            while True:
-                gen_result = _run_code(generator_codefile)
-                if gen_result.returncode != 0:
-                    print('failed runnning generator file {generator_codefile.name}')
-                    print(gen_result.stderr)
-                    return
+            result = _test_case(solve_codefile, f'random-{code_filename}', infile, expfile, debug)
+            okresult = ['AC', 'TLENAIVE', 'NOEXP']
+            if not (result in okresult):
+                if by or loop:  # compareもloopも行わない場合は単に生成して試したいだけの場合が多いので保存しない。
+                    num_to_save = 1
+                    L = [f.stem for f in test_dir.glob('random-*.in')]
+                    L.sort()
+                    if (L):
+                        num_to_save = int(L[-1].replace('random-', '').replace('.in', '')) + 1
 
-                with open(test_dir/'random.in', mode='w') as f:
-                    f.write(gen_result.stdout)
-                    
-                infile = test_dir / f"random.in"
-                expfile = test_dir / f"random.out"
-                if expfile.exists(): expfile.unlink()
+                    shutil.copyfile(infile, test_dir/f'random-{num_to_save}.in')
+                    print(f'input of this case saved to random-{num_to_save}.in')
+                    if (expfile.exists()):
+                        shutil.copyfile(expfile, test_dir/f'random-{num_to_save}.out')
+                        print(f'expected of this case saved to random-{num_to_save}.out')
+                return 1
 
-                if by:
-                    run_result = _run_code(naive_codefile, infile, debug=debug)
-                    with open(expfile, mode='w') as f:
-                        if run_result.TLE_flag:
-                            f.write('TLE for naive code. if you extend timeout time, use -t option like -t 5\n')
-                        elif run_result.returncode != 0:
-                            f.write('Some error happens when executing your naive code.\n')
-                        else:
-                            f.write(run_result.stdout)
-
-                result = _test_case(solve_codefile, f'random-{code_filename}', infile, expfile, debug)
-                okresult = ['AC', 'TLENAIVE', 'NOEXP']
-                if not (result in okresult):
-                    if by or loop:  # compareもloopも行わない場合は単に生成して試したいだけの場合が多いので保存しない。
-                        num_to_save = 1
-                        L = [f.stem for f in test_dir.glob('random-*.in')]
-                        L.sort()
-                        if (L):
-                            num_to_save = int(L[-1].replace('random-', '').replace('.in', '')) + 1
-
-                        shutil.copyfile(infile, test_dir/f'random-{num_to_save}.in')
-                        print(f'input of this case saved to random-{num_to_save}.in')
-                        if (expfile.exists()):
-                            shutil.copyfile(expfile, test_dir/f'random-{num_to_save}.out')
-                            print(f'expected of this case saved to random-{num_to_save}.out')
-                    return 1
-
-                if (not loop): return 0
+            if (not loop): return 0
 # }}}
 
 def _test_all_case(codefile: CodeFile, debug=True) -> bool: # {{{

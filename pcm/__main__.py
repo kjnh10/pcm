@@ -312,7 +312,7 @@ def _test_case(codefile: CodeFile, case_name: str, infile: Path, expfile: Path) 
 # }}}
 
 @pass_config
-def _run_code(config, codefile: CodeFile, infile: Path = None, compile_command_config='default') -> RunResult:  # {{{
+def _run_code(config, codefile: CodeFile, infile: Path = None) -> RunResult:  # {{{
     if codefile.extension not in config.pref['test']['compile_command']:  # for script language
         return _run_exe(codefile.path, infile)
     else:
@@ -436,6 +436,7 @@ def rt(config, code_filename:str, by:str, generator:str, compare:bool, timeout:f
 def sb(config, code_filename, language, pretest):
     if (not pretest) and (not click.confirm('Are you sure to submit?')):  # no-pretestの場合は遅延を避けるため最初に質問する。
         return
+    config.pref['test']['compile_command']['configname'] = 'default'
 
     codefile = CodeFile(code_filename)
     extension = codefile.path.suffix[1:]

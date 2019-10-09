@@ -179,9 +179,9 @@ def tt(config, code_filename:str, case:str, debug:bool, timeout:float, by:str, l
                     else:
                         f.write(run_result.stdout)
 
-            result = _test_case(solve_codefile, f'random-{code_filename}', infile, expfile, debug)
+            run_result = _test_case(solve_codefile, f'random-{code_filename}', infile, expfile, debug)
             okresult = ['AC', 'TLENAIVE', 'NOEXP']
-            if not (result in okresult):
+            if not (run_result.judge in okresult):
                 if by or loop:  # compareもloopも行わない場合は単に生成して試したいだけの場合が多いので保存しない。
                     num_to_save = 1
                     L = [f.stem for f in test_dir.glob('random-*.in')]
@@ -203,18 +203,32 @@ def _test_all_case(codefile: CodeFile, debug=True) -> bool: # {{{
     files = os.listdir(codefile.test_dir)
     files.sort()
     res = True
+    case_cnt = 0
+    ac_cnt = 0
+    exec_times = []
     for filename in files:
         if not fnmatch.fnmatch(filename, '*.in'):
             continue
         case = filename[:-3]
         infile = codefile.test_dir / f"{case}.in"
         expfile = codefile.test_dir / f"{case}.out"  # 拡張子をexpにしたいが。。
-        if _test_case(codefile, case, infile, expfile, debug)!='AC':
+        case_cnt += 1
+        run_result = _test_case(codefile, case, infile, expfile, debug)
+        exec_times.append(run_result.exec_time)
+        if run_result.judge == 'AC':
+            ac_cnt += 1
+        else:
             res = False
+    if (ac_cnt == case_cnt):
+        click.secho(f'{ac_cnt}/{case_cnt} cases passed', fg='green')
+    else:
+        click.secho(f'{ac_cnt}/{len(files)} cases failed', fg='red')
+
+    print('[max exec time]: {:.3f}'.format(max(exec_times)))
     return res
 # }}}
 
-def _test_case(codefile: CodeFile, case_name: str, infile: Path, expfile: Path, debug=True) -> str: # {{{
+def _test_case(codefile: CodeFile, case_name: str, infile: Path, expfile: Path, debug=True) -> RunResult: # {{{
     # run program
     click.secho('-'*10 + case_name + '-'*10, fg='blue')
     run_result = _run_code(codefile, infile, debug=debug)
@@ -274,24 +288,26 @@ def _test_case(codefile: CodeFile, case_name: str, infile: Path, expfile: Path, 
 
     if not expfile_exist:
         click.secho('--NOEXP--\n', fg='yellow')
-        return 'NOEXP'
+        run_result.judge = 'NOEXP'
     elif len(exp) == 0:
         click.secho('--WA--\n', fg='red')
-        return 'WA'
+        run_result.judge = 'WA'
     elif re.search('TLE.*naive.*', exp[0]):
         click.secho('TLENAIVE\n', fg='yellow')
-        return 'TLENAIVE'
+        run_result.judge = 'TLENAIVE'
     elif len(stdout) != len(exp):
         click.secho('--WA--\n', fg='red')
-        return 'WA'
+        run_result.judge = 'WA'
     else:
         for i in range(len(stdout)):
             if stdout[i].replace('\r', '') != exp[i]:
                 click.secho('--WA--\n\n', fg='red')
-                return 'WA'
+                run_result.judge = 'WA'
+                break
         else:
             click.secho('--AC--\n', fg='green')
-            return 'AC'
+            run_result.judge = 'AC'
+    return run_result
 # }}}
 
 @pass_config
@@ -363,7 +379,7 @@ def _run_exe(config, exefile: Path, infile: Path = None) -> RunResult: # {{{
     except subprocess.TimeoutExpired:
         proc.kill()
         outs, errs = proc.communicate()
-        res.exe_time = 'TLE'
+        res.exe_time = float('inf')
         res.TLE_flag = True
     res.returncode = proc.returncode
     res.stdout = outs.decode('utf-8')

@@ -115,68 +115,121 @@ def _prepare_problem(config, prob_name):
 # test: tt {{{
 @cli.command()
 @click.argument('code_filename', type=str, default='')
+@click.option('--compile_command_configname', '-cc', type=str, default='default')
 @click.option('--case', '-c', type=str, default='')
-@click.option('--debug/--nodebug', '-d/-nd', default=True)
 @click.option('--timeout', '-t', type=float, default=-1)
-@click.option('--by', '-b', type=str, default='naive.*')
+@click.option('--by', '-b', type=str, default=None)
+@click.option('--loop/--noloop', '-l/-nl', default=False)
+# @click.option('--save', '-s', type=bool, default=False, help='save randomly generated input and output with number. this option is valid only when -c *.py')
 @pass_config
-def tt(config, code_filename:str, case:str, by:str, debug:bool, timeout:float): # {{{
-    if (timeout!=-1):
-        config.pref['test']['timeout_sec']=timeout
-    solve_codefile = CodeFile(code_filename)
-    test_dir = solve_codefile.test_dir
+def tt(config, code_filename:str, compile_command_configname:str, case:str, timeout:float, by:str, loop:bool): # {{{
+    if (timeout != -1):
+        config.pref['test']['timeout_sec'] = timeout
+    config.pref['test']['compile_command']['configname'] = compile_command_configname
 
-    if case == '': # test all case
-        _test_all_case(solve_codefile, debug)
+    if Path(case).suffix not in ['.py', '.cpp', '.*']:
+        solve_codefile = CodeFile(code_filename)
+        test_dir = solve_codefile.test_dir
+        if case == '':  # test all case
+            _test_all_case(solve_codefile)
+        else:
+            if case in set(map(str, range(1, 101))):
+                case = f'sample-{case}'
+                infile = test_dir / f"{case}.in"
+                expfile = test_dir / f"{case}.out"
+                if (not infile.exists()):
+                    click.secho(f"{infile.name} not found.", fg='yellow')
+                    return 1
+            else:
+                infile = test_dir / f"{case}.in"
+                expfile = test_dir / f"{case}.out"
+            _test_case(solve_codefile, case, infile, expfile)
     else:
-        if case in set(map(str, range(1, 101))):
-            case = f'sample-{case}'
-            infile = test_dir / f"{case}.in"
-            expfile = test_dir / f"{case}.out"
-            if (not infile.exists()):
-                click.secho(f"{infile.name} not found.", fg='yellow')
-                return
-        elif Path(case).suffix in ['.py']:
-            # for random test
-            subprocess.run(f"python {test_dir/case} > {test_dir/'random.in'} ", shell=True)
-            case = 'random'
-            infile = test_dir / f"{case}.in"
-            expfile = test_dir / f"{case}.out"
-
+        # random test
+        solve_codefile = CodeFile(exclude_filename_pattern=(by if by else []))
+        test_dir = solve_codefile.test_dir
+        generator_codefile = CodeFile(case, search_root=Path('..'))
+        if by:
             try:
-                naive_codefile = CodeFile(by)
+                naive_codefile = CodeFile(match_filename_pattern=by)
             except FileNotFoundError:
                 click.secho(f'naive code file not found by {by}', fg='yellow')
-            else:
+                return 1
+
+        while True:
+            gen_result = _run_code(generator_codefile)
+            if gen_result.returncode != 0:
+                print('failed runnning generator file {generator_codefile.name}')
+                print(gen_result.stderr)
+                return
+
+            with open(test_dir/'random.in', mode='w') as f:
+                f.write(gen_result.stdout)
+
+            infile = test_dir / f"random.in"
+            expfile = test_dir / f"random.out"
+            if expfile.exists(): expfile.unlink()
+
+            if by:
                 run_result = _run_code(naive_codefile, infile)
                 with open(expfile, mode='w') as f:
                     if run_result.TLE_flag:
-                        f.write('TLE for naive code. if you extend timeout time, use -t option like -t 5')
+                        f.write('TLE for naive code. if you extend timeout time, use -t option like -t 5\n')
+                    elif run_result.returncode != 0:
+                        f.write('Some error happens when executing your naive code.\n')
                     else:
                         f.write(run_result.stdout)
-        else:
-            infile = test_dir / f"{case}.in"
-            expfile = test_dir / f"{case}.out"
 
-        _test_case(solve_codefile, case, infile, expfile, debug)
+            run_result = _test_case(solve_codefile, f'random-{code_filename}', infile, expfile)
+            okresult = ['AC', 'TLENAIVE', 'NOEXP']
+            if not (run_result.judge in okresult):
+                if by or loop:  # compareもloopも行わない場合は単に生成して試したいだけの場合が多いので保存しない。
+                    num_to_save = 1
+                    L = [f.stem for f in test_dir.glob('random-*.in')]
+                    L.sort()
+                    if (L):
+                        num_to_save = int(L[-1].replace('random-', '').replace('.in', '')) + 1
+
+                    shutil.copyfile(infile, test_dir/f'random-{num_to_save}.in')
+                    print(f'input of this case saved to random-{num_to_save}.in')
+                    if (expfile.exists()):
+                        shutil.copyfile(expfile, test_dir/f'random-{num_to_save}.out')
+                        print(f'expected of this case saved to random-{num_to_save}.out')
+                return 1
+
+            if (not loop): return 0
 # }}}
 
-def _test_all_case(codefile: CodeFile, debug=True) -> bool: # {{{
+def _test_all_case(codefile: CodeFile) -> bool: # {{{
     files = os.listdir(codefile.test_dir)
     files.sort()
     res = True
+    case_cnt = 0
+    ac_cnt = 0
+    exec_times = []
     for filename in files:
         if not fnmatch.fnmatch(filename, '*.in'):
             continue
         case = filename[:-3]
         infile = codefile.test_dir / f"{case}.in"
         expfile = codefile.test_dir / f"{case}.out"  # 拡張子をexpにしたいが。。
-        if _test_case(codefile, case, infile, expfile, debug)!='AC':
+        case_cnt += 1
+        run_result = _test_case(codefile, case, infile, expfile)
+        exec_times.append(run_result.exec_time)
+        if run_result.judge == 'AC':
+            ac_cnt += 1
+        else:
             res = False
+    if (ac_cnt == case_cnt):
+        click.secho(f'{ac_cnt}/{case_cnt} cases passed', fg='green')
+    else:
+        click.secho(f'{ac_cnt}/{len(files)} cases failed', fg='red')
+
+    print('[max exec time]: {:.3f}'.format(max(exec_times)))
     return res
 # }}}
 
-def _test_case(codefile: CodeFile, case_name: str, infile: Path, expfile: Path, debug=True) -> str: # {{{
+def _test_case(codefile: CodeFile, case_name: str, infile: Path, expfile: Path) -> RunResult: # {{{
     # run program
     click.secho('-'*10 + case_name + '-'*10, fg='blue')
     run_result = _run_code(codefile, infile)
@@ -236,55 +289,45 @@ def _test_case(codefile: CodeFile, case_name: str, infile: Path, expfile: Path, 
 
     if not expfile_exist:
         click.secho('--NOEXP--\n', fg='yellow')
-        return 'NOEXP'
-    elif len(exp) == 0 and len(stdout) > 0:
+        run_result.judge = 'NOEXP'
+    elif len(exp) == 0:
         click.secho('--WA--\n', fg='red')
-        return 'WA'
+        run_result.judge = 'WA'
     elif re.search('TLE.*naive.*', exp[0]):
         click.secho('TLENAIVE\n', fg='yellow')
-        return 'TLENAIVE'
+        run_result.judge = 'TLENAIVE'
     elif len(stdout) != len(exp):
         click.secho('--WA--\n', fg='red')
-        return 'WA'
+        run_result.judge = 'WA'
     else:
         for i in range(len(stdout)):
             if stdout[i].replace('\r', '') != exp[i]:
                 click.secho('--WA--\n\n', fg='red')
-                return 'WA'
+                run_result.judge = 'WA'
+                break
         else:
             click.secho('--AC--\n', fg='green')
-            return 'AC'
+            run_result.judge = 'AC'
+    return run_result
 # }}}
 
 @pass_config
-def _run_code(config, codefile: CodeFile, infile: Path, debug=True) -> RunResult:  # {{{
-    if codefile.path.suffix == ".py":
+def _run_code(config, codefile: CodeFile, infile: Path = None) -> RunResult:  # {{{
+    if codefile.extension not in config.pref['test']['compile_command']:  # for script language
         return _run_exe(codefile.path, infile)
-    elif codefile.path.suffix == ".cpp":
+    else:
         click.secho('compile start.....', blink=True)
-        exe = codefile.bin_dir / f'{codefile.path.stem}.out'
-        exe.parent.mkdir(exist_ok=True)
-        if (exe.exists() and codefile.path.stat().st_mtime <= exe.stat().st_mtime):
-            click.secho(f'compile skipped since {codefile.path} is older than {codefile.path.stem}.out')
+
+        exefile = codefile.bin_dir / f'{codefile.path.name}.out'
+        exefile.parent.mkdir(exist_ok=True)
+        if (exefile.exists() and codefile.path.stat().st_mtime <= exefile.stat().st_mtime):
+            click.secho(f'compile skipped since {codefile.path} is older than {exefile.name}')
         else:
             start = time.time()
-            command = [
-                    'g++',
-                    str(codefile.path),
-                    "-o", str(exe),
-                    '-std=c++14',
-                    ]
-            command.append('-DPCM') # for dump
-            command.append('-Wall') # for debug
-            if debug:
-                command.append('-fsanitize=undefined') # 未定義動作の検出
-                command.append('-fsanitize=address') #
-                # command.append('-g3') # for gdb
-                # command.append('-D_GLIBCXX_DEBUG')
-                # command.append('-O2')
-
+            cnfname = config.pref['test']['compile_command']['configname']
+            command = config.pref['test']['compile_command'][codefile.extension][cnfname].format(srcpath=str(codefile.path), outpath=str(exefile)).split()
             proc = subprocess.Popen(
-                    command,  # g++ solve.cpp -o {codefile.path.stem}.out -std=c++14 -DPCM -Wall -fsanitize=undefined
+                    command,
                     stdout=subprocess.PIPE,
                     )
             outs, errs = proc.communicate()
@@ -296,14 +339,13 @@ def _run_code(config, codefile: CodeFile, infile: Path, debug=True) -> RunResult
                 print(outs.decode('utf-8'))
 
             click.secho('compile finised')
-            elapsed_time = time.time() - start
-            print("compile took:{0}".format(elapsed_time) + "[sec]")
-        return _run_exe(exe, infile)
-    else:
-        raise Exception(f"{codefile.path} is not a valid code file")
+            print("compile took:{0}".format(time.time() - start) + "[sec]")
+        return _run_exe(exefile, infile)
     # }}}
+
+
 @pass_config
-def _run_exe(config, exefile: Path, infile: Path) -> RunResult: # {{{
+def _run_exe(config, exefile: Path, infile: Path = None) -> RunResult: # {{{
     res = RunResult()
     command = []
     if (exefile.suffix=='.py'):
@@ -312,7 +354,7 @@ def _run_exe(config, exefile: Path, infile: Path) -> RunResult: # {{{
     command.append('pcm') # tell the sctipt that pcm is calling
     proc = subprocess.Popen(
         command,
-        stdin=open(infile, "r"),
+        stdin=open(infile, "r") if infile else None,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         # shell=True,  # for windows
@@ -325,7 +367,7 @@ def _run_exe(config, exefile: Path, infile: Path) -> RunResult: # {{{
     except subprocess.TimeoutExpired:
         proc.kill()
         outs, errs = proc.communicate()
-        res.exe_time = 'TLE'
+        res.exe_time = float('inf')
         res.TLE_flag = True
     res.returncode = proc.returncode
     res.stdout = outs.decode('utf-8')
@@ -334,68 +376,16 @@ def _run_exe(config, exefile: Path, infile: Path) -> RunResult: # {{{
 
 # }}}
 
-# random test: rt {{{
-@cli.command()
-@click.argument('code_filename', type=str, default='')
-@click.option('--by', '-b', type=str, default='naive.*')
-@click.option('--generator', '-g', type=str, default='gen.py')
-@click.option('--compare/--nocompare', '-c/-nc', default=True)  # naive codeを実行しない。
-@click.option('--debug/--nodebug', '-d/-nd', default=True)
-@click.option('--timeout', '-t', type=float, default=-1)
-@pass_config
-def rt(config, code_filename:str, by:str, generator:str, compare:bool, debug:bool, timeout:float):# {{{
-    if (timeout!=-1):
-        config.pref['test']['timeout_sec']=timeout
-    solve_codefile = CodeFile(exclude_filename_pattern=by)
-    naive_codefile = CodeFile(match_filename_pattern=by)
-    test_dir = solve_codefile.test_dir
-
-    case_generator_file = test_dir / generator
-    infile = test_dir / "random.in"
-    expfile = test_dir/"random.out"
-    if expfile.exists(): expfile.unlink()
-
-    while True:
-        subprocess.run(f"python {str(case_generator_file)} > {str(infile)}", shell=True)
-        if compare:
-            run_result = _run_code(naive_codefile, infile)
-            with open(expfile, mode='w') as f:
-                if run_result.TLE_flag:
-                    f.write('TLE for naive code. if you extend timeout time, use -t option like -t 5\n')
-                elif run_result.returncode != 0:
-                    f.write('Some error happens when executing your naive code.\n')
-                else:
-                    f.write(run_result.stdout)
-
-        result = _test_case(solve_codefile, f'random-{code_filename}', infile, expfile, debug)
-        okresult = ['AC', 'TLENAIVE', 'NOEXP']
-        if not (result in okresult):
-            num_to_save = 1
-            L = [f.stem for f in test_dir.glob('random-*.in')]
-            L.sort()
-            if (L):
-                num_to_save = int(L[-1].replace('random-', '').replace('.in', '')) + 1
-
-            shutil.copyfile(infile, test_dir/f'random-{num_to_save}.in')
-            print(f'input of this case saved to random-{num_to_save}.in')
-            if (expfile.exists()):
-                shutil.copyfile(expfile, test_dir/f'random-{num_to_save}.out')
-                print(f'expected of this case saved to random-{num_to_save}.out')
-
-            break
-# }}}
-# }}}
-
 # submit: sb {{{
 @cli.command()
 @click.argument('code_filename', type=str, default="")
 @click.option('--language', '-l', default='auto-detect')
 @click.option('--pretest/--no-pretest', '-t/-nt', default=True)
-@click.option('--debug/--nodebug', '-d/-nd', default=False)
 @pass_config
-def sb(config, code_filename, language, pretest, debug):
+def sb(config, code_filename, language, pretest):
     if (not pretest) and (not click.confirm('Are you sure to submit?')):  # no-pretestの場合は遅延を避けるため最初に質問する。
         return
+    config.pref['test']['compile_command']['configname'] = 'default'
 
     codefile = CodeFile(code_filename)
     extension = codefile.path.suffix[1:]
@@ -406,7 +396,7 @@ def sb(config, code_filename, language, pretest, debug):
 
     if pretest:
         click.secho("pretest started\n", fg='green')
-        if not _test_all_case(codefile, debug):
+        if not _test_all_case(codefile):
             click.secho("pretest not passed and exit", fg="red")
             return
 

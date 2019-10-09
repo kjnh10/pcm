@@ -25,3 +25,14 @@ template_dir = '~/.config/pcm/template'
 
 [test]
   timeout_sec=2
+
+  [test.compile_command.cpp]  # for tt command, you can change the compile command by --cc option. like 'pcm tt -c 1 --cc v5'
+  default = """
+            g++ {srcpath} -o {outpath} \
+            -std=c++14 \
+            -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG
+            """
+  fast = """
+         g++ {srcpath} -o {outpath}
+         -std=c++14 \
+         """

@@ -116,21 +116,20 @@ def _prepare_problem(config, prob_name):
 @cli.command()
 @click.argument('code_filename', type=str, default='')
 @click.option('--case', '-c', type=str, default='')
-@click.option('--debug/--nodebug', '-d/-nd', default=True)
 @click.option('--timeout', '-t', type=float, default=-1)
 @click.option('--by', '-b', type=str, default=None)
 @click.option('--loop/--noloop', '-l/-nl', default=False)
 # @click.option('--save', '-s', type=bool, default=False, help='save randomly generated input and output with number. this option is valid only when -c *.py')
 @pass_config
-def tt(config, code_filename:str, case:str, debug:bool, timeout:float, by:str, loop:bool): # {{{
-    if (timeout!=-1):
-        config.pref['test']['timeout_sec']=timeout
+def tt(config, code_filename:str, case:str, timeout:float, by:str, loop:bool): # {{{
+    if (timeout != -1):
+        config.pref['test']['timeout_sec'] = timeout
 
     if Path(case).suffix not in ['.py', '.cpp', '.*']:
         solve_codefile = CodeFile(code_filename)
         test_dir = solve_codefile.test_dir
-        if case == '': # test all case
-            _test_all_case(solve_codefile, debug)
+        if case == '':  # test all case
+            _test_all_case(solve_codefile)
         else:
             if case in set(map(str, range(1, 101))):
                 case = f'sample-{case}'
@@ -142,7 +141,7 @@ def tt(config, code_filename:str, case:str, debug:bool, timeout:float, by:str, l
             else:
                 infile = test_dir / f"{case}.in"
                 expfile = test_dir / f"{case}.out"
-            _test_case(solve_codefile, case, infile, expfile, debug)
+            _test_case(solve_codefile, case, infile, expfile)
     else:
         # random test
         solve_codefile = CodeFile(exclude_filename_pattern=(by if by else []))
@@ -164,13 +163,13 @@ def tt(config, code_filename:str, case:str, debug:bool, timeout:float, by:str, l
 
             with open(test_dir/'random.in', mode='w') as f:
                 f.write(gen_result.stdout)
-                
+
             infile = test_dir / f"random.in"
             expfile = test_dir / f"random.out"
             if expfile.exists(): expfile.unlink()
 
             if by:
-                run_result = _run_code(naive_codefile, infile, debug=debug)
+                run_result = _run_code(naive_codefile, infile)
                 with open(expfile, mode='w') as f:
                     if run_result.TLE_flag:
                         f.write('TLE for naive code. if you extend timeout time, use -t option like -t 5\n')
@@ -179,7 +178,7 @@ def tt(config, code_filename:str, case:str, debug:bool, timeout:float, by:str, l
                     else:
                         f.write(run_result.stdout)
 
-            run_result = _test_case(solve_codefile, f'random-{code_filename}', infile, expfile, debug)
+            run_result = _test_case(solve_codefile, f'random-{code_filename}', infile, expfile)
             okresult = ['AC', 'TLENAIVE', 'NOEXP']
             if not (run_result.judge in okresult):
                 if by or loop:  # compareもloopも行わない場合は単に生成して試したいだけの場合が多いので保存しない。
@@ -199,7 +198,7 @@ def tt(config, code_filename:str, case:str, debug:bool, timeout:float, by:str, l
             if (not loop): return 0
 # }}}
 
-def _test_all_case(codefile: CodeFile, debug=True) -> bool: # {{{
+def _test_all_case(codefile: CodeFile) -> bool: # {{{
     files = os.listdir(codefile.test_dir)
     files.sort()
     res = True
@@ -213,7 +212,7 @@ def _test_all_case(codefile: CodeFile, debug=True) -> bool: # {{{
         infile = codefile.test_dir / f"{case}.in"
         expfile = codefile.test_dir / f"{case}.out"  # 拡張子をexpにしたいが。。
         case_cnt += 1
-        run_result = _test_case(codefile, case, infile, expfile, debug)
+        run_result = _test_case(codefile, case, infile, expfile)
         exec_times.append(run_result.exec_time)
         if run_result.judge == 'AC':
             ac_cnt += 1
@@ -228,10 +227,10 @@ def _test_all_case(codefile: CodeFile, debug=True) -> bool: # {{{
     return res
 # }}}
 
-def _test_case(codefile: CodeFile, case_name: str, infile: Path, expfile: Path, debug=True) -> RunResult: # {{{
+def _test_case(codefile: CodeFile, case_name: str, infile: Path, expfile: Path) -> RunResult: # {{{
     # run program
     click.secho('-'*10 + case_name + '-'*10, fg='blue')
-    run_result = _run_code(codefile, infile, debug=debug)
+    run_result = _run_code(codefile, infile)
     print(f"exec time: {run_result.exec_time} [sec]")
 
     # print input
@@ -311,7 +310,7 @@ def _test_case(codefile: CodeFile, case_name: str, infile: Path, expfile: Path, 
 # }}}
 
 @pass_config
-def _run_code(config, codefile: CodeFile, infile: Path = None, debug=True) -> RunResult:  # {{{
+def _run_code(config, codefile: CodeFile, infile: Path = None) -> RunResult:  # {{{
     if codefile.path.suffix == ".py":
         return _run_exe(codefile.path, infile)
     elif codefile.path.suffix == ".cpp":
@@ -323,19 +322,22 @@ def _run_code(config, codefile: CodeFile, infile: Path = None, debug=True) -> Ru
         else:
             start = time.time()
             command = [
-                    'g++',
+                    # 'g++',
+                    'g++-9',
                     str(codefile.path),
                     "-o", str(exe),
                     '-std=c++14',
                     ]
-            if debug:
-                command.append('-DPCM') # for dump
-                command.append('-Wall') # for debug
-                command.append('-fsanitize=undefined') # 未定義動作の検出
-                command.append('-fsanitize=address') #
-                command.append('-D_GLIBCXX_DEBUG')
-                # command.append('-g3') # for gdb
-                # command.append('-O2')
+            # command.append('-include');command.append('/usr/include/x86_64-linux-gnu/c++/5/bits/stdc++.h')
+            command.append('-include');command.append('/usr/include/x86_64-linux-gnu/c++/9/bits/stdc++.h')
+            command.append('-DPCM') # for dump
+            command.append('-Wall') # for debug
+            command.append('-fsanitize=address') #
+            command.append('-D_GLIBCXX_DEBUG') # 配列外アクセスを検出してくれるがコンパイルが遅くなる。
+            command.append('-fsanitize=undefined')  # 未定義動作の検出  g++-9とかプレコンパイル済みヘッダと相性が悪い。
+            command.append('-fuse-ld=gold')  # gcc-9で-fsanitize=undefinedをやるとエラーが出るので (https://github.com/scylladb/seastar/issues/224)
+            # command.append('-g3') # for gdb
+            # command.append('-O2')
 
             proc = subprocess.Popen(
                     command,  # g++ solve.cpp -o {codefile.path.stem}.out -std=c++14 -DPCM -Wall -fsanitize=undefined
@@ -394,10 +396,9 @@ def _run_exe(config, exefile: Path, infile: Path = None) -> RunResult: # {{{
 @click.option('--by', '-b', type=str, default='naive.*')
 @click.option('--generator', '-g', type=str, default='gen.py')
 @click.option('--compare/--nocompare', '-c/-nc', default=True)  # naive codeを実行しない。
-@click.option('--debug/--nodebug', '-d/-nd', default=True)
 @click.option('--timeout', '-t', type=float, default=-1)
 @pass_config
-def rt(config, code_filename:str, by:str, generator:str, compare:bool, debug:bool, timeout:float):# {{{
+def rt(config, code_filename:str, by:str, generator:str, compare:bool, timeout:float):# {{{
     if (timeout!=-1):
         config.pref['test']['timeout_sec']=timeout
     solve_codefile = CodeFile(exclude_filename_pattern=by)
@@ -421,7 +422,7 @@ def rt(config, code_filename:str, by:str, generator:str, compare:bool, debug:boo
                 else:
                     f.write(run_result.stdout)
 
-        result = _test_case(solve_codefile, f'random-{code_filename}', infile, expfile, debug)
+        result = _test_case(solve_codefile, f'random-{code_filename}', infile, expfile)
         okresult = ['AC', 'TLENAIVE', 'NOEXP']
         if not (result in okresult):
             num_to_save = 1
@@ -445,9 +446,8 @@ def rt(config, code_filename:str, by:str, generator:str, compare:bool, debug:boo
 @click.argument('code_filename', type=str, default="")
 @click.option('--language', '-l', default='auto-detect')
 @click.option('--pretest/--no-pretest', '-t/-nt', default=True)
-@click.option('--debug/--nodebug', '-d/-nd', default=False)
 @pass_config
-def sb(config, code_filename, language, pretest, debug):
+def sb(config, code_filename, language, pretest):
     if (not pretest) and (not click.confirm('Are you sure to submit?')):  # no-pretestの場合は遅延を避けるため最初に質問する。
         return
 
@@ -460,7 +460,7 @@ def sb(config, code_filename, language, pretest, debug):
 
     if pretest:
         click.secho("pretest started\n", fg='green')
-        if not _test_all_case(codefile, debug):
+        if not _test_all_case(codefile):
             click.secho("pretest not passed and exit", fg="red")
             return
 

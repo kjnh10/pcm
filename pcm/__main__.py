@@ -115,15 +115,17 @@ def _prepare_problem(config, prob_name):
 # test: tt {{{
 @cli.command()
 @click.argument('code_filename', type=str, default='')
+@click.option('--compile_command_configname', '-cc', type=str, default='default')
 @click.option('--case', '-c', type=str, default='')
 @click.option('--timeout', '-t', type=float, default=-1)
 @click.option('--by', '-b', type=str, default=None)
 @click.option('--loop/--noloop', '-l/-nl', default=False)
 # @click.option('--save', '-s', type=bool, default=False, help='save randomly generated input and output with number. this option is valid only when -c *.py')
 @pass_config
-def tt(config, code_filename:str, case:str, timeout:float, by:str, loop:bool): # {{{
+def tt(config, code_filename:str, compile_command_configname:str, case:str, timeout:float, by:str, loop:bool): # {{{
     if (timeout != -1):
         config.pref['test']['timeout_sec'] = timeout
+    config.pref['test']['compile_command']['configname'] = compile_command_configname
 
     if Path(case).suffix not in ['.py', '.cpp', '.*']:
         solve_codefile = CodeFile(code_filename)
@@ -310,37 +312,22 @@ def _test_case(codefile: CodeFile, case_name: str, infile: Path, expfile: Path) 
 # }}}
 
 @pass_config
-def _run_code(config, codefile: CodeFile, infile: Path = None) -> RunResult:  # {{{
-    if codefile.path.suffix == ".py":
+def _run_code(config, codefile: CodeFile, infile: Path = None, compile_command_config='default') -> RunResult:  # {{{
+    if codefile.extension not in config.pref['test']['compile_command']:  # for script language
         return _run_exe(codefile.path, infile)
-    elif codefile.path.suffix == ".cpp":
+    else:
         click.secho('compile start.....', blink=True)
-        exe = codefile.bin_dir / f'{codefile.path.stem}.out'
-        exe.parent.mkdir(exist_ok=True)
-        if (exe.exists() and codefile.path.stat().st_mtime <= exe.stat().st_mtime):
-            click.secho(f'compile skipped since {codefile.path} is older than {codefile.path.stem}.out')
+
+        exefile = codefile.bin_dir / f'{codefile.path.name}.out'
+        exefile.parent.mkdir(exist_ok=True)
+        if (exefile.exists() and codefile.path.stat().st_mtime <= exefile.stat().st_mtime):
+            click.secho(f'compile skipped since {codefile.path} is older than {exefile.name}')
         else:
             start = time.time()
-            command = [
-                    # 'g++',
-                    'g++-9',
-                    str(codefile.path),
-                    "-o", str(exe),
-                    '-std=c++14',
-                    ]
-            # command.append('-include');command.append('/usr/include/x86_64-linux-gnu/c++/5/bits/stdc++.h')
-            command.append('-include');command.append('/usr/include/x86_64-linux-gnu/c++/9/bits/stdc++.h')
-            command.append('-DPCM') # for dump
-            command.append('-Wall') # for debug
-            command.append('-fsanitize=address') #
-            command.append('-D_GLIBCXX_DEBUG') # 配列外アクセスを検出してくれるがコンパイルが遅くなる。
-            command.append('-fsanitize=undefined')  # 未定義動作の検出  g++-9とかプレコンパイル済みヘッダと相性が悪い。
-            command.append('-fuse-ld=gold')  # gcc-9で-fsanitize=undefinedをやるとエラーが出るので (https://github.com/scylladb/seastar/issues/224)
-            # command.append('-g3') # for gdb
-            # command.append('-O2')
-
+            cnfname = config.pref['test']['compile_command']['configname']
+            command = config.pref['test']['compile_command'][codefile.extension][cnfname].format(srcpath=str(codefile.path), outpath=str(exefile)).split()
             proc = subprocess.Popen(
-                    command,  # g++ solve.cpp -o {codefile.path.stem}.out -std=c++14 -DPCM -Wall -fsanitize=undefined
+                    command,
                     stdout=subprocess.PIPE,
                     )
             outs, errs = proc.communicate()
@@ -352,12 +339,11 @@ def _run_code(config, codefile: CodeFile, infile: Path = None) -> RunResult:  # 
                 print(outs.decode('utf-8'))
 
             click.secho('compile finised')
-            elapsed_time = time.time() - start
-            print("compile took:{0}".format(elapsed_time) + "[sec]")
-        return _run_exe(exe, infile)
-    else:
-        raise Exception(f"{codefile.path} is not a valid code file")
+            print("compile took:{0}".format(time.time() - start) + "[sec]")
+        return _run_exe(exefile, infile)
     # }}}
+
+
 @pass_config
 def _run_exe(config, exefile: Path, infile: Path = None) -> RunResult: # {{{
     res = RunResult()

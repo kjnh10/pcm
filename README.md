@@ -11,7 +11,9 @@ This is a command line tool to manage programming contest and provides some comm
 * prepare your work directory for a problem. of course downloading samples. (for any contest kmyk/online-judge-tools works for)
 * test your code with sample case.
 * test your code with randomly genarated cases.
-* submit yourcode to the contest site. (only for AtCoder and codeforces for now)
+* submit your code to the contest site. (only for AtCoder and codeforces for now)
+
+You can use this library with any language, but for languages other than .py and .cpp extension file, you need to add some settings to **~/.config/pcm/config.toml**
 
 This is just my own wrapper of [kmyk/online-judge-tools](https://github.com/kmyk/online-judge-tools).  
 
@@ -57,18 +59,17 @@ pcm tt <filename>          # test filename for all sample cases. <filename> (lik
 
 # test your code with randomly genarated cases. (checking your code in contest with your naive code, finding errors after contest with a AC code, and even Hacks)
 # at first you need to write test/gen.py.
-# if you write naive.cpp or naive.py, exp file will be automatically genarated.
-pcm tt -c gen.py                  # gen.py will make random.in and naive.cpp or naive.py will make random.out with random.in. then test.
-pcm tt -c gen.py --by naive2.cpp  # also you can specify naive code file for generating expected with --by option. this is same for rt command below.
-pcm rt                            # cotinue genarating a case and compare you code result and naive code result until they are different.
-pcm rt -nc                        # --nocompare option: cotinue genarating a case without executing naive code. This is for testing large case (which wll be TLE for a naive code) in terms of TLE, overflow and so on.
+pcm tt -c gen.py                       # gen.py will make random.in and naive.cpp or naive.py will make random.out with random.in. then test.
+pcm tt -c gen.py --by naive.cpp        # you can use naive code file for generating expected file with --by option.
+pcm tt -c gen.py --by naive.cpp --loop # you can continue random test until find a failed test case.
+pcm tt -c gen.py --loop                # you can continue random test until find a failed test case without comparing with naive code. this will stop only when RE, TLE
+pcm tt -c gen.py -b naive.cpp -l       # you can shortcut
 
 # submit your code
 pcm sb solve.py  # submit your code after testing. you can't submit if tests fail.
 # pcm sb         # you can omit filename, then pcm will submit the file you edited last.
 # pcm sb -nt     # wihtout test.
 # pcm sb -l py3  # you can specify language. see /pcm/config.toml for other language you can use.
-
 
 cd ../abc001/B  # continue to next problem..
 .
@@ -168,6 +169,22 @@ template_dir = '~/.config/pcm/template'
 
 [test]
   timeout_sec=2
+
+  [test.compile_command.cpp]  # for tt command, you can change the compile command by --cc option. like 'pcm tt -c 1 --cc fast'
+  default = """
+            g++ {srcpath} -o {outpath} \
+            -std=c++14 \
+            -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG
+            """
+  v9 = """g++-9 {srcpath} -o {outpath} \
+            -std=c++14 \
+            -include /usr/include/x86_64-linux-gnu/c++/9/bits/stdc++.h \
+            -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG -fuse-ld=gold
+            """
+  fast = """
+         g++ {srcpath} -o {outpath}
+         -std=c++14 \
+         """
 ```
 
 ## Contribution

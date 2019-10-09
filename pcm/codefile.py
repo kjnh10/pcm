@@ -12,6 +12,7 @@ class CodeFile(type(Path())):
         self.test_dir = self.prob_dir / 'test'
         self.bin_dir = self.prob_dir / 'bin'
         self.task_alphabet = self.prob_dir.name
+        self.extension = self.path.suffix[1:]  # like 'py', 'cpp'....
 
 
 class RunResult(object):

@@ -376,57 +376,6 @@ def _run_exe(config, exefile: Path, infile: Path = None) -> RunResult: # {{{
 
 # }}}
 
-# random test: rt {{{
-@cli.command()
-@click.argument('code_filename', type=str, default='')
-@click.option('--by', '-b', type=str, default='naive.*')
-@click.option('--generator', '-g', type=str, default='gen.py')
-@click.option('--compare/--nocompare', '-c/-nc', default=True)  # naive codeを実行しない。
-@click.option('--timeout', '-t', type=float, default=-1)
-@pass_config
-def rt(config, code_filename:str, by:str, generator:str, compare:bool, timeout:float):# {{{
-    if (timeout!=-1):
-        config.pref['test']['timeout_sec']=timeout
-    solve_codefile = CodeFile(exclude_filename_pattern=by)
-    naive_codefile = CodeFile(match_filename_pattern=by)
-    test_dir = solve_codefile.test_dir
-
-    case_generator_file = test_dir / generator
-    infile = test_dir / "random.in"
-    expfile = test_dir/"random.out"
-    if expfile.exists(): expfile.unlink()
-
-    while True:
-        subprocess.run(f"python {str(case_generator_file)} > {str(infile)}", shell=True)
-        if compare:
-            run_result = _run_code(naive_codefile, infile)
-            with open(expfile, mode='w') as f:
-                if run_result.TLE_flag:
-                    f.write('TLE for naive code. if you extend timeout time, use -t option like -t 5\n')
-                elif run_result.returncode != 0:
-                    f.write('Some error happens when executing your naive code.\n')
-                else:
-                    f.write(run_result.stdout)
-
-        result = _test_case(solve_codefile, f'random-{code_filename}', infile, expfile)
-        okresult = ['AC', 'TLENAIVE', 'NOEXP']
-        if not (result in okresult):
-            num_to_save = 1
-            L = [f.stem for f in test_dir.glob('random-*.in')]
-            L.sort()
-            if (L):
-                num_to_save = int(L[-1].replace('random-', '').replace('.in', '')) + 1
-
-            shutil.copyfile(infile, test_dir/f'random-{num_to_save}.in')
-            print(f'input of this case saved to random-{num_to_save}.in')
-            if (expfile.exists()):
-                shutil.copyfile(expfile, test_dir/f'random-{num_to_save}.out')
-                print(f'expected of this case saved to random-{num_to_save}.out')
-
-            break
-# }}}
-# }}}
-
 # submit: sb {{{
 @cli.command()
 @click.argument('code_filename', type=str, default="")

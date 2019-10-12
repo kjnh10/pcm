@@ -386,9 +386,12 @@ def _run_exe(config, exefile: Path, infile: Path = None) -> RunResult: # {{{
         res.TLE_flag = True
     else:
         # os.wait4()を使うとTLE時のout,errsが取得できなくなるため、TLEでないと判明した場合にのみMemoryの使用量を取得する。
-        proc_for_check_memory = popen()
-        ru = os.wait4(proc_for_check_memory.pid, 0)[2]
-        res.used_memory = ru.ru_maxrss / (1<<10) # MB unit
+        try:
+            proc_for_check_memory = popen()
+            ru = os.wait4(proc_for_check_memory.pid, 0)[2]  # windowsの場合はerrorになりそう。
+            res.used_memory = ru.ru_maxrss / (1<<10) # MB unit
+        except Exception as e:
+            pass
     res.returncode = proc.returncode
     res.stdout = outs.decode('utf-8')
     res.stderr = errs.decode('utf-8')

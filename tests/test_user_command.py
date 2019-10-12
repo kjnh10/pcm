@@ -63,6 +63,16 @@ def test_tt_TLE():
     assert(len(re.findall('^--TLE.*', proc.stdout.decode('utf-8'), re.MULTILINE))==3)
 
 
+def test_tt_RE():
+    os.chdir(script_path / 'tmp/test_tt/abc001/A/codes')
+    proc = __run_command('pcm tt solve_RE.py')
+    print('---------stdout-------------')
+    print(proc.stdout.decode('utf-8'))
+    print('---------stderr-------------')
+    print(proc.stderr.decode('utf-8'))
+    assert(len(re.findall('^--RE.*', proc.stdout.decode('utf-8'), re.MULTILINE))==3)
+
+
 def test_sb_atcoder():
     os.chdir(script_path / 'tmp/test_sb/abc001/A/codes')
     os.utime('solve.cpp', None)  # update st_mtime for solve.py to be used

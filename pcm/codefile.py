@@ -2,7 +2,7 @@ from pathlib import Path
 from .utils import get_last_modified_file
 
 
-class CodeFile(type(Path())):
+class CodeFile(object):
     def __init__(self, match_filename_pattern=['*.cpp', '*.py'], exclude_filename_pattern=[], search_root: Path = Path('.')):
         if (match_filename_pattern==''):
             match_filename_pattern = ['*.cpp', '*.py']

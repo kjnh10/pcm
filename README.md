@@ -170,7 +170,7 @@ template_dir = '~/.config/pcm/template'
 [test]
   timeout_sec=2
 
-  [test.compile_command.cpp]  # for tt command, you can change the compile command by --cc option. like 'pcm tt -c 1 -cc fast'
+  [test.compile_command.cpp]  # for tt command, you can change the compile command by --compile_config or -cc option. like 'pcm tt -c 1 -cc fast'
   default = """
             g++ {srcpath} -o {outpath} \
             -std=c++14 \

@@ -143,6 +143,10 @@ def tt(config, code_filename:str, compile_command_configname:str, case:str, time
             else:
                 infile = test_dir / f"{case}.in"
                 expfile = test_dir / f"{case}.out"
+                if not infile.exists():
+                    click.secho(f"{infile.name} not found.", fg='yellow')
+                    return 1
+
             _test_case(solve_codefile, case, infile, expfile)
     else:
         # random test

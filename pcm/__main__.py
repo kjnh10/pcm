@@ -232,7 +232,7 @@ def _test_all_case(codefile: CodeFile) -> bool: # {{{
     if (ac_cnt == case_cnt):
         click.secho(f'{ac_cnt}/{case_cnt} cases passed', fg='green')
     else:
-        click.secho(f'{ac_cnt}/{len(files)} cases failed', fg='red')
+        click.secho(f'{ac_cnt}/{case_cnt} cases passed', fg='red')
 
     print('[max exec time]: {:.3f}'.format(max(exec_times)), '[sec]')
     print('[max used memory]: {:.3f}'.format(max(used_memories)), '[MB]')
@@ -277,22 +277,25 @@ def _test_case(codefile: CodeFile, case_name: str, infile: Path, expfile: Path) 
         click.secho(line, fg='yellow')
         if re.search('runtime error', line):
             click.secho('--RE--\n', fg='red')
-            return 'RE'
+            run_result.judge = 'RE'
+            return run_result
 
     # compare result and expected
     if run_result.TLE_flag:
         click.secho('--TLE--\n', fg='red')
-        return "TLE"
+        run_result.judge = 'TLE'
+        return run_result
 
     if run_result.returncode != 0:
         SIGMAP = dict(
             (int(k), v) for v, k in reversed(sorted(signal.__dict__.items()))
             if v.startswith('SIG') and not v.startswith('SIG_')
         )
-        click.secho(f'RE', fg='red')
+        click.secho(f'--RE--', fg='red')
         click.secho(f':{SIGMAP[abs(run_result.returncode)]}' if abs(run_result.returncode) in SIGMAP.keys() else str(abs(run_result.returncode)), fg='red')
         print('\n')
-        return 'RE'
+        run_result.judge = 'RE'
+        return run_result
 
     # 最後の空白行は無視する。
     if (stdout[-1]==''): stdout.pop()

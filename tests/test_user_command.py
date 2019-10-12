@@ -53,6 +53,16 @@ def test_tt_python():
     assert(len(re.findall('^--WA.*', proc.stdout.decode('utf-8'), re.MULTILINE))==2)
 
 
+def test_tt_TLE():
+    os.chdir(script_path / 'tmp/test_tt/abc001/A/codes')
+    proc = __run_command('pcm tt solve_TLE.py')
+    print('---------stdout-------------')
+    print(proc.stdout.decode('utf-8'))
+    print('---------stderr-------------')
+    print(proc.stderr.decode('utf-8'))
+    assert(len(re.findall('^--TLE.*', proc.stdout.decode('utf-8'), re.MULTILINE))==3)
+
+
 def test_sb_atcoder():
     os.chdir(script_path / 'tmp/test_sb/abc001/A/codes')
     os.utime('solve.cpp', None)  # update st_mtime for solve.py to be used
@@ -93,4 +103,4 @@ def __is_same_dir(A, B):
 
 
 if __name__ == "__main__":
-    test_sb_atcoder()
+    test_tt_TLE()

@@ -29,4 +29,5 @@ class RunResult(object):
         self.stderr = ""
         self.TLE_flag = None
         self.exec_time = -1
+        self.used_memory = -1
         self.judge = "yet"  # set by 'pcm tt'

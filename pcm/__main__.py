@@ -214,6 +214,7 @@ def _test_all_case(codefile: CodeFile) -> bool: # {{{
     case_cnt = 0
     ac_cnt = 0
     exec_times = []
+    used_memories = []
     for filename in files:
         if not fnmatch.fnmatch(filename, '*.in'):
             continue
@@ -223,6 +224,7 @@ def _test_all_case(codefile: CodeFile) -> bool: # {{{
         case_cnt += 1
         run_result = _test_case(codefile, case, infile, expfile)
         exec_times.append(run_result.exec_time)
+        used_memories.append(run_result.used_memory)
         if run_result.judge == 'AC':
             ac_cnt += 1
         else:
@@ -232,7 +234,8 @@ def _test_all_case(codefile: CodeFile) -> bool: # {{{
     else:
         click.secho(f'{ac_cnt}/{len(files)} cases failed', fg='red')
 
-    print('[max exec time]: {:.3f}'.format(max(exec_times)))
+    print('[max exec time]: {:.3f}'.format(max(exec_times)), '[sec]')
+    print('[max used memory]: {:.3f}'.format(max(used_memories)), '[MB]')
     return res
 # }}}
 
@@ -241,6 +244,7 @@ def _test_case(codefile: CodeFile, case_name: str, infile: Path, expfile: Path) 
     click.secho('-'*10 + case_name + '-'*10, fg='blue')
     run_result = _run_code(codefile, infile)
     print(f"exec time: {run_result.exec_time} [sec]")
+    print(f"memory usage: {run_result.used_memory} [MB]")
 
     # print input
     with open(infile, 'r') as f:
@@ -359,13 +363,17 @@ def _run_exe(config, exefile: Path, infile: Path = None) -> RunResult: # {{{
         command.append('python')
     command.append(str(exefile))
     command.append('pcm') # tell the sctipt that pcm is calling
-    proc = subprocess.Popen(
-        command,
-        stdin=open(infile, "r") if infile else None,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        # shell=True,  # for windows
-    )
+
+    def popen():
+        return subprocess.Popen(
+            command,
+            stdin=open(infile, "r") if infile else None,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            # shell=True,  # for windows
+        )
+    proc = popen()
+
     try:
         start = time.time()
         outs, errs = proc.communicate(timeout=config.pref['test']['timeout_sec'])
@@ -376,6 +384,11 @@ def _run_exe(config, exefile: Path, infile: Path = None) -> RunResult: # {{{
         outs, errs = proc.communicate()
         res.exe_time = float('inf')
         res.TLE_flag = True
+    else:
+        # os.wait4()を使うとTLE時のout,errsが取得できなくなるため、TLEでないと判明した場合にのみMemoryの使用量を取得する。
+        proc_for_check_memory = popen()
+        ru = os.wait4(proc_for_check_memory.pid, 0)[2]
+        res.used_memory = ru.ru_maxrss / (1<<10) # MB unit
     res.returncode = proc.returncode
     res.stdout = outs.decode('utf-8')
     res.stderr = errs.decode('utf-8')

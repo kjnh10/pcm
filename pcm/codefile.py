@@ -8,9 +8,16 @@ class CodeFile(object):
             match_filename_pattern = ['*.cpp', '*.py']
         self.path = get_last_modified_file(match_filename_pattern, exclude_filename_pattern, search_root)
         self.code_dir = self.path.parent
-        self.prob_dir = self.code_dir.parent
-        self.test_dir = self.prob_dir / 'test'
-        self.bin_dir = self.prob_dir / 'bin'
+
+        if (self.code_dir/'test').exists():  # online-judge-tools style
+            self.prob_dir = self.code_dir
+            self.test_dir = self.code_dir / 'test'
+            self.bin_dir = self.code_dir / 'bin'
+        else:  # default template style
+            self.prob_dir = self.code_dir.parent
+            self.test_dir = self.prob_dir / 'test'
+            self.bin_dir = self.prob_dir / 'bin'
+
         self.task_alphabet = self.prob_dir.name
         self.extension = self.path.suffix[1:]  # like 'py', 'cpp'....
 

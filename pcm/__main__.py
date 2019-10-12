@@ -105,7 +105,10 @@ def ppp(config, task_url, prob_name, force):
     os.chdir(prob_name)
     if task_url != '':
         shutil.rmtree('./test')
-        oj(['download', task_url]) # get test cases
+        if 'hackerrank' not in task_url:
+            oj(['download', task_url]) # get test cases
+        else:
+            oj(['download', task_url, '--system'])
 
 @pass_config
 def _prepare_problem(config, prob_name):

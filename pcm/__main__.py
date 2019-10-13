@@ -221,6 +221,11 @@ def _test_all_case(codefile: CodeFile) -> bool: # {{{
         case = filename[:-3]
         infile = codefile.test_dir / f"{case}.in"
         expfile = codefile.test_dir / f"{case}.out"  # 拡張子をexpにしたいが。。
+
+        with open(infile, mode='r') as f:
+            if (f.readline()==''):  # infileが空の場合は無視。個別のテストケースでは実行したい場合もあるのでこちらにのみチェックをいれる。
+                continue
+
         case_cnt += 1
         run_result = _test_case(codefile, case, infile, expfile)
         exec_times.append(run_result.exec_time)

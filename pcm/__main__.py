@@ -239,7 +239,8 @@ def _test_all_case(codefile: CodeFile) -> bool: # {{{
     return res
 # }}}
 
-def _test_case(codefile: CodeFile, case_name: str, infile: Path, expfile: Path) -> RunResult: # {{{
+@pass_config
+def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile: Path) -> RunResult: # {{{
     # run program
     click.secho('-'*10 + case_name + '-'*10, fg='blue')
     run_result = _run_code(codefile, infile)
@@ -295,6 +296,11 @@ def _test_case(codefile: CodeFile, case_name: str, infile: Path, expfile: Path) 
         click.secho(f':{SIGMAP[abs(run_result.returncode)]}' if abs(run_result.returncode) in SIGMAP.keys() else str(abs(run_result.returncode)), fg='red')
         print('\n')
         run_result.judge = 'RE'
+        return run_result
+    
+    if run_result.used_memory > config.pref['test']['max_memory']:
+        click.secho('--MLE--\n', fg='red')
+        run_result.judge = 'MLE'
         return run_result
 
     # 最後の空白行は無視する。

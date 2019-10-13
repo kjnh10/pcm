@@ -1,6 +1,5 @@
 // http://www.creativ.xyz/dump-cpp-652
 using namespace std;
-#include <iostream>
 #include <bits/stdc++.h>
 
 #define DUMPOUT cerr // where to dump. cout or cerr

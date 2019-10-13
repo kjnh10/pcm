@@ -116,6 +116,8 @@ def __is_same_dir(A, B):
         if p.is_file():
             B_files.add(str(p.relative_to(B)))
 
+    print(A_files - B_files)
+    print(B_files - A_files)
     if (A_files==B_files):
         return True
     else:
@@ -123,4 +125,4 @@ def __is_same_dir(A, B):
 
 
 if __name__ == "__main__":
-    test_tt_TLE()
+    test_pp()

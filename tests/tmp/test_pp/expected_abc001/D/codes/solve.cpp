@@ -1,6 +1,5 @@
 // template version 1.12
 using namespace std;
-#include <iostream>
 #include <bits/stdc++.h>
 
 // varibable settings

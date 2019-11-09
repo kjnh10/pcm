@@ -127,15 +127,15 @@ def compile(config, code_filename, compile_command_configname):
 #}}}
 
 @pass_config
-def _compile(config, codefile) -> Path: # {{{
+def _compile(config, codefile, force=False) -> Path: # {{{
     click.secho('compile start.....', blink=True)
-    exefile = codefile.bin_dir / f'{codefile.path.name}.out'
+    cnfname = config.pref['test']['compile_command']['configname']
+    exefile = codefile.bin_dir / f'{codefile.path.name}_{cnfname}.out'
     exefile.parent.mkdir(exist_ok=True)
-    if (exefile.exists() and codefile.path.stat().st_mtime <= exefile.stat().st_mtime):
+    if (not force) and (exefile.exists() and codefile.path.stat().st_mtime <= exefile.stat().st_mtime):
         click.secho(f'compile skipped since {codefile.path} is older than {exefile.name}')
     else:
         start = time.time()
-        cnfname = config.pref['test']['compile_command']['configname']
         command = config.pref['test']['compile_command'][codefile.extension][cnfname].format(srcpath=str(codefile.path), outpath=str(exefile)).split()
         proc = subprocess.Popen(
                 command,

@@ -28,12 +28,27 @@ template_dir = '~/.config/pcm/template'
   max_memory=256
 
   [test.compile_command.cpp]  # for tt command, you can change the compile command by --cc option. like 'pcm tt -c 1 --cc v5'
-  default = """
-            g++ {srcpath} -o {outpath} \
+  default = """g++ {srcpath} -o {outpath} \
             -std=c++14 \
-            -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG
+            -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG -fuse-ld=gold
             """
-  fast = """
-         g++ {srcpath} -o {outpath}
-         -std=c++14 \
-         """
+
+  vsdebug = """g++ {srcpath} -o {outpath} \
+            -std=c++14 \
+            -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG -fuse-ld=gold \
+            -g
+            """
+
+  v5 = """g++ {srcpath} -o {outpath} \
+          -std=c++14 \
+          -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG
+          """
+
+  fast = """g++ {srcpath} -o {outpath} \
+          -std=c++14 \
+          """
+
+  clang = """clang++ {srcpath} -o {outpath} \
+          -stdlib=libc++ \
+          -DPCM -Wall
+          """

@@ -21,7 +21,7 @@ const int MOD=1e9+7; //}}}
 #define sz(x) ((int)(x).size())
 #define pb(a) push_back(a)
 #define mp(a, b) make_pair(a, b)
-#define mt(a, b, c) make_pair(a, b, c)
+#define mt(a, b, c) make_tuple(a, b, c)
 #define ceil(a,b) ((a)+(b)-1)/(b)
 #define is_in(x, a, b) ((a)<=(x) && (x)<(b))
 #define uni(x) sort(all(x));x.erase(unique(all(x)),x.end())

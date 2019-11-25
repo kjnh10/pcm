@@ -1,12 +1,11 @@
-// template version 1.13
+// template version 1.14
 using namespace std;
 #include <bits/stdc++.h>
 
 // varibable settings
-#define infile "../test/sample-1.in"
-#define int long long //{{{
+#define int long long
 const int INF=1e18;
-const int MOD=1e9+7; //}}}
+const int MOD=1e9+7;
 
 // define basic macro {{{
 #define _overload3(_1,_2,_3,name,...) name
@@ -51,15 +50,6 @@ struct Fast { Fast(){ std::cin.tie(0); ios::sync_with_stdio(false); } } fast;
 #endif
 //}}}
 
-int solve(){
+signed main() {
   return 0;
 }
-
-signed main() { //{{{
-#ifdef INPUT_FROM_FILE
-  std::ifstream in(infile);
-  std::cin.rdbuf(in.rdbuf());
-#endif
-  solve();
-  return 0;
-} //}}}

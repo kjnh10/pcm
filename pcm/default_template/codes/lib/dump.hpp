@@ -28,6 +28,7 @@ namespace dump_macro{
       res.push_back(tmp); \
       return res; \
     }(#__VA_ARGS__); \
+    dump_macro::varidx = 0; \
     dump_func(__VA_ARGS__); DUMPOUT<<"in ["<<__LINE__<<":"<<__FUNCTION__<<"]"<<endl;  \
   }
 

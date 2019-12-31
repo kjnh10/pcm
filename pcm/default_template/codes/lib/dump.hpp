@@ -4,10 +4,30 @@ using namespace std;
 
 #define DUMPOUT cerr // where to dump. cout or cerr
 
+namespace dump_macro{
+  vector<string> varnames;
+  int varidx;
+}
+
 #define dump(...)  \
   {  \
-    DUMPOUT<<#__VA_ARGS__; \
-    DUMPOUT<<": "; \
+      dump_macro::varnames = [](string s) -> vector<string> { \
+      int n = s.size(); \
+      vector<string> res; \
+      string tmp = ""; \
+      for(int i=0; i<n; i++){ \
+        if (s[i]==' ') continue; \
+        if (s[i]==','){ \
+          res.push_back(tmp); \
+          tmp = ""; \
+        } \
+        else{ \
+          tmp += s[i]; \
+        } \
+      } \
+      res.push_back(tmp); \
+      return res; \
+    }(#__VA_ARGS__); \
     dump_func(__VA_ARGS__); DUMPOUT<<"in ["<<__LINE__<<":"<<__FUNCTION__<<"]"<<endl;  \
   }
 
@@ -31,13 +51,14 @@ void dump_func() {
 template <class Head, class... Tail>
 void dump_func(Head&& head, Tail&&... tail)
 {
-    DUMPOUT << head;
+    DUMPOUT << dump_macro::varnames[dump_macro::varidx] << ":" << head;
     if (sizeof...(Tail) == 0) {
         DUMPOUT << " ";
     }
     else {
         DUMPOUT << ", ";
     }
+    ++dump_macro::varidx;
     dump_func(std::move(tail)...);
 }
 

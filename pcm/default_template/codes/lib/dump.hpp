@@ -15,7 +15,10 @@ namespace dump_macro{
       int n = s.size(); \
       vector<string> res; \
       string tmp = ""; \
+      int parlevel = 0; \
       for(int i=0; i<n; i++){ \
+        if (s[i]=='(') parlevel++; \
+        if (s[i]==')') parlevel--; \
         if (s[i]==' ') continue; \
         if (s[i]==','){ \
           res.push_back(tmp); \

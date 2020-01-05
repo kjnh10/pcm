@@ -10,6 +10,7 @@ import signal
 import toml
 import time
 import re
+import tempfile
 from typing import TYPE_CHECKING, List, Optional, Type
 from bs4 import BeautifulSoup
 from onlinejudge._implementation.main import main as oj
@@ -175,7 +176,11 @@ def tt(config, code_filename:str, compile_command_configname:str, case:str, time
         if case == '':  # test all case
             _test_all_case(solve_codefile)
         else:
-            if case in set(map(str, range(1, 101))):
+            if case == 'dry':  # execute code when there is no test case file
+                tmpfileobject = tempfile.NamedTemporaryFile()
+                infile = Path(tmpfileobject.name)
+                expfile = Path(tmpfileobject.name)
+            elif case in set(map(str, range(1, 101))):
                 case = f'sample-{case}'
                 infile = test_dir / f"{case}.in"
                 expfile = test_dir / f"{case}.out"

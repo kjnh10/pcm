@@ -236,16 +236,16 @@ def tt(config, code_filename:str, compile_command_configname:str, case:str, time
             if not (run_result.judge in okresult):
                 if by or loop:  # compareもloopも行わない場合は単に生成して試したいだけの場合が多いので保存しない。
                     num_to_save = 1
-                    L = [f.stem for f in test_dir.glob('random-*.in')]
+                    L = [f.stem for f in test_dir.glob('r*.in')]
                     L.sort()
                     if (L):
-                        num_to_save = int(L[-1].replace('random-', '').replace('.in', '')) + 1
+                        num_to_save = int(L[-1].replace('r', '').replace('.in', '')) + 1
 
-                    shutil.copyfile(infile, test_dir/f'random-{num_to_save}.in')
-                    print(f'input of this case saved to random-{num_to_save}.in')
+                    shutil.copyfile(infile, test_dir/f'r{num_to_save}.in')
+                    print(f'input of this case saved to r{num_to_save}.in')
                     if (expfile.exists()):
-                        shutil.copyfile(expfile, test_dir/f'random-{num_to_save}.out')
-                        print(f'expected of this case saved to random-{num_to_save}.out')
+                        shutil.copyfile(expfile, test_dir/f'r{num_to_save}.out')
+                        print(f'expected of this case saved to r{num_to_save}.out')
                 return 1
 
             if (not loop): return 0

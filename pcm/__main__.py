@@ -214,11 +214,11 @@ def tt(config, code_filename:str, compile_command_configname:str, case:str, time
                 print(gen_result.stderr)
                 return
 
-            with open(test_dir/'random.in', mode='w') as f:
+            with open(test_dir/'r.in', mode='w') as f:
                 f.write(gen_result.stdout)
 
-            infile = test_dir / f"random.in"
-            expfile = test_dir / f"random.out"
+            infile = test_dir / f"r.in"
+            expfile = test_dir / f"r.out"
             if expfile.exists(): expfile.unlink()
 
             if by:
@@ -239,7 +239,8 @@ def tt(config, code_filename:str, compile_command_configname:str, case:str, time
                     L = [f.stem for f in test_dir.glob('r*.in')]
                     L.sort()
                     if (L):
-                        num_to_save = int(L[-1].replace('r', '').replace('.in', '')) + 1
+                        last_num = L[-1].replace('r', '').replace('.in', '')
+                        num_to_save = (0 if last_num == "" else int(last_num)) + 1
 
                     shutil.copyfile(infile, test_dir/f'r{num_to_save}.in')
                     print(f'input of this case saved to r{num_to_save}.in')

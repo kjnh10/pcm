@@ -46,6 +46,7 @@ struct Fast { Fast(){ std::cin.tie(0); ios::sync_with_stdio(false); } } fast;
   #define dump(...) 42
   #define dump_1d(...) 42
   #define dump_2d(...) 42
+  #define cerrendl 42
 #endif
 //}}}
 

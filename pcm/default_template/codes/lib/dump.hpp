@@ -9,6 +9,8 @@ namespace dump_macro{
   int varidx;
 }
 
+#define cerrendl cerr << endl
+
 #define dump(...)  \
   {  \
       dump_macro::varnames = [](string s) -> vector<string> { \

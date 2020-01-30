@@ -6,7 +6,7 @@
         {
             "label": "build",
             "type": "shell",
-            "command": "g++ -std=c++14 -g codes/${fileBasename} -DINPUT_FROM_FILE -DLOCAL -o bin/${fileBasenameNoExtension}",
+            "command": "pcm compile codes/${fileBasename} -cc vsdebug",
             "group": {
                 "kind": "build",
                 "isDefault": true

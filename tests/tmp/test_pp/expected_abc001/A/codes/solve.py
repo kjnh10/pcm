@@ -37,29 +37,10 @@ def DP3(N, M, L, first): return [[[first] * L for n in range(M)] for _ in range(
 from inspect import currentframe
 # }}}
 
-def local_input():# {{{
-    from pcm.utils import set_stdin
-    import sys
-    from pathlib import Path
-    parentdir = Path(os.path.dirname(__file__)).parent
-    inputfile = parentdir.joinpath('test/sample-1.in')
-    if len(sys.argv) == 1:
-        set_stdin(inputfile)
-# }}}
-
 def solve():
     return 0
 
 if __name__ == "__main__":# {{{
-    try:
-        local_input()
-        def dump(*args):
-            names = {id(v):k for k,v in currentframe().f_back.f_locals.items()}
-            print(', '.join(names.get(id(arg),'???')+' => '+repr(arg) for arg in args), file=sys.stderr)
-    except:
-        def dump(*args):
-            pass
-
     solve()
 
-# vim: set foldmethod=marker:}}}
+# vim: set foldmethod=marker: }}}

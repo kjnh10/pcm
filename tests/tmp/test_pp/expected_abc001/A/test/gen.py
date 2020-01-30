@@ -43,5 +43,5 @@ def pl(x: List):
 # N = randint(1, 100000)
 # K = randint(1, 100000)
 # print(N, K)
-# print(randperm(5))
-# print(randseq(10, 1, 100, True))
+# pl(randperm(5))
+# pl(randseq(10, 1, 100, True))

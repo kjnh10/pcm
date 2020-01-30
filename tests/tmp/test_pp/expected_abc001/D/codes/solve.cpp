@@ -1,12 +1,10 @@
-// template version 1.12
+// template version 1.15
 using namespace std;
 #include <bits/stdc++.h>
 
 // varibable settings
-#define infile "../test/sample-1.in"
-#define int long long //{{{
+#define int long long
 const int INF=1e18;
-const int MOD=1e9+7; //}}}
 
 // define basic macro {{{
 #define _overload3(_1,_2,_3,name,...) name
@@ -21,7 +19,9 @@ const int MOD=1e9+7; //}}}
 #define sz(x) ((int)(x).size())
 #define pb(a) push_back(a)
 #define mp(a, b) make_pair(a, b)
-#define ceil(a,b) ((a)+(b)-1)/(b)
+#define mt(a, b, c) make_tuple(a, b, c)
+#define divceil(a,b) ((a)+(b)-1)/(b)
+#define is_in(x, a, b) ((a)<=(x) && (x)<(b))
 #define uni(x) sort(all(x));x.erase(unique(all(x)),x.end())
 #define ub upper_bound
 #define lb lower_bound
@@ -46,18 +46,10 @@ struct Fast { Fast(){ std::cin.tie(0); ios::sync_with_stdio(false); } } fast;
   #define dump(...) 42
   #define dump_1d(...) 42
   #define dump_2d(...) 42
+  #define cerrendl 42
 #endif
 //}}}
 
-int solve(){
+signed main() {
   return 0;
 }
-
-signed main() { //{{{
-#ifdef INPUT_FROM_FILE
-  std::ifstream in(infile);
-  std::cin.rdbuf(in.rdbuf());
-#endif
-  solve();
-  return 0;
-} //}}}

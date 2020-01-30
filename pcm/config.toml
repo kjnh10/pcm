@@ -33,7 +33,7 @@ template_dir = '~/.config/pcm/template'
             -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG -fuse-ld=gold
             """
 
-  vsdebug = """g++ {srcpath} -o {outpath} \
+  debug = """g++ {srcpath} -o {outpath} \
             -std=c++14 \
             -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG -fuse-ld=gold \
             -g

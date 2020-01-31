@@ -12,6 +12,7 @@ import toml
 import time
 import re
 import tempfile
+from colorama import init, Fore, Back, Style
 from typing import TYPE_CHECKING, List, Optional, Type
 from bs4 import BeautifulSoup
 from onlinejudge._implementation.main import main as oj
@@ -435,13 +436,14 @@ def _run_exe(config, exefile: Path, infile: Path = None) -> RunResult: # {{{
 
 # }}}
 
+# debug: db {{{
 @cli.command()
 @click.argument('code_filename', type=str, default='')
 @click.option('--compile_command_configname', '-cc', type=str, default='debug')
 @click.option('--case', '-c', type=str, default='')
 @click.option('--timeout', '-t', type=float, default=-1)
 @pass_config
-def db(config, code_filename: str, compile_command_configname: str, case: str, timeout: float):  # {{{
+def db(config, code_filename: str, compile_command_configname: str, case: str, timeout: float):  
     if (timeout != -1):
         config.pref['test']['timeout_sec'] = timeout
     config.pref['test']['compile_command']['configname'] = compile_command_configname
@@ -480,16 +482,36 @@ def db(config, code_filename: str, compile_command_configname: str, case: str, t
     with open(tmp_run_script_path, mode='w') as f:
         contents = f"""
         import gdb
+        import re
         gdb.execute('file {exefile.absolute()}')
         o = gdb.execute('run < {infile.absolute()}', to_string=True)
         print(o)
-        bt = gdb.execute('bt', to_string=True)
-        print(bt)
+
+        try:
+            bt = gdb.execute('bt', to_string=True)
+            print('----------back trace-------------------')
+            print(bt)
+        except Exception as e:
+            print("No stack")
+
         gdb.execute('quit')
         """
         f.write(textwrap.dedent(contents))
 
-    subprocess.run(f'gdb -x {tmp_run_script_path}', shell=True)
+    proc = subprocess.run(['gdb', '-x', tmp_run_script_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    print('----------------------stdout------------------------------------')
+    stdout = proc.stdout.decode('utf8')
+    stdout = stdout.replace(str(solve_codefile.path.parent), '')
+    start = False
+    for line in stdout.split('\n'):
+        if start: print(re.sub(f'({solve_codefile.path.name}:\d*)', Fore.YELLOW + r'\1' + Style.RESET_ALL, line))
+        if re.match(r'Type .* to search for commands related to .*.', line): start = True
+
+    print('----------------------stderr------------------------------------')
+    print(re.sub(f'({solve_codefile.path.name}:\d*)', Fore.YELLOW + r'\1' + Style.RESET_ALL, proc.stderr.decode('utf8')))
+    
+# }}} 
 
 # submit: sb {{{
 @cli.command()

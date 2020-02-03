@@ -13,7 +13,7 @@ namespace dump_macro{
 
 #define dump(...)  \
   {  \
-      dump_macro::varnames = [](string s) -> vector<string> { \
+    dump_macro::varnames = [](string s) -> vector<string> { \
       int n = s.size(); \
       vector<string> res; \
       string tmp = ""; \
@@ -22,7 +22,7 @@ namespace dump_macro{
         if (s[i]=='(') parlevel++; \
         if (s[i]==')') parlevel--; \
         if (s[i]==' ') continue; \
-        if (s[i]==','){ \
+        if (s[i]==',' && parlevel==0){ \
           res.push_back(tmp); \
           tmp = ""; \
         } \

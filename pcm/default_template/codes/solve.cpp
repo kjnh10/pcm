@@ -20,15 +20,17 @@ const int INF=1e18;
 #define pb(a) push_back(a)
 #define mp(a, b) make_pair(a, b)
 #define mt(a, b, c) make_tuple(a, b, c)
-#define divceil(a,b) ((a)+(b)-1)/(b)
-#define is_in(x, a, b) ((a)<=(x) && (x)<(b))
-#define uni(x) sort(all(x));x.erase(unique(all(x)),x.end())
 #define ub upper_bound
 #define lb lower_bound
 #define posl(A, x) (lower_bound(all(A), x)-A.begin())
 #define posu(A, x) (upper_bound(all(A),x)-A.begin())
 template<class T> inline void chmax(T &a, const T &b) { if((a) < (b)) (a) = (b); }
 template<class T> inline void chmin(T &a, const T &b) { if((a) > (b)) (a) = (b); }
+
+#define divceil(a,b) ((a)+(b)-1)/(b)
+#define is_in(x, a, b) ((a)<=(x) && (x)<(b))
+#define uni(x) sort(all(x));x.erase(unique(all(x)),x.end())
+#define slice(l, r) substr(l, r-l)
 
 typedef long long ll;
 typedef vector<int> vi;

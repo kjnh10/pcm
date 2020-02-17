@@ -80,6 +80,13 @@ def init(config):
 def pp(config, contest_identifier, work_dir_name, force):
     contest = Contest(contest_identifier, work_dir=work_dir_name)
     contest.prepare(force)
+    try:
+        cstr = config.pref['prepare']['custom_hook_command']['after'].format(dirname=str(contest.work_dir))
+        print(cstr)
+        subprocess.run(cstr, shell=True)
+    except Exception as e:
+        if config.verbose:
+            print(e)
 # }}}
 
 # prepare problem: ppp {{{

@@ -1,5 +1,9 @@
 template_dir = '~/.config/pcm/template'
 
+[prepare]
+  [prepare.custom_hook_command]
+  # after = 'nvim {dirname} -c "args **/solve.cpp" -c "tab all" -c ""'
+
 [submit]
   [submit.default_lang.atcoder]
   cpp = '3003' # C++14 (GCC 5.4.1)
@@ -33,7 +37,7 @@ template_dir = '~/.config/pcm/template'
             -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG -fuse-ld=gold
             """
 
-  vsdebug = """g++ {srcpath} -o {outpath} \
+  debug = """g++ {srcpath} -o {outpath} \
             -std=c++14 \
             -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG -fuse-ld=gold \
             -g

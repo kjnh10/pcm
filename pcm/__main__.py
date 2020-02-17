@@ -7,10 +7,12 @@ import fnmatch
 import pickle
 import subprocess
 import signal
+import textwrap
 import toml
 import time
 import re
 import tempfile
+from colorama import init, Fore, Back, Style
 from typing import TYPE_CHECKING, List, Optional, Type
 from bs4 import BeautifulSoup
 from onlinejudge._implementation.main import main as oj
@@ -78,6 +80,13 @@ def init(config):
 def pp(config, contest_identifier, work_dir_name, force):
     contest = Contest(contest_identifier, work_dir=work_dir_name)
     contest.prepare(force)
+    try:
+        cstr = config.pref['prepare']['custom_hook_command']['after'].format(dirname=str(contest.work_dir))
+        print(cstr)
+        subprocess.run(cstr, shell=True)
+    except Exception as e:
+        if config.verbose:
+            print(e)
 # }}}
 
 # prepare problem: ppp {{{
@@ -128,7 +137,7 @@ def compile(config, code_filename, compile_command_configname):
 #}}}
 
 @pass_config
-def _compile(config, codefile, force=False) -> Path: # {{{
+def _compile(config, codefile, force=False) -> Path:  # {{{
     click.secho('compile start.....', blink=True)
     cnfname = config.pref['test']['compile_command']['configname']
     exefile = codefile.bin_dir / f'{codefile.path.name}_{cnfname}.out'
@@ -163,9 +172,8 @@ def _compile(config, codefile, force=False) -> Path: # {{{
 @click.option('--timeout', '-t', type=float, default=-1)
 @click.option('--by', '-b', type=str, default=None)
 @click.option('--loop/--noloop', '-l/-nl', default=False)
-# @click.option('--save', '-s', type=bool, default=False, help='save randomly generated input and output with number. this option is valid only when -c *.py')
 @pass_config
-def tt(config, code_filename:str, compile_command_configname:str, case:str, timeout:float, by:str, loop:bool): # {{{
+def tt(config, code_filename: str, compile_command_configname: str, case: str, timeout: float, by: str, loop: bool):  # {{{
     if (timeout != -1):
         config.pref['test']['timeout_sec'] = timeout
     config.pref['test']['compile_command']['configname'] = compile_command_configname
@@ -434,6 +442,83 @@ def _run_exe(config, exefile: Path, infile: Path = None) -> RunResult: # {{{
     return res # }}}
 
 # }}}
+
+# debug: db {{{
+@cli.command()
+@click.argument('code_filename', type=str, default='')
+@click.option('--compile_command_configname', '-cc', type=str, default='debug')
+@click.option('--case', '-c', type=str, default='')
+@click.option('--timeout', '-t', type=float, default=-1)
+@pass_config
+def db(config, code_filename: str, compile_command_configname: str, case: str, timeout: float):  
+    if (timeout != -1):
+        config.pref['test']['timeout_sec'] = timeout
+    config.pref['test']['compile_command']['configname'] = compile_command_configname
+
+    solve_codefile = CodeFile(code_filename)
+    if solve_codefile.extension != 'cpp':
+        click.secho('db command is only for c++.')
+        exit()
+    exefile = _compile(solve_codefile)
+
+    test_dir = solve_codefile.test_dir
+    if case == '':  # test all case
+        click.secho('need to specify --case <casename>', fg='yellow')
+        exit()
+
+    if case == 'dry':  # execute code when there is no test case file
+        tmpfileobject = tempfile.NamedTemporaryFile()
+        infile = Path(tmpfileobject.name)
+        expfile = Path(tmpfileobject.name)
+    elif case in set(map(str, range(1, 101))):
+        case = f'sample-{case}'
+        infile = test_dir / f"{case}.in"
+        expfile = test_dir / f"{case}.out"
+        if (not infile.exists()):
+            click.secho(f"{infile.name} not found.", fg='yellow')
+            return 1
+    else:
+        infile = test_dir / f"{case}.in"
+        expfile = test_dir / f"{case}.out"
+        if not infile.exists():
+            click.secho(f"{infile.name} not found.", fg='yellow')
+            return 1
+
+    tmp_run_script_path = Path(f'{script_path}/tmp/run_gdb.py')
+    tmp_run_script_path.parent.mkdir(exist_ok=True)
+    with open(tmp_run_script_path, mode='w') as f:
+        contents = f"""
+        import gdb
+        import re
+        gdb.execute('file {exefile.absolute()}')
+        o = gdb.execute('run < {infile.absolute()}', to_string=True)
+        print(o)
+
+        try:
+            bt = gdb.execute('bt', to_string=True)
+            print('----------back trace-------------------')
+            print(bt)
+        except Exception as e:
+            print("No stack")
+
+        gdb.execute('quit')
+        """
+        f.write(textwrap.dedent(contents))
+
+    proc = subprocess.run(['gdb', '-x', tmp_run_script_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    print('----------------------stdout------------------------------------')
+    stdout = proc.stdout.decode('utf8')
+    stdout = stdout.replace(str(solve_codefile.path.parent), '')
+    start = False
+    for line in stdout.split('\n'):
+        if start: print(re.sub(f'({solve_codefile.path.name}:\d*)', Fore.YELLOW + r'\1' + Style.RESET_ALL, line))
+        if re.match(r'Type .* to search for commands related to .*.', line): start = True
+
+    print('----------------------stderr------------------------------------')
+    print(re.sub(f'({solve_codefile.path.name}:\d*)', Fore.YELLOW + r'\1' + Style.RESET_ALL, proc.stderr.decode('utf8')))
+    
+# }}} 
 
 # submit: sb {{{
 @cli.command()

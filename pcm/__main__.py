@@ -120,6 +120,14 @@ def ppp(config, task_url, prob_name, force):
         else:
             oj(['download', task_url, '--system'])
 
+    try:
+        cstr = config.pref['ppp']['custom_hook_command']['after'].format(dirname=prob_name)
+        print(cstr)
+        subprocess.run(cstr, shell=True)
+    except Exception as e:
+        if config.verbose:
+            print(e)
+
 @pass_config
 def _prepare_problem(config, prob_name):
     shutil.copytree(config.pref['template_dir'], f'{prob_name}/')

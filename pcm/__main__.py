@@ -106,7 +106,7 @@ def ppp(config, task_url, prob_name, force):
 
     if Path(prob_name).exists():
         if force:
-            Path(prob_name).rmdir()
+            shutil.rmtree(Path(prob_name))
         else:
             print(f'{prob_name} directory already exists')
             return

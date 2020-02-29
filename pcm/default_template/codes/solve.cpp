@@ -43,15 +43,15 @@ template<typename T> using PQ = priority_queue<T, vector<T>, greater<T>>;
 struct Fast { Fast(){ std::cin.tie(0); ios::sync_with_stdio(false); } } fast;
 
 #if defined(PCM) || defined(LOCAL)
-  #include "lib/dump.hpp"
+    #include "lib/dump.hpp"
 #else
-  #define dump(...) 42
-  #define dump_1d(...) 42
-  #define dump_2d(...) 42
-  #define cerrendl 42
+    #define dump(...) 42
+    #define dump_1d(...) 42
+    #define dump_2d(...) 42
+    #define cerrendl 42
 #endif
 //}}}
 
 signed main() {
-  return 0;
+    return 0;
 }

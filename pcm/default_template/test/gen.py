@@ -1,6 +1,12 @@
 from random import randint, choice, sample, choices
 from typing import TYPE_CHECKING, List, Optional, Type
 import string
+import math
+# print(choice(a))  # 1つ選択
+# print(sample(a, k=2))  # 非復元抽出
+# print(sample(a, k=len(L)))  # random permutation
+# print(choices(a, k=2))  # 復元抽出
+
 class UnionFind():
     def __init__(self, n):
         self.n = n
@@ -48,12 +54,6 @@ class UnionFind():
     def __str__(self):
         return '\n'.join('{}: {}'.format(r, self.members(r)) for r in self.roots())
 
-a = [3, 5, 7, 9]
-# print(randint(1, 100))  # # [1, 100]
-# print(choice(a))  # 1つ選択
-# print(sample(a, k=2))  # 非復元抽出
-# print(sample(a, k=len(L)))  # random permutation
-# print(choices(a, k=2))  # 復元抽出
 def randperm(n: int):
     return sample(list(range(1, n+1)), k=n)
 def randseq(n: int, l: int, r: int, distinct=False):
@@ -76,6 +76,23 @@ def randstr(length: int, chars: List=['a', 'b', 'c', 'd', 'e']):
     for i in range(length):
         res += choice(chars)
     return res
+def randprime(l: int = 2, r: int = 1000000007): # [l, r]
+    def is_prime(x):
+        if (x == 1): return False
+        for i in range(2, int(math.sqrt(x))+1):
+            if x % i == 0:
+                return False
+        return True
+
+
+    cnt = 0
+    while True:
+        res = randint(l, r)
+        if (is_prime(res)):
+            return res
+        cnt += 1
+        if cnt>=1000:
+            assert False
 
 def print_tree(n: int, one_index=True, header=False):
     if header: print(n, n-1)
@@ -119,4 +136,6 @@ def pl(x: List):
 
 # write down here
 # ---------------------------------------------
-print_connected_graph(10)
+n = randint(1, 10)
+print(n)
+pl(randseq(n, 1, 100))

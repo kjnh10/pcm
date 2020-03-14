@@ -387,7 +387,7 @@ def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile
         run_result.judge = 'WA'
     else:
         for i in range(len(stdout)):
-            if stdout[i].replace('\r', '') != exp[i]:
+            if stdout[i].replace('\r', '').rstrip() != exp[i].rstrip():
                 click.secho('--WA--\n\n', fg='red')
                 run_result.judge = 'WA'
                 break

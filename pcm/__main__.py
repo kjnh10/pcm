@@ -692,7 +692,7 @@ class Contest(object):
                     }
             r = self.session.post(
                     base_submit_url,
-                    params = payload,
+                    data = payload,
                     )
             soup = BeautifulSoup(r.text, "lxml")
             error = soup.find(class_="error for__source")

@@ -15,7 +15,6 @@ import tempfile
 from colorama import init, Fore, Back, Style
 from typing import TYPE_CHECKING, List, Optional, Type
 from bs4 import BeautifulSoup
-from onlinejudge._implementation.main import main as oj
 import onlinejudge._implementation.utils as oj_utils
 import onlinejudge.service.atcoder
 script_path = Path(os.path.abspath(os.path.dirname(__file__)))  # script path}}}
@@ -116,9 +115,9 @@ def ppp(config, task_url, prob_name, force):
     if task_url != '':
         shutil.rmtree('./test')
         if 'hackerrank' not in task_url:
-            oj(['download', task_url]) # get test cases
+            subprocess.run(['oj', 'download', task_url]) # get test cases
         else:
-            oj(['download', task_url, '--system'])
+            subprocess.run(['oj', 'download', task_url, '--system'])
 
     try:
         cstr = config.pref['ppp']['custom_hook_command']['after'].format(dirname=prob_name)
@@ -895,7 +894,7 @@ class Contest(object):
             try:
                 subprocess.run(f"rm {task_dir/'test'}/sample*", shell=True)  # gen.pyは消さないようにする。
                 click.secho(f"oj will try to download {task_url}...", fg='yellow')
-                oj(['download', task_url]) # get test cases
+                subprocess.run(['oj', 'download', task_url]) # get test cases
                 Path(task_info['description'].replace("/", "-")).touch()
             except:
                 click.secho("failed preparing: " + base_url + task_info['url'], fg='red')

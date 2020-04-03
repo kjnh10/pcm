@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING, List, Optional, Type
 from bs4 import BeautifulSoup
 import onlinejudge._implementation.utils as oj_utils
 import onlinejudge.service.atcoder
+import onlinejudge.dispatch
 script_path = Path(os.path.abspath(os.path.dirname(__file__)))  # script path}}}
 from .codefile import CodeFile, RunResult
 
@@ -75,6 +76,7 @@ def init(config):
 @click.option('--force/--no-force', "-f/-nf", default=False)
 @pass_config
 def pp(config, contest_identifier, work_dir_name, force):
+    # TODO: 実装をpppと統一する。
     contest = Contest(contest_identifier, work_dir=work_dir_name)
     contest.prepare(force)
     try:
@@ -93,8 +95,8 @@ def pp(config, contest_identifier, work_dir_name, force):
 @click.option('--force/--no-force', "-f/-nf", default=False)
 @pass_config
 def ppp(config, task_url, prob_name, force):
-    # TODO: 実装をppと統一する。pppをベースにしたい。
-    # TODO: task_info_mapのようなものを生成する。submitを行えるようにするため。
+    # TODO: gen.pyが落ちてきていないのを修正する
+
     if prob_name == '':
         if task_url != '':
             prob_name = task_url[task_url.rfind('/')+1:]
@@ -110,6 +112,7 @@ def ppp(config, task_url, prob_name, force):
 
     _prepare_problem(prob_name=prob_name)
     os.chdir(prob_name)
+
     # download sample cases
     if task_url != '':
         shutil.rmtree('./test')
@@ -117,6 +120,11 @@ def ppp(config, task_url, prob_name, force):
             subprocess.run(['oj', 'download', task_url]) # get test cases
         else:
             subprocess.run(['oj', 'download', task_url, '--system'])
+
+        problem = onlinejudge.dispatch.problem_from_url(task_url)
+        with open('./.problem_info.pickle', mode='wb') as f:
+            # problem directory直下にdumpしておく。
+            pickle.dump(problem, f)
 
     # execute custom_hook_command
     try:
@@ -554,6 +562,27 @@ def sb(config, code_filename, language, pretest):
 
     if (not pretest) or (click.confirm('Are you sure to submit?')):  # pretestの場合は最終確認をする。
         contest.submit(codefile.task_alphabet, extension, code_string, language)
+#}}}
+
+# submit: sb2 {{{
+@cli.command()
+@click.argument('code_filename', type=str, default="")
+@click.option('--language', '-l', default='auto-detect')
+@click.option('--pretest/--no-pretest', '-t/-nt', default=True)
+@pass_config
+def sb2(config, code_filename, language, pretest):
+    if (not pretest) and (not click.confirm('Are you sure to submit?')):  # no-pretestの場合は遅延を避けるため最初に質問する。
+        return
+    codefile = CodeFile(code_filename)
+
+    if pretest:
+        click.secho("pretest started\n", fg='green')
+        if not _test_all_case(codefile):
+            click.secho("pretest not passed and exit", fg="red")
+            return
+
+    if (not pretest) or (click.confirm('Are you sure to submit?')):  # pretestの場合は最終確認をする。
+        codefile.submit(config, language)
 #}}}
 
 # get answers: ga {{{

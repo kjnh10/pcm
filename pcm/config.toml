@@ -1,4 +1,4 @@
-template_dir = '~/.config/pcm/template'
+template_dir = '~/.config/pcm/template'  # if this directory does not exist or not specified, default template directory will be used
 
 [prepare]
   [prepare.custom_hook_command]
@@ -25,38 +25,42 @@ template_dir = '~/.config/pcm/template'
   pypy = '3510'
 
   [submit.language.Codeforces]
+  gcc = '50'
+  clang = '52'
   py = '31'
   py3 = '31'
   pypy = '41'
-  gcc = '50'
-  clang = '52'
 
 [test]
   timeout_sec=2
   max_memory=256
 
   [test.compile_command]
-  configname = 'default'  # specify profile used for tt and sb
+  configname = 'standard_14'  # specify the profile used by default for tt and sb
 
   [test.compile_command.cpp]  # for tt command, you can change the compile command by --cc option. like 'pcm tt -c 1 --cc v5'
-  default = """g++ {srcpath} -o {outpath} \
-            -std=c++14 \
-            -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG -fuse-ld=gold
+  standard_14 = """g++-9 {srcpath} -o {outpath} \
+               -std=c++14 \
+               -include bits/stdc++.h \
+               -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG -fuse-ld=gold
             """
 
   debug = """g++ {srcpath} -o {outpath} \
             -std=c++14 \
+             -include bits/stdc++.h \
             -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG -fuse-ld=gold \
             -g
             """
 
   v5 = """g++ {srcpath} -o {outpath} \
           -std=c++14 \
+          -include bits/stdc++.h \
           -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG
           """
 
   fast = """g++ {srcpath} -o {outpath} \
           -std=c++14 \
+          -include bits/stdc++.h \
           """
 
   clang = """clang++ {srcpath} -o {outpath} \

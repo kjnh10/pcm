@@ -141,50 +141,76 @@ Or you can also specify any direcotry you like as you will see below.
 
 you can customeize your setting by putting `~/.config/pcm/config.toml`.
 
-``` toml
-template_dir = '~/.config/pcm/template'
+```toml
+template_dir = '~/.config/pcm/template'  # if this directory does not exist or not specified, default template directory will be used
+
+[prepare]
+  [prepare.custom_hook_command]
+  # after = 'nvim {dirname} -c "args **/solve.cpp" -c "tab all" -c ""'
+
+[ppp]
+  [ppp.custom_hook_command]
+  # after = 'nvim {dirname} -c "args **/solve.cpp" -c "tab all" -c ""'
 
 [submit]
-  [submit.default_lang.atcoder]
+  [submit.default_lang.AtCoder]
   cpp = '3003' # C++14 (GCC 5.4.1)
   py = '3510'  # pypy
 
-  [submit.default_lang.codeforces]
+  [submit.default_lang.Codeforces]
   cpp = '50'  # GNU G++14 6.4.0
   py = '41'   # pypy if you prefer python3, use '31'
 
-  [submit.language.atcoder]  # you can use this keys like 'pcm sb -l pypy'
+  [submit.language.AtCoder]
   gcc = '3003'
   clang = '3004'
   py = '3023'
   py3 = '3023'
   pypy = '3510'
 
-  [submit.language.codeforces]
+  [submit.language.Codeforces]
+  gcc = '50'
+  clang = '52'
   py = '31'
   py3 = '31'
   pypy = '41'
-  gcc = '50'
-  clang = '52'
 
 [test]
   timeout_sec=2
+  max_memory=256
 
-  [test.compile_command.cpp]  # for tt command, you can change the compile command by --compile_config or -cc option. like 'pcm tt -c 1 -cc fast'
-  default = """
-            g++ {srcpath} -o {outpath} \
-            -std=c++14 \
-            -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG
+  [test.compile_command]
+  configname = 'standard_14'  # specify the profile used by default for tt and sb
+
+  [test.compile_command.cpp]  # for tt command, you can change the compile command by --cc option. like 'pcm tt -c 1 --cc v5'
+  standard_14 = """g++-9 {srcpath} -o {outpath} \
+               -std=c++14 \
+               -include bits/stdc++.h \
+               -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG -fuse-ld=gold
             """
-  v9 = """g++-9 {srcpath} -o {outpath} \
+
+  debug = """g++ {srcpath} -o {outpath} \
             -std=c++14 \
-            -include /usr/include/x86_64-linux-gnu/c++/9/bits/stdc++.h \
-            -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG -fuse-ld=gold
+             -include bits/stdc++.h \
+            -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG -fuse-ld=gold \
+            -g
             """
-  fast = """
-         g++ {srcpath} -o {outpath}
-         -std=c++14 \
-         """
+
+  v5 = """g++ {srcpath} -o {outpath} \
+          -std=c++14 \
+          -include bits/stdc++.h \
+          -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG
+          """
+
+  fast = """g++ {srcpath} -o {outpath} \
+          -std=c++14 \
+          -include bits/stdc++.h \
+          """
+
+  clang = """clang++ {srcpath} -o {outpath} \
+          -stdlib=libc++ \
+          -DPCM -Wall
+          """
 ```
 
 ## Contribution

@@ -25,11 +25,11 @@ class CodeFile(object):
         self.task_alphabet = self.prob_dir.name
         self.extension = self.path.suffix[1:]  # like 'py', 'cpp'....
         self.oj_problem_class = None
-        with open(self.prob_dir/'.problem_info.pickle', mode='rb') as f:
-            try:
+        try:
+            with open(self.prob_dir/'.problem_info.pickle', mode='rb') as f:
                 self.oj_problem_class = pickle.load(f)
-            except Exception as e:
-                print('failed to load problem_info.pickle')
+        except Exception as e:
+            print('failed to load problem_info.pickle')
 
 
     def submit(self, config, language):

@@ -115,7 +115,7 @@ def ppp(config, task_url, prob_name, force):
 
     # download sample cases
     if task_url != '':
-        shutil.rmtree('./test')
+        subprocess.run(f"rm test/sample*", shell=True)  # gen.pyは消さないようにする。
         if 'hackerrank' not in task_url:
             subprocess.run(['oj', 'download', task_url]) # get test cases
         else:

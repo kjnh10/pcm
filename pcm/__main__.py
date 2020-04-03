@@ -135,10 +135,11 @@ def _prepare_problem(config, prob_name):
 # compile: compile {{{
 @cli.command()
 @click.argument('code_filename', type=str, default='')
-@click.option('--compile_command_configname', '-cc', type=str, default='default')
+@click.option('--compile_command_configname', '-cc', type=str, default='')
 @pass_config
 def compile(config, code_filename, compile_command_configname):
-    config.pref['test']['compile_command']['configname'] = compile_command_configname
+    if compile_command_configname:
+        config.pref['test']['compile_command']['configname'] = compile_command_configname
     solve_codefile = CodeFile(code_filename)
     _compile(solve_codefile)
 #}}}
@@ -174,7 +175,7 @@ def _compile(config, codefile, force=False) -> Path:  # {{{
 # test: tt {{{
 @cli.command()
 @click.argument('code_filename', type=str, default='')
-@click.option('--compile_command_configname', '-cc', type=str, default='default')
+@click.option('--compile_command_configname', '-cc', type=str, default='')
 @click.option('--case', '-c', type=str, default='')
 @click.option('--timeout', '-t', type=float, default=-1)
 @click.option('--by', '-b', type=str, default=None)
@@ -183,7 +184,8 @@ def _compile(config, codefile, force=False) -> Path:  # {{{
 def tt(config, code_filename: str, compile_command_configname: str, case: str, timeout: float, by: str, loop: bool):  # {{{
     if (timeout != -1):
         config.pref['test']['timeout_sec'] = timeout
-    config.pref['test']['compile_command']['configname'] = compile_command_configname
+    if compile_command_configname:
+        config.pref['test']['compile_command']['configname'] = compile_command_configname
 
     if Path(case).suffix not in ['.py', '.cpp', '.*']:
         solve_codefile = CodeFile(code_filename)
@@ -536,7 +538,6 @@ def db(config, code_filename: str, compile_command_configname: str, case: str, t
 def sb(config, code_filename, language, pretest):
     if (not pretest) and (not click.confirm('Are you sure to submit?')):  # no-pretestの場合は遅延を避けるため最初に質問する。
         return
-    config.pref['test']['compile_command']['configname'] = 'default'
 
     codefile = CodeFile(code_filename)
     extension = codefile.path.suffix[1:]

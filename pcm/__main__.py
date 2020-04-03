@@ -12,14 +12,12 @@ import toml
 import time
 import re
 import tempfile
-from colorama import init, Fore, Back, Style
 from typing import TYPE_CHECKING, List, Optional, Type
 from bs4 import BeautifulSoup
 import onlinejudge._implementation.utils as oj_utils
 import onlinejudge.service.atcoder
 script_path = Path(os.path.abspath(os.path.dirname(__file__)))  # script path}}}
 from .codefile import CodeFile, RunResult
-from .utils import get_last_modified_file
 
 # set click
 class Config(object):# {{{
@@ -112,6 +110,7 @@ def ppp(config, task_url, prob_name, force):
 
     _prepare_problem(prob_name=prob_name)
     os.chdir(prob_name)
+    # download sample cases
     if task_url != '':
         shutil.rmtree('./test')
         if 'hackerrank' not in task_url:
@@ -119,6 +118,7 @@ def ppp(config, task_url, prob_name, force):
         else:
             subprocess.run(['oj', 'download', task_url, '--system'])
 
+    # execute custom_hook_command
     try:
         cstr = config.pref['ppp']['custom_hook_command']['after'].format(dirname=prob_name)
         print(cstr)

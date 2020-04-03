@@ -13,7 +13,7 @@ class CodeFile(object):
             self.prob_dir = self.code_dir
             self.test_dir = self.code_dir / 'test'
             self.bin_dir = self.code_dir / 'bin'
-        else:  # default template style
+        else:                                # default template style
             self.prob_dir = self.code_dir.parent
             self.test_dir = self.prob_dir / 'test'
             self.bin_dir = self.prob_dir / 'bin'

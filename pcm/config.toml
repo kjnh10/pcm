@@ -9,22 +9,22 @@ template_dir = '~/.config/pcm/template'
   # after = 'nvim {dirname} -c "args **/solve.cpp" -c "tab all" -c ""'
 
 [submit]
-  [submit.default_lang.atcoder]
+  [submit.default_lang.AtCoder]
   cpp = '3003' # C++14 (GCC 5.4.1)
   py = '3510'  # pypy
 
-  [submit.default_lang.codeforces]
+  [submit.default_lang.Codeforces]
   cpp = '50'  # GNU G++14 6.4.0
   py = '41'   # pypy if you prefer python3, use '31'
 
-  [submit.language.atcoder]
+  [submit.language.AtCoder]
   gcc = '3003'
   clang = '3004'
   py = '3023'
   py3 = '3023'
   pypy = '3510'
 
-  [submit.language.codeforces]
+  [submit.language.Codeforces]
   py = '31'
   py3 = '31'
   pypy = '41'
@@ -34,6 +34,9 @@ template_dir = '~/.config/pcm/template'
 [test]
   timeout_sec=2
   max_memory=256
+
+  [test.compile_command]
+  configname = 'default'  # specify profile used for tt and sb
 
   [test.compile_command.cpp]  # for tt command, you can change the compile command by --cc option. like 'pcm tt -c 1 --cc v5'
   default = """g++ {srcpath} -o {outpath} \

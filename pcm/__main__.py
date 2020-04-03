@@ -666,11 +666,11 @@ class Contest(object):
                 print(config.pref['submit']['language'][self.type])
                 return
 
-        if self.type=='atcoder':
+        if self.type=='AtCoder':
             problem_id = self.task_info_map[task_id]["problem_id"]
             res = onlinejudge.service.atcoder.AtCoderProblem(contest_id=self.name, problem_id=problem_id).submit_code(code=code, language_id=lang_id, session=self.session)
             print(res)
-        elif self.type=='codeforces':
+        elif self.type=='Codeforces':
             # TODO: onlinejudgeの機能を使用するようにする。
             base_submit_url = f"http://codeforces.com/contest/{self.name}/submit"
             # get csrf_token
@@ -708,7 +708,7 @@ class Contest(object):
             # }}}
 
     def get_answers(self, limit_count, extension):  # {{{
-        if self.type=='atcoder':
+        if self.type=='AtCoder':
             # get redcoderlist
             excelent_users = []
             for page in [1, 2, 3, 4]:
@@ -717,7 +717,7 @@ class Contest(object):
                 excelent_users_buf = [tag.get('href') for tag in rank_page.findAll('a', class_='username')]
                 excelent_users += [l[l.rfind('/')+1:] for l in excelent_users_buf]
             print(len(excelent_users), excelent_users)
-        elif self.type=='codeforces':
+        elif self.type=='Codeforces':
             # get redcoderlist
             rank_url = 'http://codeforces.com/ratings/page/1'
             rank_page = BeautifulSoup(requests.get(rank_url).content, 'lxml')
@@ -733,7 +733,7 @@ class Contest(object):
             if not os.path.exists(answer_dir):
                 os.makedirs(answer_dir)
 
-            if self.type=='atcoder':
+            if self.type=='AtCoder':
                 if extension == "cpp":
                     lang_code="3003"
                 elif extension == "py":
@@ -783,9 +783,9 @@ class Contest(object):
 
     def __get_type(self):# {{{
         if "atcoder" in self.url:
-            return "atcoder"
+            return "AtCoder"
         elif "codeforces" in self.url:
-            return "codeforces"
+            return "Codeforces"
         else:
             click.secho(f"unknown type of url: {self.url}", fg='red')
             sys.exit()# }}}
@@ -794,9 +794,9 @@ class Contest(object):
         """
         get contest_name from contest_url
         """
-        if self.type == 'atcoder':
+        if self.type == 'AtCoder':
             return self.url[self.url.rfind('/')+1 : ]  # like arc071
-        elif self.type == 'codeforces':
+        elif self.type == 'Codeforces':
             start = self.url.find('contest')+8
             return self.url[start:]
         else:
@@ -807,9 +807,9 @@ class Contest(object):
         """
         get task_list_url from contest_url
         """
-        if self.type == 'atcoder':
+        if self.type == 'AtCoder':
             return self.url + "/tasks"
-        elif self.type == 'codeforces':
+        elif self.type == 'Codeforces':
             return self.url  # codeforcesはproblemsがindex pageになっている。
         else:
             click.secho(f"unknown type of url: {self.url}", fg='red')
@@ -817,10 +817,10 @@ class Contest(object):
 
     def __is_logined(self):# {{{
         resp = self.session.request('GET', self.url)
-        if self.type == 'atcoder':
+        if self.type == 'AtCoder':
             click.secho(f'login status in __is_logined(): {"Sign Out" in resp.text}', fg='green')
             return ("Sign Out" in resp.text)
-        elif self.type == 'codeforces':
+        elif self.type == 'Codeforces':
             click.secho(f'login status in __is_logined(): {"Logout" in resp.text}', fg='green')
             return ("Logout" in resp.text)
 # }}}
@@ -842,7 +842,7 @@ class Contest(object):
         links = task_page.findAll('a')
 
         task_urls = []
-        if (self.type=='atcoder') or (self.type=='codeforces'):
+        if (self.type=='AtCoder') or (self.type=='Codeforces'):
             for l in links:
                 if re.match(r"[A-Z][1-2]?$", l.get_text().strip()):
                     task_urls.append(l.get('href'))
@@ -876,9 +876,9 @@ class Contest(object):
 
     @pass_config
     def __prepare_tasks(config, self):  # {{{
-        if self.type == 'atcoder':
+        if self.type == 'AtCoder':
             base_url = "https://atcoder.jp"
-        elif self.type == 'codeforces':
+        elif self.type == 'Codeforces':
             base_url = "http://codeforces.com"
         else:
             click.secho(f"unknown type of url: {self.url}", fg='red')

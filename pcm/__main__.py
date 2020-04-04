@@ -12,6 +12,7 @@ import toml
 import time
 import re
 import tempfile
+from colorama import init, Fore, Back, Style
 from typing import TYPE_CHECKING, List, Optional, Type
 from bs4 import BeautifulSoup
 import onlinejudge._implementation.utils as oj_utils

@@ -84,11 +84,9 @@ class CodeFile(object):
 
     def _run_exe(self, config, exefile: Path, infile: Path = None) -> RunResult: 
         res = RunResult()
-        command = self._get_command_string_to_run()
+        command = self._get_command_string_to_run(exefile)
 
         def popen():
-            with open(infile, 'r'):
-                pass
             return subprocess.Popen(
                 command,
                 stdin=open(infile, "r") if infile else None,
@@ -121,20 +119,9 @@ class CodeFile(object):
         res.stderr = errs.decode('utf-8')
         return res 
 
-    # def run_interactive(self, config, judgefile: __class__, infile: Path):
     def run_interactive(self, config, judgefile, infile: Path):
         res = RunResult()
         res.stderr_filepath = self.code_dir / '.stderr.log'
-        @contextlib.contextmanager
-        def fifo() -> Generator[Tuple[Any, Any], None, None]:
-            fdr, fdw = os.pipe()
-            fhr = os.fdopen(fdr, 'r')
-            fhw = os.fdopen(fdw, 'w')
-            yield fhr, fhw
-            fhw.close()
-            fhr.close()
-            # os.close(fdw), os.close(fdr) are unnecessary
-
         solution_exefile = self.to_exefile(config)
         judge_exefile = judgefile.to_exefile(config)
         sol_args = self._get_command_string_to_run(solution_exefile)
@@ -143,8 +130,6 @@ class CodeFile(object):
         with open(res.stderr_filepath, 'w') as stderr_file:
             t_judge = SubprocessThread(
                 judge_args,
-                # stdin_pipe=t_sol.p.stdout,
-                # stdout_pipe=t_sol.p.stdin,
                 stderr_pipe=stderr_file,
                 )
             t_sol = SubprocessThread(
@@ -154,13 +139,13 @@ class CodeFile(object):
                 stderr_pipe=stderr_file,
                 )
             t_case = SubprocessThread(
-                ['cat', '../test/sample-1.in'],
+                ['cat', str(infile)],
                 stdout_pipe=t_judge.p.stdin,
                 stderr_pipe=stderr_file,
                 )
 
             t_case.start()
-            time.sleep(1)
+            time.sleep(0.2)
 
             t_sol.start()
             t_judge.start()

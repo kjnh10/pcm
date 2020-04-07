@@ -415,9 +415,41 @@ def tr(config, code_filename: str, compile_command_configname: str, case: str, t
 
             _test_interactive_case(solve_codefile, judge_codefile, infile, case)
     else:
-        # TODO: implement random test
-        click.secho('random test has not been implemented yet', fg='yellow')
-        return 0
+        # random test
+        solve_codefile = CodeFile(exclude_filename_pattern=(by if by else []))
+        judge_codefile = CodeFile(by)
+        test_dir = solve_codefile.test_dir
+        generator_codefile = CodeFile(case, search_root=Path('..'))
+
+        while True:
+            gen_result = generator_codefile.run(config)
+            if gen_result.returncode != 0:
+                print('failed runnning generator file {generator_codefile.name}')
+                print(gen_result.stderr)
+                return
+
+            with open(test_dir/'r.in', mode='w') as f:
+                f.write(gen_result.stdout)
+
+            infile = test_dir / f"r.in"
+
+            run_result = _test_interactive_case(solve_codefile, judge_codefile, infile, f'random-{code_filename}')
+            if run_result.judge != 'AC':
+                if loop:  # loopを行わない場合は単に生成して試したいだけの場合が多いので保存しない。
+                    num_to_save = 1
+                    L = [f.stem for f in test_dir.glob('r*.in')]
+                    L.sort()
+                    if (L):
+                        last_num = L[-1].replace('r', '').replace('.in', '')
+                        num_to_save = (0 if last_num == "" else int(last_num)) + 1
+
+                    shutil.copyfile(infile, test_dir/f'r{num_to_save}.in')
+                    print(f'input of this case saved to r{num_to_save}.in')
+                return 1
+
+            if (not loop): return 0
+
+    return 0
 # }}}
 
 @pass_config

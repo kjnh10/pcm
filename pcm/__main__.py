@@ -376,6 +376,64 @@ def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile
     return run_result
 # }}}
 
+# }}}
+
+# test-reactive: tr {{{
+@cli.command()
+@click.argument('code_filename', type=str, default='')
+@click.option('--compile_command_configname', '-cc', type=str, default='')
+@click.option('--case', '-c', type=str, default='')
+@click.option('--timeout', '-t', type=float, default=-1)
+@click.option('--by', '-b', type=str, default=None)
+@click.option('--loop/--noloop', '-l/-nl', default=False)
+@pass_config
+def tr(config, code_filename: str, compile_command_configname: str, case: str, timeout: float, by: str, loop: bool):  # {{{
+    if (timeout != -1):
+        config.pref['test']['timeout_sec'] = timeout
+    if compile_command_configname:
+        config.pref['test']['compile_command']['configname'] = compile_command_configname
+
+    if Path(case).suffix not in ['.py', '.cpp', '.*']:
+        solve_codefile = CodeFile(code_filename, exclude_filename_pattern = [by if by else None])
+        judge_codefile = CodeFile(by)
+        test_dir = solve_codefile.test_dir
+        if case == '':  # test all case
+            click.secho('test for all case is not impremented for reactive test just for simplicity', fg='yellow')
+            return 0
+        else:
+            if case in set(map(str, range(1, 101))):
+                case = f'sample-{case}'
+                infile = test_dir / f"{case}.in"
+                if (not infile.exists()):
+                    click.secho(f"{infile.name} not found.", fg='yellow')
+                    return 1
+            else:
+                infile = test_dir / f"{case}.in"
+                if not infile.exists():
+                    click.secho(f"{infile.name} not found.", fg='yellow')
+                    return 1
+
+            _test_interactive_case(solve_codefile, judge_codefile, infile, case)
+    else:
+        # TODO: implement random test
+        click.secho('random test has not been implemented yet', fg='yellow')
+        return 0
+# }}}
+
+@pass_config
+def _test_interactive_case(config, codefile: CodeFile, judgefile: CodeFile, infile: Path, case_name: str) -> RunResult: # {{{
+    # run program
+    click.secho('-'*10 + case_name + '-'*10, fg='blue')
+    run_result = codefile.run_interactive(config, judgefile, infile)
+
+    # print input
+    with open(infile, 'r') as f:
+        print('*'*7 + ' input ' + '*'*7)
+        print(f.read())
+
+    print(run_result)
+    return run_result
+# }}}
 
 # }}}
 

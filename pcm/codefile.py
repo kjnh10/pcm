@@ -4,10 +4,13 @@ import subprocess
 import sys
 import pickle
 import os
-from typing import TYPE_CHECKING, List, Optional, Type
+import contextlib
+from typing import TYPE_CHECKING, List, Optional, Type, Generator, Tuple, Any
+from .interactive_runner import SubprocessThread
 import click
 import onlinejudge._implementation.utils as oj_utils
 from .utils import get_last_modified_file
+
 
 class RunResult(object):
     def __init__(self):
@@ -80,11 +83,7 @@ class CodeFile(object):
 
     def _run_exe(self, config, exefile: Path, infile: Path = None) -> RunResult: 
         res = RunResult()
-        command = []
-        if (exefile.suffix=='.py'):
-            command.append('python')
-        command.append(str(exefile))
-        command.append('pcm') # tell the sctipt that pcm is calling
+        command = self._get_command_string_to_run()
 
         def popen():
             with open(infile, 'r'):
@@ -121,6 +120,60 @@ class CodeFile(object):
         res.stderr = errs.decode('utf-8')
         return res 
 
+    # def run_interactive(self, config, judgefile: __class__, infile: Path):
+    def run_interactive(self, config, judgefile, infile: Path):
+        res = RunResult()
+        @contextlib.contextmanager
+        def fifo() -> Generator[Tuple[Any, Any], None, None]:
+            fdr, fdw = os.pipe()
+            fhr = os.fdopen(fdr, 'r')
+            fhw = os.fdopen(fdw, 'w')
+            yield fhr, fhw
+            fhw.close()
+            fhr.close()
+            # os.close(fdw), os.close(fdr) are unnecessary
+
+        solution_exefile = self.to_exefile(config)
+        judge_exefile = judgefile.to_exefile(config)
+        sol_args = self._get_command_string_to_run(solution_exefile)
+        judge_args = self._get_command_string_to_run(judge_exefile)
+
+        t_sol = SubprocessThread(sol_args, stderr_prefix="  sol: ")
+        t_judge = SubprocessThread(
+            judge_args,
+            stdin_pipe=t_sol.p.stdout,
+            stdout_pipe=t_sol.p.stdin,
+            stderr_prefix="judge: ")
+        t_sol.start()
+        t_judge.start()
+        t_sol.join()
+        t_judge.join()
+
+        # Print an empty line to handle the case when stderr doesn't print EOL.
+        print()
+        print("Judge return code:", t_judge.return_code)
+        if t_judge.error_message:
+            print("Judge error message:", t_judge.error_message)
+
+        print("Solution return code:", t_sol.return_code)
+        if t_judge.error_message:
+            print("Solution error message:", t_sol.error_message)
+
+
+    def to_exefile(self, config):
+        if self.extension not in config.pref['test']['compile_command']:  # for script language
+            return self.path
+        else:
+            return self.compile(config)
+
+    def _get_command_string_to_run(self, exefile: Path):
+        command = []
+        if (exefile.suffix=='.py'):
+            command.append('python')
+        command.append(str(exefile))
+        command.append('pcm') # tell the sctipt that pcm is calling
+        return command
+
     def submit(self, config, language):
         with open(self.path, "r") as f:
             code_string = f.read()
@@ -148,4 +201,6 @@ class CodeFile(object):
             res = self.oj_problem_class.submit_code(code_string, language_id=lang_id, session=session)
             print(res)
 
+    def __str__(self):
+        return str(self.path)
 

@@ -431,7 +431,40 @@ def _test_interactive_case(config, codefile: CodeFile, judgefile: CodeFile, infi
         print('*'*7 + ' input ' + '*'*7)
         print(f.read())
 
-    print(run_result)
+    with open(run_result.stderr_filepath, 'r') as f:
+        print('*'*7 + ' stderr ' + '*'*7)
+        for line in f.read().split('\n'):
+            if re.search(r'.* \[\d*:main\]$', line):
+                click.secho(line, fg='yellow')
+            else:
+                click.secho(line, fg='cyan')
+                # "black",
+                # "red",
+                # "green",
+                # "yellow",
+                # "blue",
+                # "magenta",
+                # "cyan",
+                # "white",
+                # "bright_black",
+                # "bright_red",
+                # "bright_green",
+                # "bright_yellow",
+                # "bright_blue",
+                # "bright_magenta",
+                # "bright_cyan",
+                # "bright_white",
+
+    if (run_result.judge == 'AC'):
+        click.secho('--AC--\n', fg='green')
+    if (run_result.judge == 'WA'):
+        click.secho('--WA--\n', fg='red')
+    if (run_result.judge == 'TLE'):
+        click.secho('--TLE--\n', fg='red')
+    print({f"{run_result.judge_thread.return_code=}"})
+    print({f"{run_result.solution_thread.return_code=}"})
+    print({f"{run_result.judge_thread.error_message=}"})
+    print({f"{run_result.solution_thread.error_message=}"})
     return run_result
 # }}}
 

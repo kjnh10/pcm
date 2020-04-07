@@ -17,6 +17,7 @@ class RunResult(object):
         self.returncode = None
         self.stdout = ""
         self.stderr = ""
+        self.stderr_filepath = None
         self.TLE_flag = None
         self.exec_time = -1
         self.used_memory = -1
@@ -123,6 +124,7 @@ class CodeFile(object):
     # def run_interactive(self, config, judgefile: __class__, infile: Path):
     def run_interactive(self, config, judgefile, infile: Path):
         res = RunResult()
+        res.stderr_filepath = self.code_dir / '.stderr.log'
         @contextlib.contextmanager
         def fifo() -> Generator[Tuple[Any, Any], None, None]:
             fdr, fdw = os.pipe()
@@ -138,27 +140,42 @@ class CodeFile(object):
         sol_args = self._get_command_string_to_run(solution_exefile)
         judge_args = self._get_command_string_to_run(judge_exefile)
 
-        t_sol = SubprocessThread(sol_args, stderr_prefix="  sol: ")
-        t_judge = SubprocessThread(
-            judge_args,
-            stdin_pipe=t_sol.p.stdout,
-            stdout_pipe=t_sol.p.stdin,
-            stderr_prefix="judge: ")
-        t_sol.start()
-        t_judge.start()
-        t_sol.join()
-        t_judge.join()
+        with open(res.stderr_filepath, 'w') as stderr_file:
+            t_judge = SubprocessThread(
+                judge_args,
+                # stdin_pipe=t_sol.p.stdout,
+                # stdout_pipe=t_sol.p.stdin,
+                stderr_pipe=stderr_file,
+                )
+            t_sol = SubprocessThread(
+                sol_args,
+                stdin_pipe=t_judge.p.stdout,
+                stdout_pipe=t_judge.p.stdin,
+                stderr_pipe=stderr_file,
+                )
+            t_case = SubprocessThread(
+                ['cat', '../test/sample-1.in'],
+                stdout_pipe=t_judge.p.stdin,
+                stderr_pipe=stderr_file,
+                )
 
-        # Print an empty line to handle the case when stderr doesn't print EOL.
-        print()
-        print("Judge return code:", t_judge.return_code)
-        if t_judge.error_message:
-            print("Judge error message:", t_judge.error_message)
+            t_case.start()
+            time.sleep(1)
 
-        print("Solution return code:", t_sol.return_code)
-        if t_judge.error_message:
-            print("Solution error message:", t_sol.error_message)
+            t_sol.start()
+            t_judge.start()
+            t_sol.join()
+            t_judge.join()
 
+            res.judge_thread = t_judge
+            res.solution_thread = t_sol
+            if (t_judge.return_code == -2 and t_sol.return_code == -2):
+                res.judge = "TLE"
+            elif (t_judge.return_code == 0 and t_sol.return_code == 0):
+                res.judge = "AC"
+            else:
+                res.judge = "WA"
+            return res
 
     def to_exefile(self, config):
         if self.extension not in config.pref['test']['compile_command']:  # for script language

@@ -96,8 +96,6 @@ def pp(config, contest_identifier, work_dir_name, force):
 @click.option('--force/--no-force', "-f/-nf", default=False)
 @pass_config
 def ppp(config, task_url, prob_name, force):
-    # TODO: gen.pyが落ちてきていないのを修正する
-
     if prob_name == '':
         if task_url != '':
             prob_name = task_url[task_url.rfind('/')+1:]
@@ -149,37 +147,8 @@ def _prepare_problem(config, prob_name):
 def compile(config, code_filename, compile_command_configname):
     if compile_command_configname:
         config.pref['test']['compile_command']['configname'] = compile_command_configname
-    solve_codefile = CodeFile(code_filename)
-    _compile(solve_codefile)
+    CodeFile(code_filename).compile(config)
 #}}}
-
-@pass_config
-def _compile(config, codefile, force=False) -> Path:  # {{{
-    click.secho('compile start.....', blink=True)
-    cnfname = config.pref['test']['compile_command']['configname']
-    exefile = codefile.bin_dir / f'{codefile.path.name}_{cnfname}.out'
-    exefile.parent.mkdir(exist_ok=True)
-    if (not force) and (exefile.exists() and codefile.path.stat().st_mtime <= exefile.stat().st_mtime):
-        click.secho(f'compile skipped since {codefile.path} is older than {exefile.name}')
-    else:
-        start = time.time()
-        command = config.pref['test']['compile_command'][codefile.extension][cnfname].format(srcpath=str(codefile.path), outpath=str(exefile)).split()
-        proc = subprocess.Popen(
-                command,
-                stdout=subprocess.PIPE,
-                )
-        outs, errs = proc.communicate()
-        if proc.returncode:
-            click.secho("compile error\n", fg='red')
-            sys.exit()
-
-        if outs:
-            print(outs.decode('utf-8'))
-
-        click.secho('compile finised')
-        print("compile took:{0}".format(time.time() - start) + "[sec]")
-    return exefile
-# }}}
 
 # test: tt {{{
 @cli.command()
@@ -234,7 +203,7 @@ def tt(config, code_filename: str, compile_command_configname: str, case: str, t
                 return 1
 
         while True:
-            gen_result = _run_code(generator_codefile)
+            gen_result = generator_codefile.run(config)
             if gen_result.returncode != 0:
                 print('failed runnning generator file {generator_codefile.name}')
                 print(gen_result.stderr)
@@ -248,7 +217,7 @@ def tt(config, code_filename: str, compile_command_configname: str, case: str, t
             if expfile.exists(): expfile.unlink()
 
             if by:
-                run_result = _run_code(naive_codefile, infile)
+                run_result = naive_codefile.run(config)
                 with open(expfile, mode='w') as f:
                     if run_result.TLE_flag:
                         f.write('TLE for naive code. if you extend timeout time, use -t option like -t 5\n')
@@ -319,7 +288,7 @@ def _test_all_case(codefile: CodeFile) -> bool: # {{{
 def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile: Path) -> RunResult: # {{{
     # run program
     click.secho('-'*10 + case_name + '-'*10, fg='blue')
-    run_result = _run_code(codefile, infile)
+    run_result = codefile.run(config, infile)
     print(f"exec time: {run_result.exec_time} [sec]")
     print(f"memory usage: {run_result.used_memory} [MB]")
 
@@ -407,57 +376,6 @@ def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile
     return run_result
 # }}}
 
-@pass_config
-def _run_code(config, codefile: CodeFile, infile: Path = None) -> RunResult:  # {{{
-    if codefile.extension not in config.pref['test']['compile_command']:  # for script language
-        return _run_exe(codefile.path, infile)
-    else:
-        exefile = _compile(codefile)
-        return _run_exe(exefile, infile)
-    # }}}
-
-
-@pass_config
-def _run_exe(config, exefile: Path, infile: Path = None) -> RunResult: # {{{
-    res = RunResult()
-    command = []
-    if (exefile.suffix=='.py'):
-        command.append('python')
-    command.append(str(exefile))
-    command.append('pcm') # tell the sctipt that pcm is calling
-
-    def popen():
-        return subprocess.Popen(
-            command,
-            stdin=open(infile, "r") if infile else None,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            # shell=True,  # for windows
-        )
-    proc = popen()
-
-    try:
-        start = time.time()
-        outs, errs = proc.communicate(timeout=config.pref['test']['timeout_sec'])
-        res.exec_time = time.time() - start
-        res.TLE_flag = False
-    except subprocess.TimeoutExpired:
-        proc.kill()
-        outs, errs = proc.communicate()
-        res.exe_time = float('inf')
-        res.TLE_flag = True
-    else:
-        # os.wait4()を使うとTLE時のout,errsが取得できなくなるため、TLEでないと判明した場合にのみMemoryの使用量を取得する。
-        try:
-            proc_for_check_memory = popen()
-            ru = os.wait4(proc_for_check_memory.pid, 0)[2]  # windowsの場合はerrorになりそう。
-            res.used_memory = ru.ru_maxrss / (1<<10) # MB unit
-        except Exception as e:
-            pass
-    res.returncode = proc.returncode
-    res.stdout = outs.decode('utf-8')
-    res.stderr = errs.decode('utf-8')
-    return res # }}}
 
 # }}}
 
@@ -477,7 +395,7 @@ def db(config, code_filename: str, compile_command_configname: str, case: str, t
     if solve_codefile.extension != 'cpp':
         click.secho('db command is only for c++.')
         exit()
-    exefile = _compile(solve_codefile)
+    exefile = solve_codefile.compile(config)
 
     test_dir = solve_codefile.test_dir
     if case == '':  # test all case
@@ -594,21 +512,6 @@ def sb2(config, code_filename, language, pretest):
 def ga(config, limit_count, extension):
     contest = _reload_contest_class()
     contest.get_answers(limit_count, extension)
-# }}}
-
-# private functions
-def _search_parent_dir(code_filename):# {{{
-    contest_dir = _pcm_root_dir()
-    if contest_dir is None:
-        return None
-
-    for base_dir, _sub_dirs, files in os.walk(contest_dir):
-        for f in files:
-            if f == code_filename:
-                return base_dir
-    else:
-        print("not found: " + code_filename + " in " + contest_dir)
-        sys.exit()
 # }}}
 
 def _pcm_root_dir():# {{{

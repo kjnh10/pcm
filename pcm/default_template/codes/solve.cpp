@@ -16,6 +16,7 @@ const int INF=1e18;
 #define rrep(...) _overload3(__VA_ARGS__,rrepi,_rrep,)(__VA_ARGS__)
 #define each(i,a) for (auto&& i : a)
 #define all(x) (x).begin(),(x).end()
+#define rall(x) (x).rbegin(),(x).rend()
 #define sz(x) ((int)(x).size())
 #define pb(a) push_back(a)
 #define mp(a, b) make_pair(a, b)

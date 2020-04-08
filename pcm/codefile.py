@@ -47,7 +47,8 @@ class CodeFile(object):
             with open(self.prob_dir/'.problem_info.pickle', mode='rb') as f:
                 self.oj_problem_class = pickle.load(f)
         except Exception as e:
-            print('failed to load problem_info.pickle')
+            pass
+            # print('failed to load problem_info.pickle')
 
     def compile(self, config, force=False) -> Path:
         click.secho('compile start.....', blink=True)

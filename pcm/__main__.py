@@ -493,10 +493,10 @@ def _test_interactive_case(config, codefile: CodeFile, judgefile: CodeFile, infi
         click.secho('--WA--\n', fg='red')
     if (run_result.judge == 'TLE'):
         click.secho('--TLE--\n', fg='red')
-    print({f"{run_result.judge_thread.return_code=}"})
-    print({f"{run_result.solution_thread.return_code=}"})
-    print({f"{run_result.judge_thread.error_message=}"})
-    print({f"{run_result.solution_thread.error_message=}"})
+    print({f"judge_thread.return_code: {run_result.judge_thread.return_code}"})
+    print({f"solution_thread.return_code: {run_result.solution_thread.return_code}"})
+    print({f"judge_thread.error_message: {run_result.judge_thread.error_message}"})
+    print({f"solution_thread.error_message: {run_result.solution_thread.error_message}"})
     return run_result
 # }}}
 

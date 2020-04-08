@@ -194,7 +194,7 @@ def tt(config, code_filename: str, compile_command_configname: str, case: str, t
         # random test
         solve_codefile = CodeFile(exclude_filename_pattern=(by if by else []))
         test_dir = solve_codefile.test_dir
-        generator_codefile = CodeFile(case, search_root=Path('..'))
+        generator_codefile = CodeFile(case, search_root=solve_codefile.prob_dir)
         if by:
             try:
                 naive_codefile = CodeFile(match_filename_pattern=by)
@@ -417,9 +417,9 @@ def tr(config, code_filename: str, compile_command_configname: str, case: str, t
     else:
         # random test
         solve_codefile = CodeFile(exclude_filename_pattern=(by if by else []))
-        judge_codefile = CodeFile(by)
+        judge_codefile = CodeFile(by, search_root=solve_codefile.prob_dir)
         test_dir = solve_codefile.test_dir
-        generator_codefile = CodeFile(case, search_root=Path('..'))
+        generator_codefile = CodeFile(case, search_root=solve_codefile.prob_dir)
 
         while True:
             gen_result = generator_codefile.run(config)

@@ -217,7 +217,7 @@ def tt(config, code_filename: str, compile_command_configname: str, case: str, t
             if expfile.exists(): expfile.unlink()
 
             if by:
-                run_result = naive_codefile.run(config)
+                run_result = naive_codefile.run(config, infile)
                 with open(expfile, mode='w') as f:
                     if run_result.TLE_flag:
                         f.write('TLE for naive code. if you extend timeout time, use -t option like -t 5\n')

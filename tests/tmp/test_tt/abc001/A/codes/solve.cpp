@@ -43,7 +43,6 @@ template<typename T> using PQ = priority_queue<T, vector<T>, greater<T>>;
 
 // dump macro
 #ifdef PCM
-  #include "dump.hpp"
 #else
   #define dump(...) 42
   #define dump_1d(...) 42

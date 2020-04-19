@@ -26,7 +26,7 @@ class RunResult(object):
 
 class CodeFile(object):
     def __init__(self, match_filename_pattern=['*.cpp', '*.py'], exclude_filename_pattern=[], search_root: Path = Path('.')):
-        if (match_filename_pattern==''):
+        if (match_filename_pattern == ''):
             match_filename_pattern = ['*.cpp', '*.py']
         self.path = get_last_modified_file(match_filename_pattern, exclude_filename_pattern, search_root)
         self.code_dir = self.path.parent
@@ -59,7 +59,13 @@ class CodeFile(object):
             click.secho(f'compile skipped since {self.path} is older than {exefile.name}')
         else:
             start = time.time()
-            command = config.pref['test']['compile_command'][self.extension][cnfname].format(srcpath=str(self.path), outpath=str(exefile)).split()
+            command = config.pref['test']['compile_command'][self.extension][cnfname].format(
+                srcpath=str(self.path),
+                outpath=str(exefile),
+                code_dir_path=str(self.path.parent),
+                config_dir_path='~/.config/pcm',
+                pcm_dir_path=os.path.dirname(__file__),
+            ).split()
             proc = subprocess.Popen(
                     command,
                     stdout=subprocess.PIPE,

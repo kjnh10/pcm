@@ -40,20 +40,20 @@ template_dir = '~/.config/pcm/template'  # if this directory does not exist or n
   [test.compile_command.cpp]  # for tt command, you can change the compile command by --cc option. like 'pcm tt -c 1 --cc v5'
   standard_14 = """g++-9 {srcpath} -o {outpath} \
                -std=c++14 \
-               -include bits/stdc++.h \
+               -include {pcm_dir_path}/lib_cplusplus/dump.hpp \
                -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG -fuse-ld=gold
             """
 
-  debug = """g++ {srcpath} -o {outpath} \
+  debug = """g++-9 {srcpath} -o {outpath} \
             -std=c++14 \
-             -include bits/stdc++.h \
+            -include {pcm_dir_path}/lib_cplusplus/dump.hpp \
             -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG -fuse-ld=gold \
             -g
             """
 
   v5 = """g++ {srcpath} -o {outpath} \
           -std=c++14 \
-          -include bits/stdc++.h \
+          -include {pcm_dir_path}/lib_cplusplus/dump.hpp \
           -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG
           """
 

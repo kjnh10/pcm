@@ -1,3 +1,5 @@
+#pragma once
+
 // http://www.creativ.xyz/dump-cpp-652
 using namespace std;
 #include <bits/stdc++.h>

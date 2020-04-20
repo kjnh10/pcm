@@ -129,3 +129,4 @@ a.out
 pcm/tmp/
 pcm/.vscode/
 test/tmp/
+**/*.gch/*

@@ -188,10 +188,10 @@ def _precompile(config, cnfname, extension):
         print(make_precompiled_header_command) # sudo -x c++-headerは不要そう
         proc = subprocess.run(make_precompiled_header_command)
     except Exception as e:
-        click.secho(f'precompile:{cnfname} failed.')
+        click.secho(f'precompile:[{cnfname}] failed.')
         print(e)
     else:
-        click.secho(f'precompile:{cnfname} successed. {header_filepath}.gch/{cnfname} has been created', fg='green')
+        click.secho(f'precompile:[{cnfname}] successed. {header_filepath}.gch/{cnfname} has been created', fg='green')
 
     print('')
     return 0

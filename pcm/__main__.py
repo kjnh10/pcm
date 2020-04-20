@@ -150,6 +150,53 @@ def compile(config, code_filename, compile_command_configname):
     CodeFile(code_filename).compile(config)
 #}}}
 
+# compile: precompile {{{
+@cli.command()
+@click.option('--extension', '-e', type=str, default='cpp')
+@click.option('--compile_command_configname', '-cc', type=str, default='')
+@pass_config
+def precompile(config, extension, compile_command_configname):
+    if compile_command_configname:  # precompile for default profile
+        _precompile(config.pref['test']['compile_command']['configname'], extension)
+    else:
+        for confname in config.pref['test']['compile_command'][extension].keys():
+            _precompile(confname, extension)
+
+@pass_config
+def _precompile(config, cnfname, extension):
+    click.secho(f'precompile started for {cnfname} for {extension}......', fg='yellow')
+    print('-----------------------------------------------------------------')
+
+    try:
+        command = config.pref['test']['compile_command'][extension][cnfname].format(
+            srcpath= "____",
+            outpath= "____", 
+            config_dir_path='~/.config/pcm',
+            pcm_dir_path=os.path.dirname(__file__),
+        ).split()
+
+        include_idx = command.index('-include')
+        header_filepath = command[include_idx+1];
+        make_precompiled_header_command = config.pref['test']['compile_command'][extension][cnfname].format(
+            srcpath=header_filepath,
+            outpath=header_filepath + f'.gch/{cnfname}',
+            config_dir_path='~/.config/pcm',
+            pcm_dir_path=os.path.dirname(__file__),
+        ).split()
+        del make_precompiled_header_command[include_idx:include_idx+2]
+        Path(header_filepath + f'.gch/{cnfname}').parent.mkdir(parents=True, exist_ok=True)
+        print(make_precompiled_header_command) # sudo -x c++-headerは不要そう
+        proc = subprocess.run(make_precompiled_header_command)
+    except Exception as e:
+        click.secho(f'precompile:{cnfname} failed.')
+        print(e)
+    else:
+        click.secho(f'precompile:{cnfname} successed. {header_filepath}.gch/{cnfname} has been created', fg='green')
+
+    print('')
+    return 0
+#}}}
+
 # test: tt {{{
 @cli.command()
 @click.argument('code_filename', type=str, default='')

@@ -690,29 +690,5 @@ def ga(config, limit_count, extension):
     contest.get_answers(limit_count, extension)
 # }}}
 
-def _pcm_root_dir():# {{{
-    pwd = os.getcwd() # 最後には元のdirecotryに戻るため保存しておく。
-    while True:
-        if sum([1 if f == '.pcm' else 0 for f in os.listdir('./')]):
-            now = os.getcwd()
-            os.chdir(pwd)
-            return Path(now)
-        else:
-            if os.getcwd() == "/":
-                print("it seems you aren't in directory maintained by pcm")
-                sys.exit()
-            try:
-                os.chdir('../')
-            except:
-                print("it seems you aren't in directory maintained by pcm")
-                sys.exit()
-            # }}}
-
-def _reload_contest_class():  # {{{
-    contest_dir = _pcm_root_dir()
-    with open(contest_dir / '.pcm/.contest_info', mode="r") as f:
-        contest_url = f.readline()
-    return Contest(contest_url, contest_dir)
-# }}}
 
 # vim:set foldmethod=marker:

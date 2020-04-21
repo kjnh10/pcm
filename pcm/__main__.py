@@ -145,7 +145,7 @@ def _prepare_problem(config, task_url, prob_name, force=False):
             shutil.rmtree(Path(prob_name))
         else:
             print(f'{prob_name} directory already exists')
-            return
+            sys.exit()
 
     shutil.copytree(config.pref['template_dir'], f'{prob_name}/')
     os.chdir(prob_name)

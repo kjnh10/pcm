@@ -668,33 +668,6 @@ def db(config, code_filename: str, compile_command_configname: str, case: str, t
 def sb(config, code_filename, language, pretest):
     if (not pretest) and (not click.confirm('Are you sure to submit?')):  # no-pretestの場合は遅延を避けるため最初に質問する。
         return
-
-    codefile = CodeFile(code_filename)
-    extension = codefile.path.suffix[1:]
-    contest = _reload_contest_class()
-
-    with open(codefile.path, "r") as f:
-        code_string = f.read()
-
-    if pretest:
-        click.secho("pretest started\n", fg='green')
-        if not _test_all_case(codefile):
-            click.secho("pretest not passed and exit", fg="red")
-            return
-
-    if (not pretest) or (click.confirm('Are you sure to submit?')):  # pretestの場合は最終確認をする。
-        contest.submit(codefile.task_alphabet, extension, code_string, language)
-#}}}
-
-# submit: sb2 {{{
-@cli.command()
-@click.argument('code_filename', type=str, default="")
-@click.option('--language', '-l', default='auto-detect')
-@click.option('--pretest/--no-pretest', '-t/-nt', default=True)
-@pass_config
-def sb2(config, code_filename, language, pretest):
-    if (not pretest) and (not click.confirm('Are you sure to submit?')):  # no-pretestの場合は遅延を避けるため最初に質問する。
-        return
     codefile = CodeFile(code_filename)
 
     if pretest:

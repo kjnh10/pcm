@@ -72,16 +72,38 @@ def init(config):
 
 # prepare contest: pp {{{
 @cli.command()
-@click.argument('contest_identifier', type=str, default='abc001')
+@click.argument('contest_id_or_url', type=str, default='abc001')
 @click.option('-n', '--work_dir_name', type=str, default='')
 @click.option('--force/--no-force', "-f/-nf", default=False)
 @pass_config
-def pp(config, contest_identifier, work_dir_name, force):
-    # TODO: 実装をpppと統一する。
-    contest = Contest(contest_identifier, work_dir=work_dir_name)
-    contest.prepare(force)
+def pp(config, contest_id_or_url, work_dir_name, force):
+    if contest_id_or_url[:3] in ("abc", "arc", "agc"):
+        contest_id_or_url = f"https://atcoder.jp/contests/{contest_id_or_url}"
+
+    contest = onlinejudge.dispatch.contest_from_url(contest_id_or_url)
+    if not contest:
+        click.secho(f"{contest_id_or_url} is not valid.", fg='yellow')
+        return 0
+
+    work_dir_name = Path(os.path.abspath(work_dir_name if work_dir_name else contest.contest_id))
+
     try:
-        cstr = config.pref['prepare']['custom_hook_command']['after'].format(dirname=str(contest.work_dir))
+        os.makedirs(work_dir_name)
+    except OSError:
+        if force:
+            shutil.rmtree(work_dir_name)
+            os.makedirs(work_dir_name)
+        else:
+            click.secho('The specified direcotry already exists.', fg='red')
+            return 0
+
+    os.chdir(work_dir_name)
+    for problem in contest.list_problems():
+        _prepare_problem(problem.get_url(), problem.problem_id)
+    os.chdir('../')
+
+    try:
+        cstr = config.pref['prepare']['custom_hook_command']['after'].format(dirname=work_dir_name)
         print(cstr)
         subprocess.run(cstr, shell=True)
     except Exception as e:
@@ -94,12 +116,28 @@ def pp(config, contest_identifier, work_dir_name, force):
 @click.argument('task_url', type=str, default='')
 @click.option('-n', '--prob_name', type=str, default='')
 @click.option('--force/--no-force', "-f/-nf", default=False)
+@click.option('--execute_hook/--no-execute_hook', default=True)
 @pass_config
-def ppp(config, task_url, prob_name, force):
+def ppp(config, task_url, prob_name, force, execute_hook):
+    prob_name = _prepare_problem(task_url, prob_name, force)
+
+    # execute custom_hook_command
+    if not execute_hook: return 0
+    try:
+        cstr = config.pref['ppp']['custom_hook_command']['after'].format(dirname=prob_name)
+        print(cstr)
+        subprocess.run(cstr, shell=True)
+    except Exception as e:
+        if config.verbose:
+            print(e)
+
+
+@pass_config
+def _prepare_problem(config, task_url, prob_name, force=False):
     if prob_name == '':
         if task_url != '':
             prob_name = task_url[task_url.rfind('/')+1:]
-        else:
+        elif not prob_name:
             prob_name = 'prob'
 
     if Path(prob_name).exists():
@@ -109,14 +147,19 @@ def ppp(config, task_url, prob_name, force):
             print(f'{prob_name} directory already exists')
             return
 
-    _prepare_problem(prob_name=prob_name)
+    shutil.copytree(config.pref['template_dir'], f'{prob_name}/')
     os.chdir(prob_name)
-
     # download sample cases
     if task_url != '':
-        subprocess.run(f"rm test/sample*", shell=True)  # gen.pyは消さないようにする。
+        subprocess.run(f"rm test/sample*", shell=True)
+        problem = onlinejudge.dispatch.problem_from_url(task_url)
+        if not problem:
+            click.secho(f"{task_url} is not valid.", fg='yellow')
+            sys.exit()
+
         if 'hackerrank' not in task_url:
-            subprocess.run(['oj', 'download', task_url]) # get test cases
+            # problem.download_sample_cases()
+            subprocess.run(['oj', 'download', task_url])
         else:
             subprocess.run(['oj', 'download', task_url, '--system'])
 
@@ -124,19 +167,9 @@ def ppp(config, task_url, prob_name, force):
         with open('./.problem_info.pickle', mode='wb') as f:
             # problem directory直下にdumpしておく。
             pickle.dump(problem, f)
+    os.chdir('../')
+    return prob_name
 
-    # execute custom_hook_command
-    try:
-        cstr = config.pref['ppp']['custom_hook_command']['after'].format(dirname=prob_name)
-        print(cstr)
-        subprocess.run(cstr, shell=True)
-    except Exception as e:
-        if config.verbose:
-            print(e)
-
-@pass_config
-def _prepare_problem(config, prob_name):
-    shutil.copytree(config.pref['template_dir'], f'{prob_name}/')
 # }}}
 
 # compile: compile {{{
@@ -708,300 +741,5 @@ def _reload_contest_class():  # {{{
         contest_url = f.readline()
     return Contest(contest_url, contest_dir)
 # }}}
-
-
-class Contest(object):
-    def __init__(self, contest_identifier, work_dir=""):# {{{
-        if contest_identifier[:3] in ("abc", "arc", "agc"):
-            self.url = f"https://atcoder.jp/contests/{contest_identifier}"
-        else:
-            self.url = contest_identifier
-        self.type = self.__get_type()  # like atcoder, codeforces
-        self.name = self.__get_name()  # like agc023
-        with oj_utils.with_cookiejar(oj_utils.get_default_session()) as session:
-            self.session = session
-            if not self.__is_logined():
-                click.secho(f'you are not logged in to {self.type}. if you want to join a contest realtime or submit, you need to "oj login"', fg='red')
-        self.work_dir = Path(os.path.abspath(work_dir if work_dir else self.name))
-        self.config_dir = self.work_dir / '.pcm'
-        self.task_info_cache = self.work_dir / ".pcm/task_info_map"
-        self.task_list_url = self.__get_task_list_url()
-        self.task_info_map = self.__get_task_info_map()  # {task_id:{url:<url>, description:<description>}}
-    # }}}
-
-    def prepare(self, force):# {{{
-        try:
-            os.makedirs(self.work_dir)
-        except OSError:
-            if force:
-                shutil.rmtree(self.work_dir)
-                os.makedirs(self.work_dir)
-            else:
-                click.secho('The specified direcotry already exists.', fg='red')
-                return
-
-        os.makedirs(self.config_dir)
-        with open(self.config_dir / ".contest_info", mode="w") as f:
-            f.write(self.url)
-
-        self.task_info_map = self.__get_task_info_map()  # 古いバージョンの形式のcacheが入っている可能性があるためprepareの時はもう一度読み込む。
-        with open(self.task_info_cache, mode='wb') as f:
-            pickle.dump(self.task_info_map, f)
-
-        self.__prepare_tasks()
-        # }}}
-
-    @pass_config
-    def submit(config, self, task_id: str, extension: str, code: str, language: str): # {{{
-        if language == 'auto-detect':
-            try:
-                lang_id = config.pref['submit']['default_lang'][self.type][extension]
-            except KeyError as e:
-                click.secho(f'{extension} not found in possible extensions. if you want to add {extension}, you can add it in ~/.config/pcm/config.toml', fg='red')
-                print('current possible extensions')
-                print(config.pref['submit']['default_lang'][self.type])
-                return
-        else:
-            try:
-                lang_id = config.pref['submit']['language'][self.type][language]
-            except KeyError as e:
-                click.secho(f'{language} not found in possible language. if you want to add {language}, you can add it in ~/.config/pcm/config.toml', fg='red')
-                print('current possible language')
-                print(config.pref['submit']['language'][self.type])
-                return
-
-        if self.type=='AtCoder':
-            problem_id = self.task_info_map[task_id]["problem_id"]
-            res = onlinejudge.service.atcoder.AtCoderProblem(contest_id=self.name, problem_id=problem_id).submit_code(code=code, language_id=lang_id, session=self.session)
-            print(res)
-        elif self.type=='Codeforces':
-            # TODO: onlinejudgeの機能を使用するようにする。
-            base_submit_url = f"http://codeforces.com/contest/{self.name}/submit"
-            # get csrf_token
-            r = self.session.get(base_submit_url)
-            soup = BeautifulSoup(r.text, "lxml")
-            csrf_token = soup.find(name="span", class_="csrf-token").get('data-csrf')
-            assert(csrf_token)
-            payload = {
-                        "csrf_token":csrf_token,
-                        "ftaa":"2gm68wq1kofdqv7d71",
-                        "bfaa":"37ed9af431852dbdb93c7ef8bfed8a9d",
-                        "action":"submitSolutionFormSubmitted",
-                        "submittedProblemIndex":task_id,
-                        "programTypeId":lang_id,
-                        "source":code,
-                        "tabSize":"4",
-                        "sourceFile":"",
-                    }
-            r = self.session.post(
-                    base_submit_url,
-                    data = payload,
-                    )
-            soup = BeautifulSoup(r.text, "lxml")
-            error = soup.find(class_="error for__source")
-            if error:
-                click.secho(error.text, fg='red')
-            elif(r.url[r.url.rfind("/")+1:]=="my"):  # if submitted successfully, returned url will be http://codeforces.com/contest/****/my
-                print(r.url)
-                click.secho('successfully submitted maybe...', fg='green')
-            else:
-                click.secho('submittion failed maybe...', fg='red')
-        else:
-            print("not implemeted for contest type: {self.type}")
-            sys.exit()
-            # }}}
-
-    def get_answers(self, limit_count, extension):  # {{{
-        if self.type=='AtCoder':
-            # get redcoderlist
-            excelent_users = []
-            for page in [1, 2, 3, 4]:
-                rank_url = f"https://atcoder.jp/ranking?page={page}"
-                rank_page = BeautifulSoup(requests.get(rank_url).content, 'lxml')
-                excelent_users_buf = [tag.get('href') for tag in rank_page.findAll('a', class_='username')]
-                excelent_users += [l[l.rfind('/')+1:] for l in excelent_users_buf]
-            print(len(excelent_users), excelent_users)
-        elif self.type=='Codeforces':
-            # get redcoderlist
-            rank_url = 'http://codeforces.com/ratings/page/1'
-            rank_page = BeautifulSoup(requests.get(rank_url).content, 'lxml')
-            excelent_users = [tag.get('href') for tag in rank_page.findAll('a') if '/profile/' in tag.get('href')]
-            excelent_users = set([l[l.rfind('/')+1:] for l in excelent_users])
-
-        task_ids = self.task_info_map.keys()
-        for task_id in task_ids:
-            self.__get_answer(extension=extension, task_id=task_id, limit_count=limit_count, candidate_users=excelent_users)
-
-    def __get_answer(self, extension, task_id, limit_count, candidate_users):
-            answer_dir = self.work_dir / task_id / "answers"
-            if not os.path.exists(answer_dir):
-                os.makedirs(answer_dir)
-
-            if self.type=='AtCoder':
-                if extension == "cpp":
-                    lang_code="3003"
-                elif extension == "py":
-                    lang_code="3023"
-                    # 3510 for pypy
-
-                problem_id = self.task_info_map[task_id]["problem_id"]
-                count = 0
-                page = 1
-                while count < limit_count:
-                    all_answer_url = f"https://beta.atcoder.jp/contests/{self.name}/submissions?"
-                    all_answer_url += f"f.Language={lang_code}&f.Status=AC&f.Task={problem_id}&f.User=&orderBy=created&page={page}"
-                    #like https://beta.atcoder.jp/contests/abc045/submissions?f.Language=3003&f.Status=AC&f.Task=abc045_a&f.User=&orderBy=created&page=1
-                    print('GET ' + all_answer_url)
-                    all_answer_page = BeautifulSoup(requests.get(all_answer_url).content, 'lxml')
-                    links = all_answer_page.findAll('a')
-
-                    if all_answer_page.find('div', class_='panel-body') is not None: # 回答が尽きた場合
-                        click.secho('There seems to be no enough answers for your request.', fg='yellow')
-                        break;
-
-                    for l in links:
-                        link_url = l.get('href')
-                        if l.get_text() in ("Detail", "詳細"):
-                            answer_id = link_url[link_url.rfind("/")+2:]
-                            answer_url = "https://beta.atcoder.jp" + l.get('href')
-                            answer_page = BeautifulSoup(requests.get(answer_url).content, 'lxml')
-                            A = answer_page.findAll('a')
-                            for a in A:
-                                link = a.get('href')
-                                if "users" in str(link):
-                                    user_name = link[link.rfind('/')+1:]
-
-                            if (user_name in candidate_users) or True:  # fileter 条件
-                                answer = answer_page.find(id='submission-code').get_text()
-                                with open(answer_dir / f"{answer_id}_{user_name}.{extension}", mode='w') as f:
-                                    f.write(answer)
-                                count += 1
-
-                        if count == limit_count:
-                            break
-                    page += 1;
-            else:
-                # codeforcesはseleniumを使わないととれなそう。
-                raise Exception(f'not implemented for {self.type} yet.')
-    # }}}
-
-    def __get_type(self):# {{{
-        if "atcoder" in self.url:
-            return "AtCoder"
-        elif "codeforces" in self.url:
-            return "Codeforces"
-        else:
-            click.secho(f"unknown type of url: {self.url}", fg='red')
-            sys.exit()# }}}
-
-    def __get_name(self):# {{{
-        """
-        get contest_name from contest_url
-        """
-        if self.type == 'AtCoder':
-            return self.url[self.url.rfind('/')+1 : ]  # like arc071
-        elif self.type == 'Codeforces':
-            start = self.url.find('contest')+8
-            return self.url[start:]
-        else:
-            click.secho(f"unknown type of url: {self.url}", fg='red')
-            sys.exit()# }}}
-
-    def __get_task_list_url(self):# {{{
-        """
-        get task_list_url from contest_url
-        """
-        if self.type == 'AtCoder':
-            return self.url + "/tasks"
-        elif self.type == 'Codeforces':
-            return self.url  # codeforcesはproblemsがindex pageになっている。
-        else:
-            click.secho(f"unknown type of url: {self.url}", fg='red')
-            sys.exit()# }}}
-
-    def __is_logined(self):# {{{
-        resp = self.session.request('GET', self.url)
-        if self.type == 'AtCoder':
-            click.secho(f'login status in __is_logined(): {"Sign Out" in resp.text}', fg='green')
-            return ("Sign Out" in resp.text)
-        elif self.type == 'Codeforces':
-            click.secho(f'login status in __is_logined(): {"Logout" in resp.text}', fg='green')
-            return ("Logout" in resp.text)
-# }}}
-
-    def __get_task_info_map(self):# {{{
-        # reload cache if it exists.
-        if os.path.exists(self.task_info_cache):
-            with open(self.task_info_cache, mode='rb') as f:
-                try:
-                    task_info_map = pickle.load(f)
-                    assert task_info_map != {} # 前回のフォルダが壊れていて空のcacheがおいてある場合は例外を発生させる。
-                    click.secho("reloaded cache", fg='yellow')
-                    return task_info_map
-                except:
-                    click.secho(f"{self.task_info_cache} is broken, so will try to retrieve info", fg='yellow')
-
-        task_page_html = self.session.request('GET', self.task_list_url)
-        task_page = BeautifulSoup(task_page_html.content, 'lxml')
-        links = task_page.findAll('a')
-
-        task_urls = []
-        if (self.type=='AtCoder') or (self.type=='Codeforces'):
-            for l in links:
-                if re.match(r"[A-Z][1-2]?$", l.get_text().strip()):
-                    task_urls.append(l.get('href'))
-
-            # get task_id, description
-            task_info_map = {}
-            for url in task_urls:
-                description = ""
-                for l in links:
-                    link_text = l.get_text().strip()  # like A or A1
-                    if l.get('href') == url and re.match(r"[A-Z][1-2]?$", link_text):
-                        task_id = link_text
-                    elif (l.get('href') == url):
-                        description = link_text
-
-                task_info_map[task_id] = {'url':url, 'description':description, 'problem_id':url[url.rfind("/")+1:]}
-
-            try:
-                with open(self.task_info_cache, mode='wb') as f:
-                    pickle.dump(task_info_map, f)
-            except:
-                click.secho("caching task_info_map failed", fg='yellow')
-
-            return task_info_map
-        else:
-            click.secho(f"unknown type of url: {self.url}", fg='red')
-            print("There seems to be no problems. Check that the url is correct task list url")
-            sys.exit()
-
-    # }}}
-
-    @pass_config
-    def __prepare_tasks(config, self):  # {{{
-        if self.type == 'AtCoder':
-            base_url = "https://atcoder.jp"
-        elif self.type == 'Codeforces':
-            base_url = "http://codeforces.com"
-        else:
-            click.secho(f"unknown type of url: {self.url}", fg='red')
-            sys.exit()
-
-        for task_id, task_info in self.task_info_map.items():
-            task_url = base_url + task_info['url']
-            task_dir = self.work_dir / task_id
-
-            shutil.copytree(config.pref['template_dir'], f'{task_dir}/')
-            os.chdir(task_dir)
-
-            try:
-                subprocess.run(f"rm {task_dir/'test'}/sample*", shell=True)  # gen.pyは消さないようにする。
-                click.secho(f"oj will try to download {task_url}...", fg='yellow')
-                subprocess.run(['oj', 'download', task_url]) # get test cases
-                Path(task_info['description'].replace("/", "-")).touch()
-            except:
-                click.secho("failed preparing: " + base_url + task_info['url'], fg='red')
-    # }}}
 
 # vim:set foldmethod=marker:

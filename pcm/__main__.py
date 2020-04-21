@@ -683,11 +683,22 @@ def sb(config, code_filename, language, pretest):
 # get answers: ga {{{
 @cli.command()
 @pass_config
+@click.argument('code_filename', type=str, default='')
 @click.option('--limit_count', '-c', type=int, default=5)
-@click.option('--extension', '-e', type=str, default='cpp')
-def ga(config, limit_count, extension):
-    contest = _reload_contest_class()
-    contest.get_answers(limit_count, extension)
+def ga(config, code_filename, limit_count):
+    solve_codefile = CodeFile(code_filename)
+    service = solve_codefile.oj_problem_class.get_service().get_name()
+    lang_id = config.pref['submit']['default_lang'][service][solve_codefile.extension]
+    count = 0
+    for submission in solve_codefile.oj_problem_class.iterate_submissions_where(status='AC', order='created', language_id=lang_id):
+        submission_data = submission.download_data()
+        with open(solve_codefile.code_dir / f"ans.{submission_data.user_id}.{solve_codefile.extension}", mode='wb') as f:
+            f.write(submission_data.source_code)
+        print(f'downloaded ans.{submission_data.user_id}.{solve_codefile.extension}')
+
+        count += 1
+        if (count >= limit_count):
+            break
 # }}}
 
 

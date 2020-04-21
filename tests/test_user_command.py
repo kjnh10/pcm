@@ -9,6 +9,8 @@ import re
 
 script_path = Path(os.path.dirname(__file__))
 
+probdir_name = 'abc001_1'
+
 def test_pp():
     shutil.rmtree(script_path / 'tmp/test_pp/abc001', ignore_errors=True)
     os.chdir(script_path / 'tmp' / 'test_pp')
@@ -29,7 +31,7 @@ def test_pp():
 
 
 def test_tt():
-    os.chdir(script_path / 'tmp/test_tt/abc001/A/codes')
+    os.chdir(script_path / f'tmp/test_tt/abc001/A/codes')
     os.utime('solve.cpp', None)  # update st_mtime for solve.cpp to be used
 
     proc = __run_command('pcm tt')
@@ -43,7 +45,7 @@ def test_tt():
 
 
 def test_tt_python():
-    os.chdir(script_path / 'tmp/test_tt/abc001/A/codes')
+    os.chdir(script_path / f'tmp/test_tt/abc001/A/codes')
     proc = __run_command('pcm tt solve.py')
     print('---------stdout-------------')
     print(proc.stdout.decode('utf-8'))
@@ -54,7 +56,7 @@ def test_tt_python():
 
 
 def test_tt_TLE():
-    os.chdir(script_path / 'tmp/test_tt/abc001/A/codes')
+    os.chdir(script_path / f'tmp/test_tt/abc001/A/codes')
     proc = __run_command('pcm tt solve_TLE.py')
     print('---------stdout-------------')
     print(proc.stdout.decode('utf-8'))
@@ -64,7 +66,7 @@ def test_tt_TLE():
 
 
 def test_tt_RE():
-    os.chdir(script_path / 'tmp/test_tt/abc001/A/codes')
+    os.chdir(script_path / f'tmp/test_tt/abc001/A/codes')
     proc = __run_command('pcm tt solve_RE.py')
     print('---------stdout-------------')
     print(proc.stdout.decode('utf-8'))
@@ -74,7 +76,7 @@ def test_tt_RE():
 
 
 def test_tt_MLE():
-    os.chdir(script_path / 'tmp/test_tt/abc001/A/codes')
+    os.chdir(script_path / f'tmp/test_tt/abc001/A/codes')
     proc = __run_command('pcm tt solve_MLE.py')
     print('---------stdout-------------')
     print(proc.stdout.decode('utf-8'))
@@ -84,7 +86,7 @@ def test_tt_MLE():
 
 
 def test_sb_atcoder():
-    os.chdir(script_path / 'tmp/test_sb/abc001/A/codes')
+    os.chdir(script_path / f'tmp/test_sb/abc001/{probdir_name}/codes')
     os.utime('solve.cpp', None)  # update st_mtime for solve.py to be used
     runner = CliRunner()
     result = runner.invoke(cli, args=['sb'], input='y')

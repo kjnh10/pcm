@@ -125,6 +125,7 @@ venv.bak/
 
 .idea/
 a.out
+*.out
 
 pcm/tmp/
 pcm/.vscode/

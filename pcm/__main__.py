@@ -85,7 +85,7 @@ def pp(config, contest_id_or_url, work_dir_name, force):
         click.secho(f"{contest_id_or_url} is not valid.", fg='yellow')
         return 0
 
-    work_dir_name = Path(os.path.abspath(work_dir_name if work_dir_name else contest.contest_id))
+    work_dir_name = Path(os.path.abspath(work_dir_name if work_dir_name else str(contest.contest_id)))
 
     try:
         os.makedirs(work_dir_name)
@@ -99,7 +99,7 @@ def pp(config, contest_id_or_url, work_dir_name, force):
 
     os.chdir(work_dir_name)
     for problem in contest.list_problems():
-        _prepare_problem(problem.get_url(), problem.problem_id)
+        _prepare_problem(problem.get_url())
     os.chdir('../')
 
     try:
@@ -133,7 +133,7 @@ def ppp(config, task_url, prob_name, force, execute_hook):
 
 
 @pass_config
-def _prepare_problem(config, task_url, prob_name, force=False):
+def _prepare_problem(config, task_url, prob_name='', force=False):
     if prob_name == '':
         if task_url != '':
             prob_name = task_url[task_url.rfind('/')+1:]

@@ -15,26 +15,7 @@ namespace dump_macro{
 
 #define dump(...)  \
 {  \
-    dump_macro::varnames.push([](string s) -> vector<string> { \
-        int n = s.size(); \
-        vector<string> res; \
-        string tmp = ""; \
-        int parlevel = 0; \
-        for(int i=0; i<n; i++){ \
-        if (s[i]=='(') parlevel++; \
-        if (s[i]==')') parlevel--; \
-        if (s[i]==' ') continue; \
-        if (s[i]==',' && parlevel==0){ \
-        res.push_back(tmp); \
-        tmp = ""; \
-        } \
-        else{ \
-        tmp += s[i]; \
-        } \
-        } \
-        res.push_back(tmp); \
-        return res; \
-        }(#__VA_ARGS__)); \
+    dump_macro::varnames.push(split_va_args(#__VA_ARGS__)); \
     dump_macro::varidx.push(0); \
     dump_func(__VA_ARGS__); DUMPOUT<<"in ["<<__LINE__<<":"<<__FUNCTION__<<"]"<<endl;  \
     dump_macro::varnames.pop();dump_macro::varidx.pop(); \
@@ -57,7 +38,8 @@ namespace dump_macro{
 
 void dump_func() {
 }
-    template <class Head, class... Tail>
+
+template <class Head, class... Tail>
 void dump_func(Head&& head, Tail&&... tail)
 {
     DUMPOUT << dump_macro::varnames.top()[dump_macro::varidx.top()] << ":" << head;
@@ -69,6 +51,27 @@ void dump_func(Head&& head, Tail&&... tail)
     }
     ++dump_macro::varidx.top();
     dump_func(std::move(tail)...);
+}
+
+vector<string> split_va_args(string s){
+    int n = s.size(); 
+    vector<string> res; 
+    string tmp = ""; 
+    int parlevel = 0; 
+    for(int i=0; i<n; i++){ 
+        if (s[i]=='(') parlevel++; 
+        if (s[i]==')') parlevel--; 
+        if (s[i]==' ') continue; 
+        if (s[i]==',' && parlevel==0){ 
+            res.push_back(tmp); 
+            tmp = ""; 
+        } 
+        else{ 
+            tmp += s[i]; 
+        } 
+    } 
+    res.push_back(tmp); 
+    return res; 
 }
 
 #include "prettyprint.hpp"

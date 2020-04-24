@@ -12,6 +12,7 @@ import toml
 import time
 import re
 import tempfile
+import hashlib
 from colorama import init, Fore, Back, Style
 from typing import TYPE_CHECKING, List, Optional, Type
 from bs4 import BeautifulSoup
@@ -201,27 +202,36 @@ def _precompile(config, cnfname, extension):
     print('-----------------------------------------------------------------')
 
     try:
-        command = config.pref['test']['compile_command'][extension][cnfname].format(
+        command_str = config.pref['test']['compile_command'][extension][cnfname].format(
             srcpath= "____",
             outpath= "____", 
             config_dir_path='~/.config/pcm',
             pcm_dir_path=os.path.dirname(__file__),
-        ).split()
-
+        )
+        command = command_str.split()
+        command_hash = hashlib.md5(command_str.encode()).hexdigest()
         include_idx = command.index('-include')
         header_filepath = command[include_idx+1];
+        outpath = Path(header_filepath + f'.gch/{cnfname}.ver-{command_hash}')
+        if outpath.exists():
+            click.secho(f'precompile:[{cnfname}] skipped since the string of [{cnfname}] has not changed.\n', fg='green')
+            return 0
+
         make_precompiled_header_command = config.pref['test']['compile_command'][extension][cnfname].format(
             srcpath=header_filepath,
-            outpath=header_filepath + f'.gch/{cnfname}',
+            outpath=str(outpath),
             config_dir_path='~/.config/pcm',
             pcm_dir_path=os.path.dirname(__file__),
         ).split()
         del make_precompiled_header_command[include_idx:include_idx+2]
-        Path(header_filepath + f'.gch/{cnfname}').parent.mkdir(parents=True, exist_ok=True)
+        outpath.parent.mkdir(parents=True, exist_ok=True)
+        for p in outpath.parent.glob(f'{cnfname}.ver-*'):
+            p.unlink()
+
         print(make_precompiled_header_command) # sudo -x c++-headerは不要そう
         proc = subprocess.run(make_precompiled_header_command)
     except Exception as e:
-        click.secho(f'precompile:[{cnfname}] failed.')
+        click.secho(f'precompile:[{cnfname}] failed.', fg='red')
         print(e)
     else:
         click.secho(f'precompile:[{cnfname}] successed. {header_filepath}.gch/{cnfname} has been created', fg='green')

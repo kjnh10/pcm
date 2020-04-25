@@ -211,14 +211,14 @@ def _precompile(config, cnfname, extension):
         command = command_str.split()
         command_hash = hashlib.md5(command_str.encode()).hexdigest()
         include_idx = command.index('-include')
-        header_filepath = command[include_idx+1];
-        outpath = Path(header_filepath + f'.gch/{cnfname}.ver-{command_hash}')
+        header_filepath = Path(command[include_idx+1]).expanduser();
+        outpath = Path(str(header_filepath) + f'.gch/{cnfname}.ver-{command_hash}')
         if outpath.exists():
             click.secho(f'precompile:[{cnfname}] skipped since the string of [{cnfname}] has not changed.\n', fg='green')
             return 0
 
         make_precompiled_header_command = config.pref['test']['compile_command'][extension][cnfname].format(
-            srcpath=header_filepath,
+            srcpath=str(header_filepath),
             outpath=str(outpath),
             config_dir_path='~/.config/pcm',
             pcm_dir_path=os.path.dirname(__file__),

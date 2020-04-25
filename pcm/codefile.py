@@ -184,8 +184,21 @@ class CodeFile(object):
         return command
 
     def submit(self, config, language):
-        with open(self.path, "r") as f:
-            code_string = f.read()
+        code_string = ""
+        if self.extension == "cpp":
+            tmp_expanded_code_file = f'{self.path.parent}/.last_submit_code'
+            oj_bundle_commands = ['oj-bundle', str(self.path), '>', tmp_expanded_code_file]
+            proc = subprocess.Popen(' '.join(oj_bundle_commands), shell=True, stderr=subprocess.PIPE)
+            outs, errs = proc.communicate()
+            if proc.returncode:
+                click.secho("oj-bundle error")
+                print(errs)
+                exit()
+            with open(tmp_expanded_code_file, "r") as f:
+                code_string = f.read()
+        else:
+            with open(self.path, "r") as f:
+                code_string = f.read()
 
         contest_site = self.oj_problem_class.get_service().get_name()
 

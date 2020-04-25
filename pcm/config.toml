@@ -38,31 +38,21 @@ template_dir = '~/.config/pcm/template'  # if this directory does not exist or n
   configname = 'standard_17'  # specify the profile used by default for tt and sb
 
   [test.compile_command.cpp]  # for tt command, you can change the compile command by --cc option. like 'pcm tt -c 1 --cc v5'
-  standard_17 = """g++-9 {srcpath} -o {outpath} \
+  standard_17 = """g++ {srcpath} -o {outpath} \
                -std=c++17 \
                -include {pcm_dir_path}/lib_cplusplus/dump.hpp \
-               -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG -fuse-ld=gold
+               -DPCM -Wall -D_GLIBCXX_DEBUG -fuse-ld=gold
             """
 
-  debug = """g++-9 {srcpath} -o {outpath} \
+  debug = """g++ {srcpath} -o {outpath} \
             -std=c++17 \
             -include {pcm_dir_path}/lib_cplusplus/dump.hpp \
             -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG -fuse-ld=gold \
             -g
             """
 
-  v5 = """g++ {srcpath} -o {outpath} \
+  clang = """clang++ {srcpath} -o {outpath} \
           -std=c++17 \
           -include {pcm_dir_path}/lib_cplusplus/dump.hpp \
-          -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG
-          """
-
-  fast = """g++ {srcpath} -o {outpath} \
-          -std=c++17 \
-          -include bits/stdc++.h \
-          """
-
-  clang = """clang++ {srcpath} -o {outpath} \
-          -stdlib=libc++ \
-          -DPCM -Wall
+          -DPCM -Wall -D_GLIBCXX_DEBUG -fuse-ld=lld
           """

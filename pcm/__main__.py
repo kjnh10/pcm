@@ -71,6 +71,14 @@ def init(config):
     """This command will make current dir pcm work-space"""
     os.makedirs('./.pcm')# }}}
 
+# prepare problem: login {{{
+@cli.command()
+@click.argument('url', type=str)
+@pass_config
+def login(config, url):
+    subprocess.run(f'oj login {url}', shell=True)
+# }}}
+
 # prepare contest: pp {{{
 @cli.command()
 @click.argument('contest_id_or_url', type=str, default='abc001')

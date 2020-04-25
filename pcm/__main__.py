@@ -151,25 +151,44 @@ def _prepare_problem(config, task_url, prob_name='', force=False):
     shutil.copytree(config.pref['template_dir'], f'{prob_name}/')
     os.chdir(prob_name)
     # download sample cases
-    if task_url != '':
-        subprocess.run(f"rm test/sample*", shell=True)
-        problem = onlinejudge.dispatch.problem_from_url(task_url)
-        if not problem:
-            click.secho(f"{task_url} is not valid.", fg='yellow')
-            sys.exit()
-
-        if 'hackerrank' not in task_url:
-            # problem.download_sample_cases()
-            subprocess.run(['oj', 'download', task_url])
-        else:
-            subprocess.run(['oj', 'download', task_url, '--system'])
-
-        problem = onlinejudge.dispatch.problem_from_url(task_url)
-        with open('./.problem_info.pickle', mode='wb') as f:
-            # problem directory直下にdumpしておく。
-            pickle.dump(problem, f)
+    if task_url:
+        _download_sample(task_url)
     os.chdir('../')
     return prob_name
+# }}}
+
+# prepare problem: dl {{{
+@cli.command()
+@click.argument('task_url', type=str)
+@pass_config
+def dl(config, task_url):
+    try:
+        solve_codefile = CodeFile("")
+    except FileNotFoundError as e:
+        print("you are not in pcm-problem directory")
+        exit()
+    os.chdir(solve_codefile.prob_dir)
+    _download_sample(task_url)
+
+
+def _download_sample(task_url):
+    # prob_dirにいることが仮定されている
+    subprocess.run(f"rm test/sample*", shell=True)
+    problem = onlinejudge.dispatch.problem_from_url(task_url)
+    if not problem:
+        click.secho(f"{task_url} is not valid.", fg='yellow')
+        sys.exit()
+
+    if 'hackerrank' not in task_url:
+        # problem.download_sample_cases()
+        subprocess.run(['oj', 'download', task_url])
+    else:
+        subprocess.run(['oj', 'download', task_url, '--system'])
+
+    problem = onlinejudge.dispatch.problem_from_url(task_url)
+    with open('./.problem_info.pickle', mode='wb') as f:
+        # problem directory直下にdumpしておく。
+        pickle.dump(problem, f)
 
 # }}}
 

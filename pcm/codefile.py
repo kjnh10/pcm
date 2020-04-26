@@ -220,8 +220,14 @@ class CodeFile(object):
                 return
 
         with oj_utils.with_cookiejar(oj_utils.get_default_session()) as session:
-            res = self.oj_problem_class.submit_code(code_string, language_id=lang_id, session=session)
-            print(res)
+            try:
+                res = self.oj_problem_class.submit_code(code_string, language_id=lang_id, session=session)
+            except AssertionError as e:
+                click.secho('maybe language_id is not valid.', fg='yellow')
+                print(e)
+                exit()
+            else:
+                print(res)
 
     def __str__(self):
         return str(self.path)

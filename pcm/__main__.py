@@ -215,16 +215,17 @@ def compile(config, code_filename, compile_command_configname):
 @cli.command()
 @click.option('--extension', '-e', type=str, default='cpp')
 @click.option('--compile_command_configname', '-cc', type=str, default='')
+@click.option('--force/--no-force', "-f/-nf", default=False)
 @pass_config
-def precompile(config, extension, compile_command_configname):
+def precompile(config, extension, compile_command_configname, force):
     if compile_command_configname:  # precompile for default profile
-        _precompile(config.pref['test']['compile_command']['configname'], extension)
+        _precompile(config.pref['test']['compile_command']['configname'], extension, force)
     else:
         for confname in config.pref['test']['compile_command'][extension].keys():
-            _precompile(confname, extension)
+            _precompile(confname, extension, force)
 
 @pass_config
-def _precompile(config, cnfname, extension):
+def _precompile(config, cnfname, extension, force):
     click.secho(f'precompile started for {cnfname} for {extension}......', fg='yellow')
     print('-----------------------------------------------------------------')
 
@@ -240,7 +241,7 @@ def _precompile(config, cnfname, extension):
         include_idx = command.index('-include')
         header_filepath = Path(command[include_idx+1]).expanduser();
         outpath = Path(str(header_filepath) + f'.gch/{cnfname}.ver-{command_hash}')
-        if outpath.exists():
+        if outpath.exists() and (not force):
             click.secho(f'precompile:[{cnfname}] skipped since the string of [{cnfname}] has not changed.\n', fg='green')
             return 0
 

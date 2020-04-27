@@ -53,3 +53,8 @@ template_dir = '~/.config/pcm/template'  # if this directory does not exist or n
           -std=c++17 \
           -DPCM -Wall -D_GLIBCXX_DEBUG -fuse-ld=lld
           """
+
+  atcoder = """g++-9 {srcpath} -o {outpath} \
+                 -std=gnu++17 -Wall -Wextra -O2 -march=native -mtune=native -DEVAL\
+                 -I/opt/boost/gcc/include -L/opt/boost/gcc/lib
+            """

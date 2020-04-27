@@ -107,8 +107,9 @@ def pp(config, contest_id_or_url, work_dir_name, force):
             return 0
 
     os.chdir(work_dir_name)
-    for problem in contest.list_problems():
-        _prepare_problem(problem.get_url())
+    with oj_utils.with_cookiejar(oj_utils.get_default_session()) as session:
+        for problem in contest.list_problems(session):
+            _prepare_problem(problem.get_url())
     os.chdir('../')
 
     try:

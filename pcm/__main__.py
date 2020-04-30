@@ -212,6 +212,18 @@ def compile(config, code_filename, compile_command_configname):
     CodeFile(code_filename).compile(config)
 #}}}
 
+# compile: bundle {{{
+@cli.command()
+@click.argument('code_filename', type=str, default='')
+@click.option('--clipboard', '-c/-nc', type=bool, default=True)
+@pass_config
+def bd(config, code_filename, clipboard):
+    command = ['oj-bundle', str(CodeFile(code_filename).path)]
+    if clipboard:
+        command += ['|', 'xsel', '--clipboard', '--input']
+    subprocess.run(' '.join(command), shell=True)
+#}}}
+
 # compile: precompile {{{
 @cli.command()
 @click.option('--extension', '-e', type=str, default='cpp')
@@ -703,6 +715,7 @@ def db(config, code_filename: str, compile_command_configname: str, case: str, t
 @click.argument('code_filename', type=str, default="")
 @click.option('--language', '-l', default='auto-detect')
 @click.option('--pretest/--no-pretest', '-t/-nt', default=True)
+@click.option('--clip/--no-clip', '-c/-nc', default=False)
 @pass_config
 def sb(config, code_filename, language, pretest):
     if (not pretest) and (not click.confirm('Are you sure to submit?')):  # no-pretestの場合は遅延を避けるため最初に質問する。

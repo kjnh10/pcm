@@ -95,16 +95,17 @@ def randprime(l: int = 2, r: int = 1000000007): # [l, r]
             assert False
 
 class randtree(object):
-    def __init__(self, n: int):
+    def __init__(self, n: int, root: int = 0):
+        assert root < n
         self.edges = []
         self.n = n
-        s = set(range(1, self.n))
-        joined = [0]
+        s = set([x for x in range(n) if x!=root])
+        joined = [root]
         self.edges = []
         for _ in range(n-1):
             a = sample(s, 1)[0]
             b = choice(joined)
-            self.edges.append((a, b))
+            self.edges.append((b, a))  # この向きにするとgraphvizの表示が木らしくなる。
             s.remove(a)
             joined.append(a)
 
@@ -117,27 +118,35 @@ class randtree(object):
             res.append(f"{edge[0]+one_index} {edge[1]+one_index}")
         return '\n'.join(res)
 
-class connected_graph(object):  # undirected
-    def __init__(self, n:int, tree_ok=True):
+class randgraph(object):  # undirected
+    def __init__(self, n:int, lb:int=1, ub:int=float('inf'), tree_ok=True):
         self.n = n
-        if tree_ok:
-            # 10%くらいは木が生成されるように
-            r = randint(1, 10)
-            if (r<=2):
-                self.edges = randtree(n).edges
+        if ub == float('inf'):
+            ub = n*(n-1)/2
+
+        while True:
+            if tree_ok:  # tree graph
+                # 10%くらいは木が生成されるように
+                r = randint(1, 10)
+                if (r<=2):
+                    self.edges = randtree(n).edges
+                    return
+
+            # TODO: [line graph, star graph, complete graph]
+
+            uf = UnionFind(n)
+            self.edges = set()
+            while(uf.group_count()>1 or len(self.edges)<lb):
+                u = randint(0, n-1)
+                v = randint(0, n-1)
+                if (u==v): continue
+
+                if (u>v): u,v=v,u
+                self.edges.add((u, v))
+                uf.union(u, v)
+            self.edges = list(self.edges)
+            if len(self.edges) <= ub:
                 return
-
-        uf = UnionFind(n)
-        self.edges = set()
-        while(uf.group_count()>1 and (tree_ok or len(self.edges)>=n)):
-            u = randint(0, n-1)
-            v = randint(0, n-1)
-            if (u==v): continue
-
-            if (u>v): u,v=v,u
-            self.edges.add((u, v))
-            uf.union(u, v)
-        self.edges = list(self.edges)
 
     def __str__(self, one_index=True, header=True):
         res = []
@@ -152,6 +161,7 @@ def pl(x: List):
 
 # write down here
 # ---------------------------------------------
-n = randint(1, 10)
+n = randint(2, 10)
 print(n)
-print(connected_graph(n))
+# print(randgraph(n))
+print(randtree(n))

@@ -752,5 +752,42 @@ def ga(config, code_filename, limit_count):
             break
 # }}}
 
+# get answers: viz {{{
+@cli.command()
+@click.option('--directed', '-d/-nd', type=bool, default=False)
+@click.option('--in_index_base', '-i', type=int, default=1)
+@click.option('--out-index-base', '-o', type=int, default=0)
+@pass_config
+def viz(config, directed, in_index_base, out_index_base):
+    from graphviz import Digraph, Graph
+
+    firstline = input().split()
+    G = None
+    n, m = -1, -1
+    if (len(firstline) == 1):
+        # this is tree
+        G = Graph()
+        n = int(firstline[0])
+        m = n-1
+    else:
+        n, m = map(int, firstline)
+        if directed:
+            G = Digraph()
+        else:
+            G = Graph()
+
+    for i in range(n):
+        G.node(str(i))
+
+    for i in range(m):
+        u, v = map(int, input().split())
+        u -= 1
+        v -= 1
+        G.edge(str(u), str(v), cost='1')
+
+    output_filepath = os.path.expanduser('~/Dropbox/graph')
+    G.render(output_filepath, view=True)
+# }}}
+
 
 # vim:set foldmethod=marker:

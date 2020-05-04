@@ -15,10 +15,22 @@ import tempfile
 import hashlib
 from colorama import init, Fore, Back, Style
 from typing import TYPE_CHECKING, List, Optional, Type
-from bs4 import BeautifulSoup
-import onlinejudge._implementation.utils as oj_utils
-import onlinejudge.service.atcoder
-import onlinejudge.dispatch
+
+# pylint: disable=unused-import,ungrouped-imports
+try:
+    import onlinejudge._implementation.utils as oj_utils
+    import onlinejudge.service.atcoder
+    import onlinejudge.dispatch
+except ModuleNotFoundError:
+    import json
+    print(json.dumps({
+        "status": "error",
+        "messages": ["Due to a known bug, the online-judge-tools is not yet properly installed. Please re-run $ pip3 install --force-reinstall online-judge-api-client"],
+        "result": None,
+    }))
+    raise SystemExit(1)
+# pylint: enable=unused-import,ungrouped-importsrom bs4 import BeautifulSoup
+
 script_path = Path(os.path.abspath(os.path.dirname(__file__)))  # script path}}}
 from .codefile import CodeFile, RunResult
 

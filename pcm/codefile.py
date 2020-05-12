@@ -82,14 +82,14 @@ class CodeFile(object):
             print("compile took:{0}".format(time.time() - start) + "[sec]")
         return exefile
 
-    def run(self, config, infile: Path = None) -> RunResult:  
+    def run(self, config, infile: Path = None, outfile: Path = None) -> RunResult:  
         if self.extension not in config.pref['test']['compile_command']:  # for script language
-            return self._run_exe(config, self.path, infile)
+            return self._run_exe(config, self.path, infile, outfile)
         else:
             exefile = self.compile(config)
-            return self._run_exe(config, exefile, infile)
+            return self._run_exe(config, exefile, infile, outfile)
 
-    def _run_exe(self, config, exefile: Path, infile: Path = None) -> RunResult: 
+    def _run_exe(self, config, exefile: Path, infile: Path = None, outfile: Path = None) -> RunResult: 
         res = RunResult()
         command = self._get_command_string_to_run(exefile)
 
@@ -97,7 +97,7 @@ class CodeFile(object):
             return subprocess.Popen(
                 command,
                 stdin=open(infile, "r") if infile else None,
-                stdout=subprocess.PIPE,
+                stdout=open(outfile, "w") if outfile else subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 # shell=True,  # for windows
             )
@@ -122,7 +122,7 @@ class CodeFile(object):
             except Exception as e:
                 pass
         res.returncode = proc.returncode
-        res.stdout = outs.decode('utf-8')
+        res.stdout = None if outfile else outs.decode('utf-8')
         res.stderr = errs.decode('utf-8')
         return res 
 

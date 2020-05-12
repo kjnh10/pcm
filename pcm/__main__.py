@@ -346,14 +346,11 @@ def tt(config, code_filename: str, compile_command_configname: str, case: str, t
                 return 1
 
         while True:
-            gen_result = generator_codefile.run(config)
+            gen_result = generator_codefile.run(config, outfile=test_dir/'r.in')
             if gen_result.returncode != 0:
-                print('failed runnning generator file {generator_codefile.name}')
+                print('failed running generator file {generator_codefile.name}')
                 print(gen_result.stderr)
                 return
-
-            with open(test_dir/'r.in', mode='w') as f:
-                f.write(gen_result.stdout)
 
             infile = test_dir / f"r.in"
             expfile = test_dir / f"r.out"

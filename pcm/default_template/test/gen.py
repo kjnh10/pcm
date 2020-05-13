@@ -54,28 +54,37 @@ class UnionFind():
     def __str__(self):
         return '\n'.join('{}: {}'.format(r, self.members(r)) for r in self.roots())
 
-def randperm(n: int):
-    return sample(list(range(1, n+1)), k=n)
-def randseq(n: int, l: int, r: int, distinct=False):
-    res = []
-    used = set()
-    if (n>r-l+1) and distinct:
-        raise Exception(print("n>r-l+1 and distinct=True is not impossible"))
+class randperm(object):
+    def __init__(self, n:int):
+        self.data = sample(list(range(1, n+1)), k=n)
+    def __str__(self):
+        return ' '.join(map(str, self.data))
 
-    while len(res) < n:
-        v = randint(l, r)
-        if distinct and v in used:
-            pass
-        else:
-            res.append(v)
-            used.add(v)
-    return res
+class randseq(object):
+    def __init__(self, n: int, l: int, r: int, distinct=False):
+        self.data = []
+        used = set()
+        if (n>r-l+1) and distinct:
+            raise Exception(print("n>r-l+1 and distinct=True is not impossible"))
+
+        while len(self.data) < n:
+            v = randint(l, r)
+            if distinct and v in used:
+                pass
+            else:
+                self.data.append(v)
+                used.add(v)
+
+    def __str__(self):
+        return ' '.join(map(str, self.data))
+
 def randstr(length: int, chars: List=['a', 'b', 'c', 'd', 'e']):
 # def randstr(length: int, chars: List=string.ascii_lowercase):
     res = ""
     for i in range(length):
         res += choice(chars)
     return res
+
 def randprime(l: int = 2, r: int = 1000000007): # [l, r]
     def is_prime(x):
         if (x == 1): return False
@@ -156,12 +165,7 @@ class randgraph(object):  # undirected
             res.append(f"{edge[0]+one_index} {edge[1]+one_index}")
         return '\n'.join(res)
 
-def pl(x: List):
-    print(' '.join(map(str, x)))
-
 # write down here
 # ---------------------------------------------
 n = randint(2, 10)
 print(n)
-# print(randgraph(n))
-print(randtree(n))

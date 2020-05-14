@@ -10,8 +10,8 @@ template_dir = '~/.config/pcm/template'  # if this directory does not exist or n
 
 [submit]
   [submit.default_lang.AtCoder]
-  cpp = '3003'  # テストを通すため暫定対応
-  py = '3047'   # テストを通すため暫定対応
+  cpp = '4003'
+  py = '4047'
 
   [submit.default_lang.Codeforces]
   cpp = '54'  # GNU G++14 6.4.0

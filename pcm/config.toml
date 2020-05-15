@@ -17,6 +17,10 @@ template_dir = '~/.config/pcm/template'  # if this directory does not exist or n
   cpp = '54'  # GNU G++14 6.4.0
   py = '41'   # pypy if you prefer python3, use '31'
 
+  [submit.default_lang.yukicoder]
+  cpp = 'cpp17'
+  py  = 'pypy3'
+
   [submit.language.AtCoder]
   gcc = '4003' # C++17 (GCC 9.2.1)
   clang = '4004' # C++17 (Glang 10.0.0)

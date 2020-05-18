@@ -533,10 +533,11 @@ def tr(config, code_filename: str, compile_command_configname: str, case: str, t
     if compile_command_configname:
         config.pref['test']['compile_command']['configname'] = compile_command_configname
 
+    solve_codefile = CodeFile(code_filename, exclude_filename_pattern = [by if by else None])
+    judge_codefile = CodeFile(by, search_root=solve_codefile.prob_dir)
+    test_dir = solve_codefile.test_dir
+
     if Path(case).suffix not in ['.py', '.cpp', '.*']:
-        solve_codefile = CodeFile(code_filename, exclude_filename_pattern = [by if by else None])
-        judge_codefile = CodeFile(by)
-        test_dir = solve_codefile.test_dir
         if case == '':  # test all case
             click.secho('test for all case is not impremented for reactive test just for simplicity', fg='yellow')
             return 0
@@ -556,9 +557,6 @@ def tr(config, code_filename: str, compile_command_configname: str, case: str, t
             _test_interactive_case(solve_codefile, judge_codefile, infile, case)
     else:
         # random test
-        solve_codefile = CodeFile(exclude_filename_pattern=(by if by else []))
-        judge_codefile = CodeFile(by, search_root=solve_codefile.prob_dir)
-        test_dir = solve_codefile.test_dir
         generator_codefile = CodeFile(case, search_root=solve_codefile.prob_dir)
 
         while True:

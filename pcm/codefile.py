@@ -10,18 +10,33 @@ from .interactive_runner import SubprocessThread
 import click
 import onlinejudge._implementation.utils as oj_utils
 from .utils import get_last_modified_file
+from enum import IntEnum
+from pathlib import Path
+
+
+class JudgeResult(IntEnum):
+    AC = 0
+    WA = 1
+    RE = 2
+    CE = 3
+    TLE = -2
+    MLE = 3
+    QLE = 4  # Query limit exceeded
+    NOEXP = 98
+    TLENAIVE = 99
+    YET = 100
 
 
 class RunResult(object):
     def __init__(self):
-        self.returncode = None
-        self.stdout = ""
-        self.stderr = ""
-        self.stderr_filepath = None
-        self.TLE_flag = None
-        self.exec_time = -1
-        self.used_memory = -1
-        self.judge = "yet"  # set by 'pcm tt'
+        self.returncode: int = None
+        self.stdout: str = ""
+        self.stderr: str = ""
+        self.stderr_filepath: Path = None
+        self.TLE_flag: bool = False
+        self.exec_time: float = -1
+        self.used_memory: float = -1
+        self.judge: JudgeResult = JudgeResult.YET  # set by 'pcm tt'
 
 
 class CodeFile(object):
@@ -161,12 +176,11 @@ class CodeFile(object):
 
             res.judge_thread = t_judge
             res.solution_thread = t_sol
-            if (t_judge.return_code == -2 and t_sol.return_code == -2):
-                res.judge = "TLE"
-            elif (t_judge.return_code == 0 and t_sol.return_code == 0):
-                res.judge = "AC"
-            else:
-                res.judge = "WA"
+            try:
+                res.judge = JudgeResult(t_judge.return_code)
+            except Exception as e:
+                res.judge = t_judge.return_code
+
             return res
 
     def to_exefile(self, config):
@@ -231,4 +245,3 @@ class CodeFile(object):
 
     def __str__(self):
         return str(self.path)
-

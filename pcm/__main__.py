@@ -32,7 +32,7 @@ except ModuleNotFoundError:
 # pylint: enable=unused-import,ungrouped-importsrom bs4 import BeautifulSoup
 
 script_path = Path(os.path.abspath(os.path.dirname(__file__)))  # script path}}}
-from .codefile import CodeFile, RunResult
+from .codefile import CodeFile, RunResult, JudgeResult
 
 # set click
 class Config(object):# {{{
@@ -367,7 +367,7 @@ def tt(config, code_filename: str, compile_command_configname: str, case: str, t
                         f.write(run_result.stdout)
 
             run_result = _test_case(solve_codefile, f'random-{code_filename}', infile, expfile)
-            okresult = ['AC', 'TLENAIVE', 'NOEXP']
+            okresult = [JudgeResult.AC, JudgeResult.TLENAIVE, JudgeResult.NOEXP]
             if not (run_result.judge in okresult):
                 if by or loop:  # compareもloopも行わない場合は単に生成して試したいだけの場合が多いので保存しない。
                     num_to_save = 1
@@ -463,13 +463,13 @@ def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile
         click.secho(line, fg='yellow')
         if re.search('runtime error', line):
             click.secho('--RE--\n', fg='red')
-            run_result.judge = 'RE'
+            run_result.judge = JudgeResult.RE
             return run_result
 
     # compare result and expected
     if run_result.TLE_flag:
         click.secho('--TLE--\n', fg='red')
-        run_result.judge = 'TLE'
+        run_result.judge = JudgeResult.TLE
         return run_result
 
     if run_result.returncode != 0:
@@ -480,39 +480,39 @@ def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile
         click.secho(f'--RE--', fg='red')
         click.secho(f':{SIGMAP[abs(run_result.returncode)]}' if abs(run_result.returncode) in SIGMAP.keys() else str(abs(run_result.returncode)), fg='red')
         print('\n')
-        run_result.judge = 'RE'
+        run_result.judge = JudgeResult.RE
         return run_result
-    
+
     if run_result.used_memory > config.pref['test']['max_memory']:
         click.secho('--MLE--\n', fg='red')
-        run_result.judge = 'MLE'
+        run_result.judge = JudgeResult.MLE
         return run_result
 
     # 最後の空白行は無視する。
-    if (stdout[-1]==''): stdout.pop()
-    if (exp[-1]==''): exp.pop()
+    if (stdout[-1] == ''): stdout.pop()
+    if (exp[-1] == ''): exp.pop()
 
     if not expfile_exist:
         click.secho('--NOEXP--\n', fg='yellow')
-        run_result.judge = 'NOEXP'
+        run_result.judge = JudgeResult.NOEXP
     elif len(exp) == 0:
         click.secho('--WA--\n', fg='red')
         run_result.judge = 'WA'
     elif re.search('TLE.*naive.*', exp[0]):
         click.secho('TLENAIVE\n', fg='yellow')
-        run_result.judge = 'TLENAIVE'
+        run_result.judge = JudgeResult.TLENAIVE
     elif len(stdout) != len(exp):
         click.secho('--WA--\n', fg='red')
-        run_result.judge = 'WA'
+        run_result.judge = JudgeResult.WA
     else:
         for i in range(len(stdout)):
             if stdout[i].replace('\r', '').rstrip() != exp[i].rstrip():
                 click.secho('--WA--\n\n', fg='red')
-                run_result.judge = 'WA'
+                run_result.judge = JudgeResult.WA
                 break
         else:
             click.secho('--AC--\n', fg='green')
-            run_result.judge = 'AC'
+            run_result.judge = JudgeResult.AC
     return run_result
 # }}}
 
@@ -572,7 +572,7 @@ def tr(config, code_filename: str, compile_command_configname: str, case: str, t
             infile = test_dir / f"r.in"
 
             run_result = _test_interactive_case(solve_codefile, judge_codefile, infile, f'random-{code_filename}')
-            if run_result.judge != 'AC':
+            if run_result.judge != JudgeResult.AC:
                 if loop:  # loopを行わない場合は単に生成して試したいだけの場合が多いので保存しない。
                     num_to_save = 1
                     L = [f.stem for f in test_dir.glob('r*.in')]
@@ -604,7 +604,7 @@ def _test_interactive_case(config, codefile: CodeFile, judgefile: CodeFile, infi
     with open(run_result.stderr_filepath, 'r') as f:
         print('*'*7 + ' stderr ' + '*'*7)
         for line in f.read().split('\n'):
-            if re.search(r'.* \[\d*:main\]$', line):
+            if re.search(r'.* \[\d*:main\]$', line) or re.search(r'.* \[.*\]$', line):
                 click.secho(line, fg='yellow')
             else:
                 click.secho(line, fg='cyan')
@@ -625,12 +625,11 @@ def _test_interactive_case(config, codefile: CodeFile, judgefile: CodeFile, infi
                 # "bright_cyan",
                 # "bright_white",
 
-    if (run_result.judge == 'AC'):
+    if (run_result.judge == JudgeResult.AC):
         click.secho('--AC--\n', fg='green')
-    if (run_result.judge == 'WA'):
-        click.secho('--WA--\n', fg='red')
-    if (run_result.judge == 'TLE'):
-        click.secho('--TLE--\n', fg='red')
+    else:
+        click.secho(f'--{run_result.judge.__str__().replace("JudgeResult.", "")}--\n', fg='red')
+
     print({f"judge_thread.return_code: {run_result.judge_thread.return_code}"})
     print({f"solution_thread.return_code: {run_result.solution_thread.return_code}"})
     print({f"judge_thread.error_message: {run_result.judge_thread.error_message}"})

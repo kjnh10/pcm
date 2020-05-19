@@ -20,8 +20,9 @@ class JudgeResult(IntEnum):
     RE = 2
     CE = 3
     TLE = -2
-    MLE = 3
-    QLE = 4  # Query limit exceeded
+    MLE = 4
+    QLE = 5  # Query limit exceeded
+    AIE = 6  # Additional input error
     NOEXP = 98
     TLENAIVE = 99
     YET = 100

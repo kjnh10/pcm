@@ -1,46 +1,70 @@
-int T;
-int b;
+#include "../codes/header.hpp"
 
-template<class T>
-void tell(T x){
+enum JudgeResult {/*{{{*/
+    AC = 0,
+    WA = 1,
+    RE = 2,
+    CE = 3,
+    TLE = -2,
+    MLE = 4,
+    QLE = 5,  // Query limit exceeded
+    AIE = 6,  // Additional input error
+    NOEXP = 98,
+    TLENAIVE = 99,
+    YET = 100,
+};/*}}}*/
+
+template <class T>/*{{{*/
+void tell(T x) {
     cout << x << endl;
     fflush(stdout);
-}
+}/*}}}*/
 
-int judge_case(string a){
-    for(int cnt=1; cnt<=150; cnt++){
-        if (cnt%10==1){ reverse(all(a)); }
+bool check_AIE(){/*{{{*/
+    ll tmp;cin>>tmp;
+    if (cin.eof()==0) exit(AIE);  // check needles user-output does not exist
+}/*}}}*/
 
-        string query;cin>>query;
-        if (sz(query)!=b){ tell(a[stoi(query)-1]); }
-        else{
-            if (query==a){
-                tell("Y");
+int judge_case(ll x) {
+    ll num = 22;  // TODO: update query number limit
+    while(num--){
+        string query;
+        cin >> query;
+        if (query=="?"){ // query
+            ll solver_ans;cin>>solver_ans;
+            tell(gcd(solver_ans, x));
+        }
+        if (query=="!"){ // ans
+            ll solver_ans;cin>>solver_ans;
+            if (abs(solver_ans-x)<=7 || (solver_ans<=2*x && x<=2*solver_ans)){
                 return 0;
             }
             else{
-                tell("N");
-                throw("WA");
+                cerr << "WA: ";
+                dump(x, solver_ans);
+                exit(WA);
             }
         }
-        cnt += 1;
     }
-    throw("query's limit exceeded");
+    exit(QLE);
 }
 
-int main(){
+int main() {
     // input case
-    cin>>T>>b;
-    tell(T);
-    tell(b);
-    vector<string> A(T);
-    rep(t, T){ cin>>A[t]; }
+    int Q;
+    cin >> Q;
+    // Q = 1; if single case
+    vector<ll> x(Q);
+    rep(q, Q){ cin>>x[q]; }
 
     // judge
-    rep(i, T){
-        judge_case(A[i]);
+    tell(Q);  // off if single case
+    rep(q, Q) {
+        cerr << "start judge for: " << x[q] << " [judge]" << endl;;
+        judge_case(x[q]); 
     }
 
-    // TODO: check contestant code is continuing to needles queries.
+    // check_AIE(); // これは何故か動かない。無限待機になってしまう。
+    exit(AC);
     return 0;
 }

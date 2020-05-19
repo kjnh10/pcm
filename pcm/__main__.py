@@ -339,6 +339,9 @@ def tt(config, code_filename: str, compile_command_configname: str, case: str, t
         test_dir = solve_codefile.test_dir
         generator_codefile = CodeFile(case, search_root=solve_codefile.prob_dir)
         if by:
+            if (by in ['judge.cpp', 'judge.py']):
+                click.secho('maybe you should use [tr] command for reactive test', fg='yellow')
+                exit()
             try:
                 naive_codefile = CodeFile(match_filename_pattern=by)
             except FileNotFoundError:
@@ -533,8 +536,18 @@ def tr(config, code_filename: str, compile_command_configname: str, case: str, t
     if compile_command_configname:
         config.pref['test']['compile_command']['configname'] = compile_command_configname
 
-    solve_codefile = CodeFile(code_filename, exclude_filename_pattern = [by if by else None])
-    judge_codefile = CodeFile(by, search_root=solve_codefile.prob_dir)
+    try:
+        solve_codefile = CodeFile(code_filename, exclude_filename_pattern = [by if by else None])
+    except FileNotFoundError:
+        click.secho(f'solve code file not found by {code_filename}', fg='yellow')
+        return 1
+
+    try:
+        judge_codefile = CodeFile(by, search_root=solve_codefile.prob_dir)
+    except FileNotFoundError:
+        click.secho(f'judge code file not found by {by}', fg='yellow')
+        return 1
+
     test_dir = solve_codefile.test_dir
 
     if Path(case).suffix not in ['.py', '.cpp', '.*']:
@@ -604,26 +617,10 @@ def _test_interactive_case(config, codefile: CodeFile, judgefile: CodeFile, infi
     with open(run_result.stderr_filepath, 'r') as f:
         print('*'*7 + ' stderr ' + '*'*7)
         for line in f.read().split('\n'):
-            if re.search(r'.* \[\d*:main\]$', line) or re.search(r'.* \[.*\]$', line):
+            if re.search(r'.*\[.*judge.*\].*', line):
                 click.secho(line, fg='yellow')
             else:
                 click.secho(line, fg='cyan')
-                # "black",
-                # "red",
-                # "green",
-                # "yellow",
-                # "blue",
-                # "magenta",
-                # "cyan",
-                # "white",
-                # "bright_black",
-                # "bright_red",
-                # "bright_green",
-                # "bright_yellow",
-                # "bright_blue",
-                # "bright_magenta",
-                # "bright_cyan",
-                # "bright_white",
 
     if (run_result.judge == JudgeResult.AC):
         click.secho('--AC--\n', fg='green')

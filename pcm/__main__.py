@@ -396,6 +396,7 @@ def _test_all_case(codefile: CodeFile) -> bool: # {{{
     res = True
     case_cnt = 0
     ac_cnt = 0
+    noexp_cnt = 0
     exec_times = []
     used_memories = []
     for filename in files:
@@ -413,14 +414,20 @@ def _test_all_case(codefile: CodeFile) -> bool: # {{{
         run_result = _test_case(codefile, case, infile, expfile)
         exec_times.append(run_result.exec_time)
         used_memories.append(run_result.used_memory)
-        if run_result.judge == 'AC':
+        if run_result.judge == JudgeResult.AC:
             ac_cnt += 1
+        elif run_result.judge == JudgeResult.NOEXP:
+            noexp_cnt += 1
         else:
             res = False
     if (ac_cnt == case_cnt):
         click.secho(f'{ac_cnt}/{case_cnt} cases passed', fg='green')
+    elif (ac_cnt + noexp_cnt == case_cnt):
+        click.secho(f'{ac_cnt}/{case_cnt} cases passed', fg='yellow')
+        click.secho(f'{noexp_cnt}/{case_cnt} cases passed', fg='yellow')
     else:
         click.secho(f'{ac_cnt}/{case_cnt} cases passed', fg='red')
+        click.secho(f'{noexp_cnt}/{case_cnt} cases passed', fg='red')
 
     print('[max exec time]: {:.3f}'.format(max(exec_times)), '[sec]')
     print('[max used memory]: {:.3f}'.format(max(used_memories)), '[MB]')

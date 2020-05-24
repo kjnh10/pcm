@@ -1,104 +1,70 @@
-// template version 1.15
-using namespace std;
-#include <bits/stdc++.h>
+#include "../codes/header.hpp"
 
-// varibable settings
-#define int long long
-const int INF=1e18;
+enum JudgeResult {/*{{{*/
+    AC = 0,
+    WA = 1,
+    RE = 2,
+    CE = 3,
+    TLE = -2,
+    MLE = 4,
+    QLE = 5,  // Query limit exceeded
+    AIE = 6,  // Additional input error
+    NOEXP = 98,
+    TLENAIVE = 99,
+    YET = 100,
+};/*}}}*/
 
-// define basic macro {{{
-#define _overload3(_1,_2,_3,name,...) name
-#define _rep(i,n) repi(i,0,n)
-#define repi(i,a,b) for(int i=(int)(a);i<(int)(b);++i)
-#define rep(...) _overload3(__VA_ARGS__,repi,_rep,)(__VA_ARGS__)
-#define _rrep(i,n) rrepi(i,0,n)
-#define rrepi(i,a,b) for(int i=(int)((b)-1);i>=(int)(a);--i)
-#define rrep(...) _overload3(__VA_ARGS__,rrepi,_rrep,)(__VA_ARGS__)
-#define each(i,a) for (auto&& i : a)
-#define all(x) (x).begin(),(x).end()
-#define rall(x) (x).rbegin(),(x).rend()
-#define sz(x) ((int)(x).size())
-#define pb(a) push_back(a)
-#define mp(a, b) make_pair(a, b)
-#define mt(a, b, c) make_tuple(a, b, c)
-#define ub upper_bound
-#define lb lower_bound
-#define posl(A, x) (lower_bound(all(A), x)-A.begin())
-#define posu(A, x) (upper_bound(all(A),x)-A.begin())
-template<class T> inline void chmax(T &a, const T &b) { if((a) < (b)) (a) = (b); }
-template<class T> inline void chmin(T &a, const T &b) { if((a) > (b)) (a) = (b); }
-
-#define divceil(a,b) ((a)+(b)-1)/(b)
-#define is_in(x, a, b) ((a)<=(x) && (x)<(b))
-#define uni(x) sort(all(x));x.erase(unique(all(x)),x.end())
-#define slice(l, r) substr(l, r-l)
-
-typedef long long ll;
-typedef vector<int> vi;
-typedef vector<vi> vvi;
-typedef long double ld;
-typedef pair<int,int> pii;
-typedef tuple<int,int,int> iii;
-
-template<typename T> using PQ = priority_queue<T, vector<T>, greater<T>>;
-// struct Fast { Fast(){ std::cin.tie(0); ios::sync_with_stdio(false); } } fast;
-
-#if defined(PCM) || defined(LOCAL)
-#else
-    #define dump(...) 42
-    #define dump_1d(...) 42
-    #define dump_2d(...) 42
-    #define cerrendl 42
-#endif
-//}}}
-
-int T;
-int b;
-
-template<class T>
-void tell(T x){
-    dump(x);
+template <class T>/*{{{*/
+void tell(T x) {
     cout << x << endl;
     fflush(stdout);
-}
+}/*}}}*/
 
-int judge_case(string a){
-    dump(a);
-    for(int cnt=1; cnt<=150; cnt++){
-        if (cnt%10==1){ reverse(all(a)); }
+bool check_AIE(){/*{{{*/
+    ll tmp;cin>>tmp;
+    if (cin.eof()==0) exit(AIE);  // check needles user-output does not exist
+}/*}}}*/
 
-        string query;cin>>query;
-        if (sz(query)!=b){ tell(a[stoi(query)-1]); }
-        else{
-            if (query==a){
-                tell("Y");
+int judge_case(ll x) {
+    ll num = 22;  // TODO: update query number limit
+    while(num--){
+        string query;
+        cin >> query;
+        if (query=="?"){ // query
+            ll solver_ans;cin>>solver_ans;
+            tell(gcd(solver_ans, x));
+        }
+        if (query=="!"){ // ans
+            ll solver_ans;cin>>solver_ans;
+            if (abs(solver_ans-x)<=7 || (solver_ans<=2*x && x<=2*solver_ans)){
                 return 0;
             }
             else{
-                tell("N");
-                dump("judge-ans", a);
-                dump("contestant-ans", query);
-                throw("WA");
+                cerr << "WA: ";
+                dump(x, solver_ans);
+                exit(WA);
             }
         }
-        cnt += 1;
     }
-    throw("query's limit exceeded");
+    exit(QLE);
 }
 
-signed main(){
+int main() {
     // input case
-    cin>>T>>b;
-    tell(T);
-    tell(b);
-    vector<string> A(T);
-    rep(t, T){ cin>>A[t]; }
+    int Q;
+    cin >> Q;
+    // Q = 1; if single case
+    vector<ll> x(Q);
+    rep(q, Q){ cin>>x[q]; }
 
     // judge
-    rep(i, T){
-        judge_case(A[i]);
+    tell(Q);  // off if single case
+    rep(q, Q) {
+        cerr << "start judge for: " << x[q] << " [judge]" << endl;;
+        judge_case(x[q]); 
     }
 
-    // TODO: check contestant code is continuing to needles queries.
+    // check_AIE(); // これは何故か動かない。無限待機になってしまう。
+    exit(AC);
     return 0;
 }

@@ -12,6 +12,7 @@ import onlinejudge._implementation.utils as oj_utils
 from .utils import get_last_modified_file
 from enum import IntEnum
 from pathlib import Path
+import resource
 
 
 class JudgeResult(IntEnum):
@@ -106,6 +107,7 @@ class CodeFile(object):
             return self._run_exe(config, exefile, infile, outfile)
 
     def _run_exe(self, config, exefile: Path, infile: Path = None, outfile: Path = None) -> RunResult: 
+        # gen.pyもこれで実行される。
         res = RunResult()
         command = self._get_command_string_to_run(exefile)
 
@@ -130,17 +132,22 @@ class CodeFile(object):
             res.exe_time = float('inf')
             res.TLE_flag = True
         else:
-            # os.wait4()を使うとTLE時のout,errsが取得できなくなるため、TLEでないと判明した場合にのみMemoryの使用量を取得する。
             try:
-                proc_for_check_memory = popen()
-                ru = os.wait4(proc_for_check_memory.pid, 0)[2]  # windowsの場合はerrorになりそう。
-                res.used_memory = ru.ru_maxrss / (1<<10) # MB unit
+                # get memory usage
+                # 別プロセスで起動した方がとりやすそうなのでexec.pyでもう一度runし直している。
+                proc_mem = subprocess.Popen(
+                        ["python", f"{os.path.dirname(__file__)}/exec.py", str(exefile), str(infile)],
+                        stdout=subprocess.PIPE,
+                        )
+                stdout_mem, stderr_mem = proc_mem.communicate()
+                res.used_memory = float((stdout_mem.decode('utf-8').replace('\n', '')))
             except Exception as e:
-                pass
+                print(e)
+
         res.returncode = proc.returncode
         res.stdout = None if outfile else outs.decode('utf-8')
         res.stderr = errs.decode('utf-8')
-        return res 
+        return res
 
     def run_interactive(self, config, judgefile, infile: Path):
         res = RunResult()

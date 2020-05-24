@@ -424,10 +424,9 @@ def _test_all_case(codefile: CodeFile) -> bool: # {{{
         click.secho(f'{ac_cnt}/{case_cnt} cases passed', fg='green')
     elif (ac_cnt + noexp_cnt == case_cnt):
         click.secho(f'{ac_cnt}/{case_cnt} cases passed', fg='yellow')
-        click.secho(f'{noexp_cnt}/{case_cnt} cases passed', fg='yellow')
+        click.secho(f'{noexp_cnt}/{case_cnt} cases have no expected answer', fg='yellow')
     else:
         click.secho(f'{ac_cnt}/{case_cnt} cases passed', fg='red')
-        click.secho(f'{noexp_cnt}/{case_cnt} cases passed', fg='red')
 
     print('[max exec time]: {:.3f}'.format(max(exec_times)), '[sec]')
     print('[max used memory]: {:.3f}'.format(max(used_memories)), '[MB]')

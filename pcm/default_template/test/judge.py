@@ -1,5 +1,5 @@
-import math
 import sys
+from math import gcd
 from pcm.codefile import JudgeResult as jr
 
 
@@ -29,7 +29,7 @@ def judge_case(x):
             query = list(input().split())
             v = int(query[1])
             if (query[0] == "?"):
-                tell(math.gcd(v, x))
+                tell(gcd(v, x))
 
             if (query[0] == "!"):
                 if (abs(v-x) <= 7 or (v <= 2*x and x <= 2*v)):
@@ -70,4 +70,5 @@ def main():  # multi case type
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    print("hello")

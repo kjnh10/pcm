@@ -14,15 +14,15 @@ setup(
     include_package_data=True,
     install_requires=['Click>=7.0', 'online-judge-tools>=9.0.0', 'online-judge-verify-helper', 'toml'],
     entry_points={'console_scripts': ['pcm=pcm.__main__:cli']},
-    python_requires='>=3.6',
+    python_requires='>=3.7',
     classifiers = [
         "Development Status :: 4 - Beta",
         "Environment :: Console",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         ],
 )
 

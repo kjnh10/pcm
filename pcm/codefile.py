@@ -11,8 +11,6 @@ import click
 import onlinejudge._implementation.utils as oj_utils
 from .utils import get_last_modified_file
 from enum import IntEnum
-from pathlib import Path
-import resource
 
 
 class JudgeResult(IntEnum):
@@ -142,7 +140,8 @@ class CodeFile(object):
                 stdout_mem, stderr_mem = proc_mem.communicate()
                 res.used_memory = float((stdout_mem.decode('utf-8').replace('\n', '')))
             except Exception as e:
-                print(e)
+                # print(e)
+                pass
 
         res.returncode = proc.returncode
         res.stdout = None if outfile else outs.decode('utf-8')

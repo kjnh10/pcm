@@ -9,6 +9,7 @@ jobs:
       max-parallel: 4
       matrix:
         python-version: [3.8]
+      matrix:
         os: [ubuntu-latest, windows-latest]
 
     steps:

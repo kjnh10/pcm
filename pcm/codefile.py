@@ -136,6 +136,7 @@ class CodeFile(object):
                 proc_mem = subprocess.Popen(
                         ["python", f"{os.path.dirname(__file__)}/exec.py", str(exefile), str(infile)],
                         stdout=subprocess.PIPE,
+                        stderr=subprocess.DEVNULL,
                         )
                 stdout_mem, stderr_mem = proc_mem.communicate()
                 res.used_memory = float((stdout_mem.decode('utf-8').replace('\n', '')))

@@ -54,13 +54,13 @@ class UnionFind():
     def __str__(self):
         return '\n'.join('{}: {}'.format(r, self.members(r)) for r in self.roots())
 
-class rperm(object):
+class randperm(object):
     def __init__(self, n:int):
         self.data = sample(list(range(1, n+1)), k=n)
     def __str__(self):
         return ' '.join(map(str, self.data))
 
-class rseq(object):
+class randseq(object):
     def __init__(self, n: int, l: int, r: int, distinct=False):
         self.data = []
         used = set()
@@ -68,7 +68,7 @@ class rseq(object):
             raise Exception(print("n>r-l+1 and distinct=True is not impossible"))
 
         while len(self.data) < n:
-            v = rint(l, r)
+            v = randint(l, r)
             if distinct and v in used:
                 pass
             else:
@@ -78,14 +78,14 @@ class rseq(object):
     def __str__(self):
         return ' '.join(map(str, self.data))
 
-def rstr(length: int, chars: List=['a', 'b', 'c', 'd', 'e']):
-# def rstr(length: int, chars: List=string.ascii_lowercase):
+def randstr(length: int, chars: List=['a', 'b', 'c', 'd', 'e']):
+# def randstr(length: int, chars: List=string.ascii_lowercase):
     res = ""
     for i in range(length):
         res += choice(chars)
     return res
 
-def rprime(l: int = 2, r: int = 1000000007): # [l, r]
+def randprime(l: int = 2, r: int = 1000000007): # [l, r]
     def is_prime(x):
         if (x == 1): return False
         for i in range(2, int(math.sqrt(x))+1):
@@ -96,14 +96,14 @@ def rprime(l: int = 2, r: int = 1000000007): # [l, r]
 
     cnt = 0
     while True:
-        res = rint(l, r)
+        res = randint(l, r)
         if (is_prime(res)):
             return res
         cnt += 1
         if cnt>=1000:
             assert False
 
-class rtree(object):
+class randtree(object):
     def __init__(self, n: int, root: int = 0):
         assert root < n
         self.edges = []
@@ -127,7 +127,7 @@ class rtree(object):
             res.append(f"{edge[0]+one_index} {edge[1]+one_index}")
         return '\n'.join(res)
 
-class rgraph(object):  # undirected
+class randgraph(object):  # undirected
     def __init__(self, n:int, lb:int=1, ub:int=float('inf'), tree_ok=True):
         self.n = n
         if ub == float('inf'):
@@ -136,9 +136,9 @@ class rgraph(object):  # undirected
         while True:
             if tree_ok:  # tree graph
                 # 10%くらいは木が生成されるように
-                r = rint(1, 10)
+                r = randint(1, 10)
                 if (r<=2):
-                    self.edges = rtree(n).edges
+                    self.edges = randtree(n).edges
                     return
 
             # TODO: [line graph, star graph, complete graph]
@@ -146,8 +146,8 @@ class rgraph(object):  # undirected
             uf = UnionFind(n)
             self.edges = set()
             while(uf.group_count()>1 or len(self.edges)<lb):
-                u = rint(0, n-1)
-                v = rint(0, n-1)
+                u = randint(0, n-1)
+                v = randint(0, n-1)
                 if (u==v): continue
 
                 if (u>v): u,v=v,u
@@ -167,5 +167,5 @@ class rgraph(object):  # undirected
 
 # write down here
 # ---------------------------------------------
-n = rint(2, 10)
+n = randint(2, 10)
 print(n)

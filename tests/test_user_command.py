@@ -76,6 +76,10 @@ def test_tt_RE():
 
 
 def test_tt_MLE():
+    if os.name != "posix":
+        # windowsではメモリ取得が出来ていないのでテストをskipする。
+        return 0
+
     os.chdir(script_path / f'data/test_tt/abc001/A/codes')
     proc = __run_command('pcm tt solve_MLE.py')
     print('---------stdout-------------')

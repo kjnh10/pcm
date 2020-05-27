@@ -4,6 +4,7 @@ import os
 import psutil
 
 # windowsではresource moduleが使用出来ないのでpsutil moduleを使用する。
+raise Exception("Not implemented yet")
 
 
 command = sys.argv[1]

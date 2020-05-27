@@ -62,3 +62,5 @@ template_dir = '~/.config/pcm/template'  # if this directory does not exist or n
                  -std=gnu++17 -Wall -Wextra -O2 -march=native -mtune=native -DEVAL\
                  -I/opt/boost/gcc/include -L/opt/boost/gcc/lib
             """
+
+  simple = "g++ {srcpath} -o {outpath} -std=c++14"

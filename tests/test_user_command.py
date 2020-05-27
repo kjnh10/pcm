@@ -34,7 +34,7 @@ def test_tt():
     os.chdir(script_path / f'tmp/test_tt/abc001/A/codes')
     os.utime('solve.cpp', None)  # update st_mtime for solve.cpp to be used
 
-    proc = __run_command('pcm tt')
+    proc = __run_command('pcm tt -cc simple')
     print('---------stdout-------------')
     print(proc.stdout.decode('utf-8'))
     print('---------stderr-------------')

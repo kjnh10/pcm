@@ -11,8 +11,6 @@ import click
 import onlinejudge._implementation.utils as oj_utils
 from .utils import get_last_modified_file
 from enum import IntEnum
-from pathlib import Path
-import resource
 
 
 class JudgeResult(IntEnum):
@@ -135,14 +133,17 @@ class CodeFile(object):
             try:
                 # get memory usage
                 # 別プロセスで起動した方がとりやすそうなのでexec.pyでもう一度runし直している。
+                executer = "exec.py" if os.name == "posix" else "exec_windows.py"
                 proc_mem = subprocess.Popen(
-                        ["python", f"{os.path.dirname(__file__)}/exec.py", str(exefile), str(infile)],
+                        ["python", f"{os.path.dirname(__file__)}/{executer}", str(exefile), str(infile)],
                         stdout=subprocess.PIPE,
+                        stderr=subprocess.DEVNULL,
                         )
                 stdout_mem, stderr_mem = proc_mem.communicate()
+                print(stdout_mem.decode('utf-8'))
                 res.used_memory = float((stdout_mem.decode('utf-8').replace('\n', '')))
             except Exception as e:
-                print(e)
+                pass
 
         res.returncode = proc.returncode
         res.stdout = None if outfile else outs.decode('utf-8')

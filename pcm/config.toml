@@ -10,8 +10,8 @@ template_dir = '~/.config/pcm/template'  # if this directory does not exist or n
 
 [submit]
   [submit.default_lang.AtCoder]
-  cpp = '3003'
-  py = '3047'
+  cpp = '4003'
+  py = '4047'
 
   [submit.default_lang.Codeforces]
   cpp = '54'  # GNU G++14 6.4.0
@@ -62,3 +62,5 @@ template_dir = '~/.config/pcm/template'  # if this directory does not exist or n
                  -std=gnu++17 -Wall -Wextra -O2 -march=native -mtune=native -DEVAL\
                  -I/opt/boost/gcc/include -L/opt/boost/gcc/lib
             """
+
+  simple = "g++ {srcpath} -o {outpath} -std=c++14"

@@ -12,8 +12,8 @@ script_path = Path(os.path.dirname(__file__))
 probdir_name = 'abc001_1'
 
 def test_pp():
-    shutil.rmtree(script_path / 'tmp/test_pp/abc001', ignore_errors=True)
-    os.chdir(script_path / 'tmp' / 'test_pp')
+    shutil.rmtree(script_path / 'data/test_pp/abc001', ignore_errors=True)
+    os.chdir(script_path / 'data' / 'test_pp')
     
     proc = __run_command('pcm pp abc001')
     print('---------stdout-------------')
@@ -22,16 +22,16 @@ def test_pp():
     print(proc.stderr.decode('utf-8'))
 
     res = __is_same_dir(
-            script_path/'tmp/test_pp/abc001',
-            script_path/'tmp/test_pp/expected_abc001'
+            script_path/'data/test_pp/abc001',
+            script_path/'data/test_pp/expected_abc001'
             )
     assert(res==True)
 
-    shutil.rmtree(script_path / 'tmp/test_pp/abc001', ignore_errors=True)
+    shutil.rmtree(script_path / 'data/test_pp/abc001', ignore_errors=True)
 
 
 def test_tt():
-    os.chdir(script_path / f'tmp/test_tt/abc001/A/codes')
+    os.chdir(script_path / f'data/test_tt/abc001/A/codes')
     os.utime('solve.cpp', None)  # update st_mtime for solve.cpp to be used
 
     proc = __run_command('pcm tt -cc simple')
@@ -45,7 +45,7 @@ def test_tt():
 
 
 def test_tt_python():
-    os.chdir(script_path / f'tmp/test_tt/abc001/A/codes')
+    os.chdir(script_path / f'data/test_tt/abc001/A/codes')
     proc = __run_command('pcm tt solve.py')
     print('---------stdout-------------')
     print(proc.stdout.decode('utf-8'))
@@ -56,7 +56,7 @@ def test_tt_python():
 
 
 def test_tt_TLE():
-    os.chdir(script_path / f'tmp/test_tt/abc001/A/codes')
+    os.chdir(script_path / f'data/test_tt/abc001/A/codes')
     proc = __run_command('pcm tt solve_TLE.py')
     print('---------stdout-------------')
     print(proc.stdout.decode('utf-8'))
@@ -66,7 +66,7 @@ def test_tt_TLE():
 
 
 def test_tt_RE():
-    os.chdir(script_path / f'tmp/test_tt/abc001/A/codes')
+    os.chdir(script_path / f'data/test_tt/abc001/A/codes')
     proc = __run_command('pcm tt solve_RE.py')
     print('---------stdout-------------')
     print(proc.stdout.decode('utf-8'))
@@ -76,7 +76,7 @@ def test_tt_RE():
 
 
 def test_tt_MLE():
-    os.chdir(script_path / f'tmp/test_tt/abc001/A/codes')
+    os.chdir(script_path / f'data/test_tt/abc001/A/codes')
     proc = __run_command('pcm tt solve_MLE.py')
     print('---------stdout-------------')
     print(proc.stdout.decode('utf-8'))
@@ -86,8 +86,8 @@ def test_tt_MLE():
 
 
 def test_sb_atcoder():
-    os.chdir(script_path / f'tmp/test_sb/abc001/{probdir_name}/codes')
-    os.utime('solve.cpp', None)  # update st_mtime for solve.py to be used
+    os.chdir(script_path / f'data/test_sb/abc166_a/codes')
+    os.utime('solve.py', None)  # update st_mtime for solve.py to be used
     runner = CliRunner()
     result = runner.invoke(cli, args=['sb'], input='y')
     print(result.stdout)

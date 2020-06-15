@@ -104,10 +104,10 @@ class CodeFile(object):
             exefile = self.compile(config)
             return self._run_exe(config, exefile, infile, outfile)
 
-    def _run_exe(self, config, exefile: Path, infile: Path = None, outfile: Path = None) -> RunResult: 
+    def _run_exe(self, config, exefile: Path, infile: Path = None, outfile: Path = None, args: List = []) -> RunResult: 
         # gen.pyもこれで実行される。
         res = RunResult()
-        command = self._get_command_string_to_run(exefile)
+        command = self._get_command_string_to_run(exefile, args=args)
 
         def popen():
             return subprocess.Popen(
@@ -198,12 +198,13 @@ class CodeFile(object):
         else:
             return self.compile(config)
 
-    def _get_command_string_to_run(self, exefile: Path):
+    def _get_command_string_to_run(self, exefile: Path, args: List = []):
         command = []
-        if (exefile.suffix=='.py'):
+        if (exefile.suffix == '.py'):
             command.append('python')
         command.append(str(exefile))
-        command.append('pcm') # tell the sctipt that pcm is calling
+        for arg in args:
+            command.append(arg)
         return command
 
     def submit(self, config, language):

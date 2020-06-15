@@ -348,14 +348,23 @@ def tt(config, code_filename: str, compile_command_configname: str, case: str, t
                 click.secho(f'naive code file not found by {by}', fg='yellow')
                 return 1
 
+        generator_style = False
         if generator_codefile.extension == 'py':
             from importlib import import_module
             sys.path.append(str(generator_codefile.path.parent))
+            store = sys.stdout
+            sys.stdout = None  # importの際にold format(gen scriptがベタがき)形式だった場合の対応
             user_gen_script = import_module(generator_codefile.path.stem)
-            generator = user_gen_script.generator()
+            sys.stdout = store
+            try:
+                generator = user_gen_script.generator()
+            except AttributeError:
+                pass
+            else:
+                generator_style = True
 
         while True:
-            if generator_codefile.extension == 'py':
+            if generator_style:
                 with open(test_dir/'r.in', mode='w') as f:
                     store = sys.stdout
                     sys.stdout = f

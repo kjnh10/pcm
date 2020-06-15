@@ -348,12 +348,31 @@ def tt(config, code_filename: str, compile_command_configname: str, case: str, t
                 click.secho(f'naive code file not found by {by}', fg='yellow')
                 return 1
 
+        if generator_codefile.extension == 'py':
+            from importlib import import_module
+            sys.path.append(str(generator_codefile.path.parent))
+            user_gen_script = import_module(generator_codefile.path.stem)
+            generator = user_gen_script.generator()
+
         while True:
-            gen_result = generator_codefile.run(config, outfile=test_dir/'r.in')
-            if gen_result.returncode != 0:
-                print('failed running generator file {generator_codefile.name}')
-                print(gen_result.stderr)
-                return
+            if generator_codefile.extension == 'py':
+                with open(test_dir/'r.in', mode='w') as f:
+                    store = sys.stdout
+                    sys.stdout = f
+                    try:
+                        generator.__next__()
+                    except StopIteration:
+                        sys.stdout = store
+                        click.secho("all specified cases finished.", fg='green')
+                        return
+
+                    sys.stdout = store
+            else:
+                gen_result = generator_codefile.run(config, outfile=test_dir/'r.in')
+                if gen_result.returncode != 0:
+                    print('failed running generator file {generator_codefile.name}')
+                    print(gen_result.stderr)
+                    return
 
             infile = test_dir / f"r.in"
             expfile = test_dir / f"r.out"

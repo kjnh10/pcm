@@ -167,5 +167,22 @@ class randgraph(object):  # undirected
 
 # write down here
 # ---------------------------------------------
-n = randint(2, 10)
-print(n)
+
+# for random cases
+def generator():  # you should implement as generator
+    while True:
+        # single case
+        a = randint(2, 10)
+        b = randint(2, 10)
+        print(a, b)
+
+        yield
+
+
+# for some specified ranges
+# def generator():  # you should implement as generator
+#     for a in range(1, 5):
+#         for b in range(1, 5):
+#             # single case
+#             print(a, b)
+#             yield 0

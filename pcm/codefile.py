@@ -140,7 +140,6 @@ class CodeFile(object):
                         stderr=subprocess.DEVNULL,
                         )
                 stdout_mem, stderr_mem = proc_mem.communicate()
-                print(stdout_mem.decode('utf-8'))
                 res.used_memory = float((stdout_mem.decode('utf-8').replace('\n', '')))
             except Exception as e:
                 pass

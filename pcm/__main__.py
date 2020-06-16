@@ -484,7 +484,7 @@ def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile
             exp = exp_str.split('\n')
     except FileNotFoundError:
         print('*'*7 + ' expected ' + '*'*7)
-        click.secho(f"expected file: {expfile} not found\n", fg='yellow')
+        click.secho(f"expected file:[{expfile.name}] not found\n", fg='yellow')
         exp = ['']
         expfile_exist = False
 

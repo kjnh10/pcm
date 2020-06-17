@@ -184,10 +184,15 @@ class CodeFile(object):
 
             res.judge_thread = t_judge
             res.solution_thread = t_sol
-            try:
-                res.judge = JudgeResult(t_judge.return_code)
-            except Exception as e:
-                res.judge = t_judge.return_code
+            if t_sol.return_code == -2:
+                res.judge = JudgeResult.TLE
+            elif t_sol.return_code != 0:
+                res.judge = JudgeResult.RE
+            else:
+                try:
+                    res.judge = JudgeResult(t_judge.return_code)
+                except Exception as e:
+                    res.judge = t_judge.return_code
 
             return res
 

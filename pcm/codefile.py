@@ -104,10 +104,10 @@ class CodeFile(object):
             exefile = self.compile(config)
             return self._run_exe(config, exefile, infile, outfile)
 
-    def _run_exe(self, config, exefile: Path, infile: Path = None, outfile: Path = None) -> RunResult: 
+    def _run_exe(self, config, exefile: Path, infile: Path = None, outfile: Path = None, args: List = []) -> RunResult: 
         # gen.pyもこれで実行される。
         res = RunResult()
-        command = self._get_command_string_to_run(exefile)
+        command = self._get_command_string_to_run(exefile, args=args)
 
         def popen():
             return subprocess.Popen(
@@ -140,7 +140,6 @@ class CodeFile(object):
                         stderr=subprocess.DEVNULL,
                         )
                 stdout_mem, stderr_mem = proc_mem.communicate()
-                print(stdout_mem.decode('utf-8'))
                 res.used_memory = float((stdout_mem.decode('utf-8').replace('\n', '')))
             except Exception as e:
                 pass
@@ -185,10 +184,15 @@ class CodeFile(object):
 
             res.judge_thread = t_judge
             res.solution_thread = t_sol
-            try:
-                res.judge = JudgeResult(t_judge.return_code)
-            except Exception as e:
-                res.judge = t_judge.return_code
+            if t_sol.return_code == -2:
+                res.judge = JudgeResult.TLE
+            elif t_sol.return_code != 0:
+                res.judge = JudgeResult.RE
+            else:
+                try:
+                    res.judge = JudgeResult(t_judge.return_code)
+                except Exception as e:
+                    res.judge = t_judge.return_code
 
             return res
 
@@ -198,12 +202,13 @@ class CodeFile(object):
         else:
             return self.compile(config)
 
-    def _get_command_string_to_run(self, exefile: Path):
+    def _get_command_string_to_run(self, exefile: Path, args: List = []):
         command = []
-        if (exefile.suffix=='.py'):
+        if (exefile.suffix == '.py'):
             command.append('python')
         command.append(str(exefile))
-        command.append('pcm') # tell the sctipt that pcm is calling
+        for arg in args:
+            command.append(arg)
         return command
 
     def submit(self, config, language):

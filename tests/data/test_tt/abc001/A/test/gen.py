@@ -3,10 +3,6 @@ from random import randint as rint
 from typing import TYPE_CHECKING, List, Optional, Type
 import string
 import math
-# print(choice(a))  # 1つ選択
-# print(sample(a, k=2))  # 非復元抽出
-# print(sample(a, k=len(L)))  # random permutation
-# print(choices(a, k=2))  # 復元抽出
 
 class UnionFind():
     def __init__(self, n):
@@ -168,22 +164,7 @@ class rgraph(object):  # undirected
 
 # write down here
 # ---------------------------------------------
-
-# for random cases
-def generator():  # you should implement as generator
-    while True:
-        # single case
-        a = rint(2, 10)
-        b = rint(2, 10)
-        print(a, b)
-
-        yield
-
-
-# for some specified ranges
-# def generator():  # you should implement as generator
-#     for a in range(1, 5):
-#         for b in range(1, 5):
-#             # single case
-#             print(a, b)
-#             yield 0
+a = rint(1, 10000)
+b = rint(1, 10000)
+print(a)
+print(b)

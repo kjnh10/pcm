@@ -168,22 +168,9 @@ class rgraph(object):  # undirected
 
 # write down here
 # ---------------------------------------------
-
-# for random cases
-def generator():  # you should implement as generator
-    while True:
-        # single case
-        a = rint(2, 10)
-        b = rint(2, 10)
-        print(a, b)
-
-        yield
-
-
-# for some specified ranges
-# def generator():  # you should implement as generator
-#     for a in range(1, 5):
-#         for b in range(1, 5):
-#             # single case
-#             print(a, b)
-#             yield 0
+Q = rint(1, 10)
+print(Q)
+for i in range(Q):
+    # x = randint(1, 10**9)
+    x = rint(1, 1000)
+    print(x)

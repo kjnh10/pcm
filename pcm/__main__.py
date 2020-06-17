@@ -440,23 +440,24 @@ def _test_all_case(codefile: CodeFile) -> bool: # {{{
 # }}}
 
 @pass_config
-def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile: Path, limit_size_of_output: int = 50) -> RunResult: # {{{
+def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile: Path, limit_height_of_output: int = 100, limit_width_of_output: int = 48) -> RunResult: # {{{
     # run program
     click.secho('-'*10 + case_name + '-'*10, fg='blue')
     run_result = codefile.run(config, infile)
     print(f"exec time: {run_result.exec_time} [sec]")
     print(f"memory usage: {run_result.used_memory} [MB]")
 
-    def smart_print(strs, limit_of_lines, func=print):
+    def smart_print(strs, func=print, limit_of_lines = limit_height_of_output, limit_of_width = limit_width_of_output):
         n = len(strs)
         x = limit_of_lines
+        y = limit_of_width
         def print_line(line):
-            if len(line) <= 2*x:
+            if len(line) <= 2*y:
                 func(line)
             else:
-                func(line[:x] + ' ~~~ ' + line[len(line)-x:len(line)])
+                func(line[:y] + ' ~~~ ' + line[len(line)-y:len(line)])
 
-        if 2*x >= n:
+        if n <= 2*x:
             for line in lines:
                 print_line(line)
         else:
@@ -471,7 +472,7 @@ def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile
     with open(infile, 'r') as f:
         print('*'*7 + ' input ' + '*'*7)
         lines  = f.read().split('\n')
-        smart_print(lines, limit_size_of_output)
+        smart_print(lines, limit_of_lines=10)
 
     # print expected
     expfile_exist = True
@@ -480,7 +481,7 @@ def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile
             print('*'*7 + ' expected ' + '*'*7)
             exp_str = f.read()
             lines  = exp_str.split('\n')
-            smart_print(lines, limit_size_of_output)
+            smart_print(lines)
             exp = exp_str.split('\n')
     except FileNotFoundError:
         print('*'*7 + ' expected ' + '*'*7)
@@ -491,7 +492,7 @@ def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile
     # print result
     print('*'*7 + ' stdout ' + '*'*7)
     lines  = run_result.stdout.split('\n')
-    smart_print(lines, limit_size_of_output)
+    smart_print(lines)
     stdout = run_result.stdout.split('\n')
 
     # print stderr message
@@ -500,7 +501,7 @@ def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile
     def print_stderr(line):
         line = line.replace(str(codefile.code_dir), "")
         click.secho(line, fg='yellow')
-    smart_print(lines, limit_size_of_output, print_stderr)
+    smart_print(lines, func=print_stderr)
 
     for line in run_result.stderr.split('\n'):
         if re.search('runtime error', line):

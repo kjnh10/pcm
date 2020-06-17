@@ -213,4 +213,5 @@ def __is_same_dir(A, B):
 
 
 if __name__ == "__main__":
-    test_tr()
+    # test_tt()
+    pass

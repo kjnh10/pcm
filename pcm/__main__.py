@@ -33,6 +33,7 @@ except ModuleNotFoundError:
 
 script_path = Path(os.path.abspath(os.path.dirname(__file__)))  # script path}}}
 from .codefile import CodeFile, RunResult, JudgeResult
+from .case_generator import CaseGenerator, CaseGenerateError
 
 # set click
 class Config(object):# {{{
@@ -308,7 +309,7 @@ def tt(config, code_filename: str, compile_command_configname: str, case: str, t
     if compile_command_configname:
         config.pref['test']['compile_command']['configname'] = compile_command_configname
 
-    if Path(case).suffix not in ['.py', '.cpp', '.*']:
+    if Path(case).suffix not in ['.py', '.cpp']:
         solve_codefile = CodeFile(code_filename)
         test_dir = solve_codefile.test_dir
         if case == '':  # test all case
@@ -337,7 +338,6 @@ def tt(config, code_filename: str, compile_command_configname: str, case: str, t
         # random test
         solve_codefile = CodeFile(exclude_filename_pattern=(by if by else []))
         test_dir = solve_codefile.test_dir
-        generator_codefile = CodeFile(case, search_root=solve_codefile.prob_dir)
         if by:
             if (by in ['judge.cpp', 'judge.py']):
                 click.secho('maybe you should use [tr] command for reactive test', fg='yellow')
@@ -348,43 +348,20 @@ def tt(config, code_filename: str, compile_command_configname: str, case: str, t
                 click.secho(f'naive code file not found by {by}', fg='yellow')
                 return 1
 
-        generator_style = False
-        if generator_codefile.extension == 'py':
-            from importlib import import_module
-            sys.path.append(str(generator_codefile.path.parent))
-            store = sys.stdout
-            sys.stdout = None  # importの際にold format(gen scriptがベタがき)形式だった場合の対応
-            user_gen_script = import_module(generator_codefile.path.stem)
-            sys.stdout = store
-            try:
-                generator = user_gen_script.generator()
-            except AttributeError:
-                pass
-            else:
-                generator_style = True
-
+        case_generator = CaseGenerator(CodeFile(case, search_root=solve_codefile.prob_dir), config)
+        finished_count = 0
         while True:
-            if generator_style:
-                with open(test_dir/'r.in', mode='w') as f:
-                    store = sys.stdout
-                    sys.stdout = f
-                    try:
-                        generator.__next__()
-                    except StopIteration:
-                        sys.stdout = store
-                        click.secho("all specified cases finished.", fg='green')
-                        return
+            try:
+                case_generator.generate_case(target=test_dir/'r.in')
+            except StopIteration:
+                click.secho(f'all {finished_count} cases specified by {case_generator.codefile.path.name} finished.', fg='green')
+                break
+            except CaseGenerateError as e:
+                click.secho(f"case generating faild. check your {case_generator.codefile.path.name}", fg='red')
+                exit()
 
-                    sys.stdout = store
-            else:
-                gen_result = generator_codefile.run(config, outfile=test_dir/'r.in')
-                if gen_result.returncode != 0:
-                    print('failed running generator file {generator_codefile.name}')
-                    print(gen_result.stderr)
-                    return
-
-            infile = test_dir / f"r.in"
-            expfile = test_dir / f"r.out"
+            infile = test_dir / "r.in"
+            expfile = test_dir / "r.out"
             if expfile.exists(): expfile.unlink()
 
             if by:
@@ -415,6 +392,7 @@ def tt(config, code_filename: str, compile_command_configname: str, case: str, t
                         print(f'expected of this case saved to r{num_to_save}.out')
                 return 1
 
+            finished_count += 1
             if (not loop): return 0
 # }}}
 
@@ -561,7 +539,7 @@ def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile
 @click.option('--compile_command_configname', '-cc', type=str, default='')
 @click.option('--case', '-c', type=str, default='')
 @click.option('--timeout', '-t', type=float, default=-1)
-@click.option('--by', '-b', type=str, default=None)
+@click.option('--by', '-b', type=str, default='judge.py')
 @click.option('--loop/--noloop', '-l/-nl', default=False)
 @pass_config
 def tr(config, code_filename: str, compile_command_configname: str, case: str, timeout: float, by: str, loop: bool):  # {{{
@@ -584,7 +562,7 @@ def tr(config, code_filename: str, compile_command_configname: str, case: str, t
 
     test_dir = solve_codefile.test_dir
 
-    if Path(case).suffix not in ['.py', '.cpp', '.*']:
+    if Path(case).suffix not in ['.py', '.cpp']:
         if case == '':  # test all case
             click.secho('test for all case is not impremented for reactive test just for simplicity', fg='yellow')
             return 0
@@ -604,20 +582,19 @@ def tr(config, code_filename: str, compile_command_configname: str, case: str, t
             _test_interactive_case(solve_codefile, judge_codefile, infile, case)
     else:
         # random test
-        generator_codefile = CodeFile(case, search_root=solve_codefile.prob_dir)
-
+        case_generator = CaseGenerator(CodeFile(case, search_root=solve_codefile.prob_dir), config)
+        finished_count = 0
         while True:
-            gen_result = generator_codefile.run(config)
-            if gen_result.returncode != 0:
-                print('failed runnning generator file {generator_codefile.name}')
-                print(gen_result.stderr)
-                return
-
-            with open(test_dir/'r.in', mode='w') as f:
-                f.write(gen_result.stdout)
+            try:
+                case_generator.generate_case(target=test_dir/'r.in')
+            except StopIteration:
+                click.secho(f'all {finished_count} cases specified by {case_generator.codefile.path.name} finished.', fg='green')
+                break
+            except CaseGenerateError:
+                click.secho(f"case generating faild. check your {case_generator.codefile.path.name}", fg='red')
+                exit()
 
             infile = test_dir / f"r.in"
-
             run_result = _test_interactive_case(solve_codefile, judge_codefile, infile, f'random-{code_filename}')
             if run_result.judge != JudgeResult.AC:
                 if loop:  # loopを行わない場合は単に生成して試したいだけの場合が多いので保存しない。
@@ -632,6 +609,7 @@ def tr(config, code_filename: str, compile_command_configname: str, case: str, t
                     print(f'input of this case saved to r{num_to_save}.in')
                 return 1
 
+            finished_count += 1
             if (not loop): return 0
 
     return 0

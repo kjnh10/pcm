@@ -440,17 +440,38 @@ def _test_all_case(codefile: CodeFile) -> bool: # {{{
 # }}}
 
 @pass_config
-def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile: Path) -> RunResult: # {{{
+def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile: Path, limit_size_of_output: int = 50) -> RunResult: # {{{
     # run program
     click.secho('-'*10 + case_name + '-'*10, fg='blue')
     run_result = codefile.run(config, infile)
     print(f"exec time: {run_result.exec_time} [sec]")
     print(f"memory usage: {run_result.used_memory} [MB]")
 
+    def smart_print(strs, limit_of_lines, func=print):
+        n = len(strs)
+        x = limit_of_lines
+        def print_line(line):
+            if len(line) <= 2*x:
+                func(line)
+            else:
+                func(line[:x] + ' ~~~ ' + line[len(line)-x:len(line)])
+
+        if 2*x >= n:
+            for line in lines:
+                print_line(line)
+        else:
+            for i in range(0, x):
+                print_line(lines[i])
+            print_line("~~~")
+            print_line("~~~")
+            for i in range(n-x, n):
+                print_line(lines[i])
+
     # print input
     with open(infile, 'r') as f:
         print('*'*7 + ' input ' + '*'*7)
-        print(f.read())
+        lines  = f.read().split('\n')
+        smart_print(lines, limit_size_of_output)
 
     # print expected
     expfile_exist = True
@@ -458,7 +479,8 @@ def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile
         with open(expfile, 'r') as f:
             print('*'*7 + ' expected ' + '*'*7)
             exp_str = f.read()
-            print(exp_str)
+            lines  = exp_str.split('\n')
+            smart_print(lines, limit_size_of_output)
             exp = exp_str.split('\n')
     except FileNotFoundError:
         print('*'*7 + ' expected ' + '*'*7)
@@ -468,14 +490,19 @@ def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile
 
     # print result
     print('*'*7 + ' stdout ' + '*'*7)
-    print(run_result.stdout)
+    lines  = run_result.stdout.split('\n')
+    smart_print(lines, limit_size_of_output)
     stdout = run_result.stdout.split('\n')
 
     # print stderr message
     print('*'*7 + ' stderr ' + '*'*7)
-    for line in run_result.stderr.split('\n'):
+    lines = run_result.stderr.split('\n')
+    def print_stderr(line):
         line = line.replace(str(codefile.code_dir), "")
         click.secho(line, fg='yellow')
+    smart_print(lines, limit_size_of_output, print_stderr)
+
+    for line in run_result.stderr.split('\n'):
         if re.search('runtime error', line):
             click.secho('--RE--\n', fg='red')
             run_result.judge = JudgeResult.RE
@@ -504,8 +531,8 @@ def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile
         return run_result
 
     # 最後の空白行は無視する。
-    while stdout[-1] == '': stdout.pop()
-    while exp[-1] == '': exp.pop()
+    while stdout and stdout[-1] == '': stdout.pop()
+    while exp and exp[-1] == '': exp.pop()
 
     if not expfile_exist:
         click.secho('--NOEXP--\n', fg='yellow')

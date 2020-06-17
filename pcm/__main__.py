@@ -336,7 +336,7 @@ def tt(config, code_filename: str, compile_command_configname: str, case: str, t
             _test_case(solve_codefile, case, infile, expfile)
     else:
         # random test
-        solve_codefile = CodeFile(exclude_filename_pattern=(by if by else []))
+        solve_codefile = CodeFile(code_filename, exclude_filename_pattern=(by if by else []))
         test_dir = solve_codefile.test_dir
         if by:
             if (by in ['judge.cpp', 'judge.py']):

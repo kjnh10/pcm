@@ -44,6 +44,18 @@ def test_tt():
     assert(len(re.findall('^--WA.*', proc.stdout.decode('utf-8'), re.MULTILINE))==2)
 
 
+def test_tt_specify_name():
+    os.chdir(script_path / f'data/test_tt/abc001/A/codes')
+    os.utime('solve.cpp', None)  # update st_mtime for solve.cpp, but should not be used
+
+    proc = __run_command('pcm tt solve_AC.py')
+    print('---------stdout-------------')
+    print(proc.stdout.decode('utf-8'))
+    print('---------stderr-------------')
+    print(proc.stderr.decode('utf-8'))
+    assert(len(re.findall('^--AC.*', proc.stdout.decode('utf-8'), re.MULTILINE))==3)
+
+
 def test_tt_python():
     os.chdir(script_path / f'data/test_tt/abc001/A/codes')
     proc = __run_command('pcm tt solve.py')

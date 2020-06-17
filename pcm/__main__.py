@@ -504,8 +504,8 @@ def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile
         return run_result
 
     # 最後の空白行は無視する。
-    if (stdout[-1] == ''): stdout.pop()
-    if (exp[-1] == ''): exp.pop()
+    while stdout[-1] == '': stdout.pop()
+    while exp[-1] == '': exp.pop()
 
     if not expfile_exist:
         click.secho('--NOEXP--\n', fg='yellow')

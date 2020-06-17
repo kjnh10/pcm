@@ -9,8 +9,6 @@ import re
 
 script_path = Path(os.path.dirname(__file__))
 
-probdir_name = 'abc001_1'
-
 def test_pp():
     shutil.rmtree(script_path / 'data/test_pp/abc001', ignore_errors=True)
     os.chdir(script_path / 'data' / 'test_pp')
@@ -32,7 +30,7 @@ def test_pp():
 
 def test_tt():
     os.chdir(script_path / f'data/test_tt/abc001/A/codes')
-    os.utime('solve.cpp', None)  # update st_mtime for solve.cpp to be used
+    os.utime('solve.cpp', None)  # update st_mtime for solve.cpp to be compiled
 
     proc = __run_command('pcm tt -cc simple')
     print('---------stdout-------------')
@@ -67,6 +65,28 @@ def test_tt_python():
     assert(len(re.findall('^--WA.*', proc.stdout.decode('utf-8'), re.MULTILINE))==2)
 
 
+def test_tt_casegen():
+    os.chdir(script_path / f'data/test_tt/abc001/A/codes')
+
+    proc = __run_command('pcm tt solve_AC.py -c gen.py --by naive_AC.py')
+    print('---------stdout-------------')
+    print(proc.stdout.decode('utf-8'))
+    print('---------stderr-------------')
+    print(proc.stderr.decode('utf-8'))
+    assert(len(re.findall('^--AC.*', proc.stdout.decode('utf-8'), re.MULTILINE))==1)
+    assert(len(re.findall('^--WA.*', proc.stdout.decode('utf-8'), re.MULTILINE))==0)
+
+
+def test_tt_casegen_ranged_loop():
+    os.chdir(script_path / f'data/test_tt/abc001/A/codes')
+    proc = __run_command('pcm tt solve_AC.py -c range_gen.py --by naive_AC.py --loop')
+    print('---------stdout-------------')
+    print(proc.stdout.decode('utf-8'))
+    print('---------stderr-------------')
+    print(proc.stderr.decode('utf-8'))
+    assert(len(re.findall('^--AC.*', proc.stdout.decode('utf-8'), re.MULTILINE))==25)
+
+
 def test_tt_TLE():
     os.chdir(script_path / f'data/test_tt/abc001/A/codes')
     proc = __run_command('pcm tt solve_TLE.py')
@@ -93,12 +113,62 @@ def test_tt_MLE():
         return 0
 
     os.chdir(script_path / f'data/test_tt/abc001/A/codes')
-    proc = __run_command('pcm tt solve_MLE.py')
+    proc = __run_command('pcm tt solve_MLE.py -t 10')
     print('---------stdout-------------')
     print(proc.stdout.decode('utf-8'))
     print('---------stderr-------------')
     print(proc.stderr.decode('utf-8'))
     assert(len(re.findall('^--MLE.*', proc.stdout.decode('utf-8'), re.MULTILINE))==3)
+
+
+def test_tr_AC():
+    os.chdir(script_path / f'data/test_tr/F/codes')
+    proc = __run_command('pcm tr AC.cpp -c 1 --by judge.py -cc simple')
+    print('---------stdout-------------')
+    print(proc.stdout.decode('utf-8'))
+    print('---------stderr-------------')
+    print(proc.stderr.decode('utf-8'))
+    assert(len(re.findall('^--AC.*', proc.stdout.decode('utf-8'), re.MULTILINE))==1)
+
+
+def test_tr_WA():
+    os.chdir(script_path / f'data/test_tr/F/codes')
+    proc = __run_command('pcm tr WA.cpp -c 1 --by judge.py -cc simple')
+    print('---------stdout-------------')
+    print(proc.stdout.decode('utf-8'))
+    print('---------stderr-------------')
+    print(proc.stderr.decode('utf-8'))
+    assert(len(re.findall('^--WA.*', proc.stdout.decode('utf-8'), re.MULTILINE))==1)
+
+
+def test_tr_RE():
+    os.chdir(script_path / f'data/test_tr/F/codes')
+    proc = __run_command('pcm tr RE.cpp -c 1 --by judge.py -cc simple')
+    print('---------stdout-------------')
+    print(proc.stdout.decode('utf-8'))
+    print('---------stderr-------------')
+    print(proc.stderr.decode('utf-8'))
+    assert(len(re.findall('^--RE.*', proc.stdout.decode('utf-8'), re.MULTILINE))==1)
+
+
+def test_tr_TLE():
+    os.chdir(script_path / f'data/test_tr/F/codes')
+    proc = __run_command('pcm tr TLE.cpp -c 1 --by judge.py -cc simple')
+    print('---------stdout-------------')
+    print(proc.stdout.decode('utf-8'))
+    print('---------stderr-------------')
+    print(proc.stderr.decode('utf-8'))
+    assert(len(re.findall('^--TLE.*', proc.stdout.decode('utf-8'), re.MULTILINE))==1)
+
+
+def test_tr_AC():
+    os.chdir(script_path / f'data/test_tr/F/codes')
+    proc = __run_command('pcm tr AC.cpp -c gen.py --by judge.py -cc simple')
+    print('---------stdout-------------')
+    print(proc.stdout.decode('utf-8'))
+    print('---------stderr-------------')
+    print(proc.stderr.decode('utf-8'))
+    assert(len(re.findall('^--AC.*', proc.stdout.decode('utf-8'), re.MULTILINE))==1)
 
 
 def test_sb_atcoder():
@@ -143,4 +213,4 @@ def __is_same_dir(A, B):
 
 
 if __name__ == "__main__":
-    test_pp()
+    test_tr()

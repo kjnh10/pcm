@@ -302,12 +302,29 @@ def _precompile(config, cnfname, extension, force):
 @click.option('--timeout', '-t', type=float, default=-1)
 @click.option('--by', '-b', type=str, default=None)
 @click.option('--loop/--noloop', '-l/-nl', default=False)
+@click.option('--limit_height_max_output', '-lh', type=int, default=0)
+@click.option('--limit_width_max_output', '-lw', type=int, default=0)
 @pass_config
-def tt(config, code_filename: str, compile_command_configname: str, case: str, timeout: float, by: str, loop: bool):  # {{{
+def tt(  # {{{
+        config,
+        code_filename: str,
+        compile_command_configname:
+        str,
+        case: str,
+        timeout: float,
+        by: str,
+        loop: bool,
+        limit_height_max_output: int,
+        limit_width_max_output: int,
+        ):
     if (timeout != -1):
         config.pref['test']['timeout_sec'] = timeout
     if compile_command_configname:
         config.pref['test']['compile_command']['configname'] = compile_command_configname
+    if limit_height_max_output:
+        config.pref['test']['limit_height_max_output'] = limit_height_max_output
+    if limit_width_max_output:
+        config.pref['test']['limit_width_max_output'] = limit_width_max_output
 
     if Path(case).suffix not in ['.py', '.cpp']:
         solve_codefile = CodeFile(code_filename)
@@ -440,14 +457,14 @@ def _test_all_case(codefile: CodeFile) -> bool: # {{{
 # }}}
 
 @pass_config
-def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile: Path, limit_height_of_output: int = 100, limit_width_of_output: int = 48) -> RunResult: # {{{
+def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile: Path) -> RunResult: # {{{
     # run program
     click.secho('-'*10 + case_name + '-'*10, fg='blue')
     run_result = codefile.run(config, infile)
     print(f"exec time: {run_result.exec_time} [sec]")
     print(f"memory usage: {run_result.used_memory} [MB]")
 
-    def smart_print(strs, func=print, limit_of_lines = limit_height_of_output, limit_of_width = limit_width_of_output):
+    def smart_print(strs, func=print, limit_of_lines=config.pref['test']['limit_height_max_output'], limit_of_width=config.pref['test']['limit_width_max_output']):
         n = len(strs)
         x = limit_of_lines
         y = limit_of_width

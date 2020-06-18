@@ -302,12 +302,29 @@ def _precompile(config, cnfname, extension, force):
 @click.option('--timeout', '-t', type=float, default=-1)
 @click.option('--by', '-b', type=str, default=None)
 @click.option('--loop/--noloop', '-l/-nl', default=False)
+@click.option('--limit_height_max_output', '-lh', type=int, default=0)
+@click.option('--limit_width_max_output', '-lw', type=int, default=0)
 @pass_config
-def tt(config, code_filename: str, compile_command_configname: str, case: str, timeout: float, by: str, loop: bool):  # {{{
+def tt(  # {{{
+        config,
+        code_filename: str,
+        compile_command_configname:
+        str,
+        case: str,
+        timeout: float,
+        by: str,
+        loop: bool,
+        limit_height_max_output: int,
+        limit_width_max_output: int,
+        ):
     if (timeout != -1):
         config.pref['test']['timeout_sec'] = timeout
     if compile_command_configname:
         config.pref['test']['compile_command']['configname'] = compile_command_configname
+    if limit_height_max_output:
+        config.pref['test']['limit_height_max_output'] = limit_height_max_output
+    if limit_width_max_output:
+        config.pref['test']['limit_width_max_output'] = limit_width_max_output
 
     if Path(case).suffix not in ['.py', '.cpp']:
         solve_codefile = CodeFile(code_filename)
@@ -447,10 +464,32 @@ def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile
     print(f"exec time: {run_result.exec_time} [sec]")
     print(f"memory usage: {run_result.used_memory} [MB]")
 
+    def smart_print(strs, func=print, limit_of_lines=config.pref['test']['limit_height_max_output'], limit_of_width=config.pref['test']['limit_width_max_output']):
+        n = len(strs)
+        x = limit_of_lines
+        y = limit_of_width
+        def print_line(line):
+            if len(line) <= 2*y:
+                func(line)
+            else:
+                func(line[:y] + ' ~~~ ' + line[len(line)-y:len(line)])
+
+        if n <= 2*x:
+            for line in lines:
+                print_line(line)
+        else:
+            for i in range(0, x):
+                print_line(lines[i])
+            print_line("~~~")
+            print_line("~~~")
+            for i in range(n-x, n):
+                print_line(lines[i])
+
     # print input
     with open(infile, 'r') as f:
         print('*'*7 + ' input ' + '*'*7)
-        print(f.read())
+        lines  = f.read().split('\n')
+        smart_print(lines, limit_of_lines=10)
 
     # print expected
     expfile_exist = True
@@ -458,7 +497,8 @@ def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile
         with open(expfile, 'r') as f:
             print('*'*7 + ' expected ' + '*'*7)
             exp_str = f.read()
-            print(exp_str)
+            lines  = exp_str.split('\n')
+            smart_print(lines)
             exp = exp_str.split('\n')
     except FileNotFoundError:
         print('*'*7 + ' expected ' + '*'*7)
@@ -468,14 +508,19 @@ def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile
 
     # print result
     print('*'*7 + ' stdout ' + '*'*7)
-    print(run_result.stdout)
+    lines  = run_result.stdout.split('\n')
+    smart_print(lines)
     stdout = run_result.stdout.split('\n')
 
     # print stderr message
     print('*'*7 + ' stderr ' + '*'*7)
-    for line in run_result.stderr.split('\n'):
+    lines = run_result.stderr.split('\n')
+    def print_stderr(line):
         line = line.replace(str(codefile.code_dir), "")
         click.secho(line, fg='yellow')
+    smart_print(lines, func=print_stderr)
+
+    for line in run_result.stderr.split('\n'):
         if re.search('runtime error', line):
             click.secho('--RE--\n', fg='red')
             run_result.judge = JudgeResult.RE
@@ -504,8 +549,8 @@ def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile
         return run_result
 
     # 最後の空白行は無視する。
-    while stdout[-1] == '': stdout.pop()
-    while exp[-1] == '': exp.pop()
+    while stdout and stdout[-1] == '': stdout.pop()
+    while exp and exp[-1] == '': exp.pop()
 
     if not expfile_exist:
         click.secho('--NOEXP--\n', fg='yellow')

@@ -179,6 +179,13 @@ def _prepare_problem(config, task_url, prob_name='', force=False):
     return prob_name
 # }}}
 
+# start server for competitive companion: ss {{{
+@cli.command()
+@pass_config
+def ss(config):
+    subprocess.run(f"node {script_path / 'cc-server/index.js'}", shell=True)
+# }}}
+
 # prepare problem: dl {{{
 @cli.command()
 @click.argument('task_url', type=str)

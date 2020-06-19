@@ -96,10 +96,11 @@ def login(config, url):
 # prepare contest: pp {{{
 @cli.command()
 @click.argument('contest_id_or_url', type=str, default='abc001')
+@click.option('-c/-nc', '--current_dir/--no-current_dir', type=bool, default=False)
 @click.option('-n', '--work_dir_name', type=str, default='')
 @click.option('--force/--no-force', "-f/-nf", default=False)
 @pass_config
-def pp(config, contest_id_or_url, work_dir_name, force):
+def pp(config, contest_id_or_url, current_dir, work_dir_name, force):
     contest_url = ""
     if contest_id_or_url[:3] in ("abc", "arc", "agc"):
         contest_url = f"https://atcoder.jp/contests/{contest_id_or_url}"
@@ -115,6 +116,8 @@ def pp(config, contest_id_or_url, work_dir_name, force):
     with oj_utils.with_cookiejar(oj_utils.get_default_session()) as session:
         problems = contest.list_problems(session=session)
 
+    if current_dir:
+        config.pref['contest_root_dir'] = '.'
     work_dir = get_work_directory(problems[0], from_pp=True).parent
     if work_dir_name:
         work_dir.name = work_dir_name
@@ -131,7 +134,6 @@ def pp(config, contest_id_or_url, work_dir_name, force):
             already_exist = True
 
     if not already_exist:
-        os.chdir(work_dir)
         for problem in problems:
             _prepare_problem(problem.get_url(), from_pp=True)
 
@@ -147,11 +149,14 @@ def pp(config, contest_id_or_url, work_dir_name, force):
 # prepare problem: ppp {{{
 @cli.command()
 @click.argument('task_url', type=str, default='')
+@click.option('-c/-nc', '--current_dir/--no-current_dir', type=bool, default=False)
 @click.option('-n', '--prob_name', type=str, default='')
 @click.option('--force/--no-force', "-f/-nf", default=False)
 @click.option('--execute_hook/--no-execute_hook', default=True)
 @pass_config
-def ppp(config, task_url, prob_name, force, execute_hook):
+def ppp(config, task_url, current_dir, prob_name, force, execute_hook):
+    if current_dir:
+        config.pref['problem_root_dir'] = '.'
     work_dir = _prepare_problem(task_url, prob_name, force)
 
     # execute custom_hook_command
@@ -185,16 +190,14 @@ def _prepare_problem(config, task_url, prob_name='', force=False, from_pp=False)
 
     problem_dir.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(config.pref['template_dir'], f'{problem_dir}/')
-    os.chdir(problem_dir)
     # download sample cases
     if task_url:
-        _download_sample(task_url)
+        _download_sample(task_url, problem_dir)
     return problem_dir
 # }}}
 
-
 @pass_config
-def get_work_directory(config, problem: onlinejudge.type.Problem, from_pp) -> Path:
+def get_work_directory(config, problem: onlinejudge.type.Problem, from_pp) -> Path:# {{{
     # prepare params
     service = problem.get_service()
 
@@ -225,7 +228,7 @@ def get_work_directory(config, problem: onlinejudge.type.Problem, from_pp) -> Pa
         return problem_directory.resolve()
     else:
         contest_directory = Path(config.pref['contest_root_dir'].format(**params)).expanduser() / str(contest_id) / str(problem_id)
-        return contest_directory.resolve()
+        return contest_directory.resolve()# }}}
 
 # start server for competitive companion: ss {{{
 @cli.command()
@@ -244,12 +247,13 @@ def dl(config, task_url):
     except FileNotFoundError as e:
         print("you are not in pcm-problem directory")
         exit()
-    os.chdir(solve_codefile.prob_dir)
-    _download_sample(task_url)
+    _download_sample(task_url, solve_codefile.prob_dir)
 
 
-def _download_sample(task_url):
-    # prob_dirにいることが仮定されている
+def _download_sample(task_url, problem_dir):
+    to_restore = Path('.').resolve()
+
+    os.chdir(problem_dir) # prob_dirにいることが仮定されている
     subprocess.run(f"rm test/sample*", shell=True)
     problem = onlinejudge.dispatch.problem_from_url(task_url)
     if not problem:
@@ -266,6 +270,7 @@ def _download_sample(task_url):
     with open('./.problem_info.pickle', mode='wb') as f:
         # problem directory直下にdumpしておく。
         pickle.dump(problem, f)
+    os.chdir(to_restore)
 
 # }}}
 

@@ -173,13 +173,14 @@ def ppp(config, task_url, current_dir, prob_name, force, execute_hook):
 @pass_config
 def _prepare_problem(config, task_url, prob_name='', force=False, from_pp=False):
     problem_dir = None
-    if prob_name == '':
-        if task_url != '':
-            problem = onlinejudge.dispatch.problem_from_url(task_url)
-            problem_dir = get_work_directory(problem, from_pp=from_pp)
-            print(problem_dir)
-        elif not prob_name:
-            problem_dir = Path('./prob')
+    if task_url != '':
+        problem = onlinejudge.dispatch.problem_from_url(task_url)
+        problem_dir = get_work_directory(problem, from_pp=from_pp)
+    else:
+        problem_dir = Path('./prob').resolve()
+
+    if prob_name:
+        problem_dir = problem_dir.parent / prob_name
 
     if Path(problem_dir).exists():
         if force:

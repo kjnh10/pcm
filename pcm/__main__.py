@@ -10,6 +10,7 @@ import signal
 import textwrap
 import toml
 import time
+import urllib
 import re
 import tempfile
 import hashlib
@@ -99,34 +100,43 @@ def login(config, url):
 @click.option('--force/--no-force', "-f/-nf", default=False)
 @pass_config
 def pp(config, contest_id_or_url, work_dir_name, force):
+    contest_url = ""
     if contest_id_or_url[:3] in ("abc", "arc", "agc"):
-        contest_id_or_url = f"https://atcoder.jp/contests/{contest_id_or_url}"
+        contest_url = f"https://atcoder.jp/contests/{contest_id_or_url}"
+    else:
+        contest_url = contest_id_or_url
 
-    contest = onlinejudge.dispatch.contest_from_url(contest_id_or_url)
+    contest = onlinejudge.dispatch.contest_from_url(contest_url)
     if not contest:
         click.secho(f"{contest_id_or_url} is not valid.", fg='yellow')
         return 0
 
-    work_dir_name = Path(os.path.abspath(work_dir_name if work_dir_name else str(contest.contest_id)))
+    problems = []
+    with oj_utils.with_cookiejar(oj_utils.get_default_session()) as session:
+        problems = contest.list_problems(session=session)
 
+    work_dir = get_work_directory(problems[0], from_pp=True).parent
+    if work_dir_name:
+        work_dir.name = work_dir_name
+
+    already_exist = False
     try:
-        os.makedirs(work_dir_name)
+        os.makedirs(work_dir)
     except OSError:
         if force:
-            shutil.rmtree(work_dir_name)
-            os.makedirs(work_dir_name)
+            shutil.rmtree(work_dir)
+            os.makedirs(work_dir)
         else:
             click.secho('The specified direcotry already exists.', fg='red')
-            return 0
+            already_exist = True
 
-    os.chdir(work_dir_name)
-    with oj_utils.with_cookiejar(oj_utils.get_default_session()) as session:
-        for problem in contest.list_problems(session=session):
-            _prepare_problem(problem.get_url())
-    os.chdir('../')
+    if not already_exist:
+        os.chdir(work_dir)
+        for problem in problems:
+            _prepare_problem(problem.get_url(), from_pp=True)
 
     try:
-        cstr = config.pref['prepare']['custom_hook_command']['after'].format(dirname=work_dir_name)
+        cstr = config.pref['prepare']['custom_hook_command']['after'].format(dirname=work_dir.resolve())
         print(cstr)
         subprocess.run(cstr, shell=True)
     except Exception as e:
@@ -142,12 +152,12 @@ def pp(config, contest_id_or_url, work_dir_name, force):
 @click.option('--execute_hook/--no-execute_hook', default=True)
 @pass_config
 def ppp(config, task_url, prob_name, force, execute_hook):
-    prob_name = _prepare_problem(task_url, prob_name, force)
+    work_dir = _prepare_problem(task_url, prob_name, force)
 
     # execute custom_hook_command
     if not execute_hook: return 0
     try:
-        cstr = config.pref['ppp']['custom_hook_command']['after'].format(dirname=prob_name)
+        cstr = config.pref['ppp']['custom_hook_command']['after'].format(dirname=work_dir.resolve())
         print(cstr)
         subprocess.run(cstr, shell=True)
     except Exception as e:
@@ -156,28 +166,66 @@ def ppp(config, task_url, prob_name, force, execute_hook):
 
 
 @pass_config
-def _prepare_problem(config, task_url, prob_name='', force=False):
+def _prepare_problem(config, task_url, prob_name='', force=False, from_pp=False):
+    problem_dir = None
     if prob_name == '':
         if task_url != '':
-            prob_name = task_url[task_url.rfind('/')+1:]
+            problem = onlinejudge.dispatch.problem_from_url(task_url)
+            problem_dir = get_work_directory(problem, from_pp=from_pp)
+            print(problem_dir)
         elif not prob_name:
-            prob_name = 'prob'
+            problem_dir = Path('./prob')
 
-    if Path(prob_name).exists():
+    if Path(problem_dir).exists():
         if force:
-            shutil.rmtree(Path(prob_name))
+            shutil.rmtree(problem_dir)
         else:
-            print(f'{prob_name} directory already exists')
-            return prob_name
+            print(f'{problem_dir} directory already exists')
+            return problem_dir
 
-    shutil.copytree(config.pref['template_dir'], f'{prob_name}/')
-    os.chdir(prob_name)
+    problem_dir.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(config.pref['template_dir'], f'{problem_dir}/')
+    os.chdir(problem_dir)
     # download sample cases
     if task_url:
         _download_sample(task_url)
-    os.chdir('../')
-    return prob_name
+    return problem_dir
 # }}}
+
+
+@pass_config
+def get_work_directory(config, problem: onlinejudge.type.Problem, from_pp) -> Path:
+    # prepare params
+    service = problem.get_service()
+
+    for name in ('contest_id', 'contest_slug'):
+        contest_id = getattr(problem, name, None)
+        if contest_id:
+            break
+    else:
+        contest_id = ''
+
+    for name in ('problem_id', 'problem_slug', 'problem_no', 'task_id', 'task_slug', 'task_no', 'alphabet', 'index'):
+        problem_id = getattr(problem, name, None)
+        if problem_id:
+            break
+    else:
+        problem_id, = urllib.parse.urlparse(problem.get_url()).path.lstrip('/').replace('/', '-'),
+
+    params = {
+        'service_name': service.get_name(),
+        'service_domain': urllib.parse.urlparse(service.get_url()).netloc,
+        'contest_id': contest_id,
+        'problem_id': problem_id,
+    }
+
+    # generate the path
+    problem_directory = Path(config.pref['problem_root_dir'].format(**params)).expanduser() / str(problem_id)
+    if not from_pp:
+        return problem_directory.resolve()
+    else:
+        contest_directory = Path(config.pref['contest_root_dir'].format(**params)).expanduser() / str(contest_id) / str(problem_id)
+        return contest_directory.resolve()
 
 # start server for competitive companion: ss {{{
 @cli.command()

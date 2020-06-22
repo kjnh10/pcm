@@ -12,10 +12,18 @@ setup(
     url='https://github.com/kjnh10/pcm',
     packages=find_packages(),
     include_package_data=True,
-    install_requires=['Click>=7.0', 'online-judge-tools>=9.0.0', 'online-judge-verify-helper', 'toml'],
-    entry_points={'console_scripts': ['pcm=pcm.__main__:cli']},
+    install_requires=[
+            'Click>=7.0',
+            'online-judge-tools>=9.0.0',
+            'online-judge-verify-helper',
+            'toml',
+            'pyside2',
+            ],
+    entry_points={
+        'console_scripts': ['pcm=pcm.__main__:cli', 'pcm-cc=pcm.cc_server.__main__:main']
+    },
     python_requires='>=3.6',
-    classifiers = [
+    classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Console",
         "Intended Audience :: Developers",

@@ -13,7 +13,7 @@ def test_pp():
     shutil.rmtree(script_path / 'data/test_pp/abc001', ignore_errors=True)
     os.chdir(script_path / 'data' / 'test_pp')
     
-    proc = __run_command('pcm pp abc001')
+    proc = __run_command('pcm pp abc001 --current_dir')
     print('---------stdout-------------')
     print(proc.stdout.decode('utf-8'))
     print('---------stderr-------------')

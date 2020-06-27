@@ -1,4 +1,8 @@
 template_dir = '~/.config/pcm/template'  # if this directory does not exist or not specified, default template directory will be used
+contest_root_dir = '~/Desktop/procon-work/{service_name}'
+# contest_root_dir = '.'
+problem_root_dir = '~/Desktop/procon-work/{service_name}/{contest_id}'
+# problem_root_dir = '.'
 
 [prepare]
   [prepare.custom_hook_command]
@@ -6,6 +10,7 @@ template_dir = '~/.config/pcm/template'  # if this directory does not exist or n
 
 [ppp]
   [ppp.custom_hook_command]
+  # after = 'code "{dirname}" -g {dirname}/codes/solve.cpp:6 {dirname}/test/gen.py -r'
   # after = 'nvim {dirname} -c "args **/solve.cpp" -c "tab all" -c ""'
 
 [submit]

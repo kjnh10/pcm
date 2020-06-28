@@ -87,7 +87,10 @@ pcm ppp https://atcoder.jp/contests/caddi2018/tasks/caddi2018_a -n A
 or you can start browser integration mode. (using ![competitive-companion](https://github.com/jmerle/competitive-companion)
 ```bash
 # you have to install node beforehand
+cd <pcm installed dirctory>/pcm/pcm/cc_server
+npm install
 # you have to install competitive companion as a browser extension.
+
 pcm ss  # start server for competitive companion
 # when you click the competitive companion button, the work space will be created.
 # internally, pcm ppp <problem-url> will be executed.

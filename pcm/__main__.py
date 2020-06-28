@@ -235,7 +235,7 @@ def get_work_directory(config, problem: onlinejudge.type.Problem, from_pp) -> Pa
 @cli.command()
 @pass_config
 def ss(config):
-    subprocess.run(f"node {script_path / 'cc-server/index.js'}", shell=True)
+    subprocess.run(f"node {script_path / 'cc_server/index.js'}", shell=True)
 # }}}
 
 # prepare problem: dl {{{

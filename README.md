@@ -56,6 +56,7 @@ pcm tt <filename>          # test filename for all sample cases. <filename> (lik
 # pcm tt -c 1              # shorter version
 # pcm tt -t 3              # you can set TLE time limit. in this sample to 3 second. (default is 2 second.)
 # pcm tt -c 1 -t 3         # of course, you can specify multiple options. this is same for other commands.
+# pcm tt -lh 200 -lw 100   # you can change output size.
 
 # test your code with randomly genarated cases. (checking your code in contest with your naive code, finding errors after contest with a AC code, and even Hacks)
 # at first you need to write test/gen.py.
@@ -81,6 +82,15 @@ cd ../abc001/B  # continue to next problem..
 you can also specify single problem with ppp command
 ```bash
 pcm ppp https://atcoder.jp/contests/caddi2018/tasks/caddi2018_a -n A
+```
+
+or you can start browser integration mode. (using ![competitive-companion](https://github.com/jmerle/competitive-companion)
+```bash
+# you have to install node beforehand
+# you have to install competitive companion as a browser extension.
+pcm ss  # start server for competitive companion
+# when you click the competitive companion button, the work space will be created.
+# internally, pcm ppp <problem-url> will be executed.
 ```
 
 ## Work dirctory structure
@@ -144,12 +154,18 @@ you can customeize your setting by putting `~/.config/pcm/config.toml`.
 ```toml
 template_dir = '~/.config/pcm/template'  # if this directory does not exist or not specified, default template directory will be used
 
+contest_root_dir = '~/Desktop/procon-work/{service_name}'  # root dir for pcm pp
+# contest_root_dir = '.'
+problem_root_dir = '~/Desktop/procon-work/{service_name}/{contest_id}'  # root dir for pcm ppp
+# problem_root_dir = '.'
+
 [prepare]
   [prepare.custom_hook_command]
   # after = 'nvim {dirname} -c "args **/solve.cpp" -c "tab all" -c ""'
 
 [ppp]
   [ppp.custom_hook_command]
+  after = 'code "{dirname}" -g {dirname}/codes/solve.cpp:6 {dirname}/test/gen.py -r'  # open working direcotry by vscode after ppp
   # after = 'nvim {dirname} -c "args **/solve.cpp" -c "tab all" -c ""'
 
 [submit]

@@ -173,8 +173,11 @@ def ppp(config, task_url, current_dir, prob_name, force, execute_hook):
 @pass_config
 def _prepare_problem(config, task_url, prob_name='', force=False, from_pp=False):
     problem_dir = None
+    problem_title = None
     if task_url != '':
         problem = onlinejudge.dispatch.problem_from_url(task_url)
+        problem_data = problem.download_data()
+        problem_title = problem_data.name
         problem_dir = get_work_directory(problem, from_pp=from_pp)
     else:
         problem_dir = Path('./prob').resolve()
@@ -193,6 +196,7 @@ def _prepare_problem(config, task_url, prob_name='', force=False, from_pp=False)
     shutil.copytree(config.pref['template_dir'], f'{problem_dir}/')
     # download sample cases
     if task_url:
+        with open(problem_dir / problem_title,"w"):pass
         _download_sample(task_url, problem_dir)
     return problem_dir
 # }}}

@@ -70,7 +70,8 @@ problem_root_dir = '~/Desktop/procon-work/{service_name}/{contest_id}'
 
   atcoder = """g++-9 {srcpath} -o {outpath} \
                  -std=gnu++17 -Wall -Wextra -O2 -march=native -mtune=native -DEVAL\
-                 -I/opt/boost/gcc/include -L/opt/boost/gcc/lib
+                 -I/opt/boost/gcc/include -L/opt/boost/gcc/lib \
+                 -I {pcm_dir_path}/lang_library/cplusplus/ac-library \
             """
 
   simple = "g++ {srcpath} -o {outpath} -std=c++14"

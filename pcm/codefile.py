@@ -238,6 +238,11 @@ class CodeFile(object):
                 print('current possible self.extensions')
                 print(config.pref['submit']['default_lang'][contest_site])
                 return
+            try:
+                service = self.oj_problem_class.get_service().get_name()
+                lang_id = config.pref['submit']['language'][service][lang_id]
+            except:
+                pass
         else:
             try:
                 lang_id = config.pref['submit']['language'][contest_site][language]

@@ -45,7 +45,7 @@ problem_root_dir = '~/Desktop/procon-work/{service_name}/{contest_id}'
 [test]
   timeout_sec=2
   max_memory=256
-  limit_height_max_output=100
+  limit_height_max_output=200
   limit_width_max_output=45
 
   [test.compile_command]

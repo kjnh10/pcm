@@ -15,7 +15,7 @@ problem_root_dir = '~/Desktop/procon-work/{service_name}/{contest_id}'
 
 [submit]
   [submit.default_lang.AtCoder]
-  cpp = 'gcc'
+  cpp = 'gcc_acl'
   py = 'pypy'
 
   [submit.default_lang.Codeforces]
@@ -54,17 +54,20 @@ problem_root_dir = '~/Desktop/procon-work/{service_name}/{contest_id}'
   [test.compile_command.cpp]  # for tt command, you can change the compile command by --cc option. like 'pcm tt -c 1 --cc v5'
   standard_17 = """g++ {srcpath} -o {outpath} \
                -std=c++17 \
+               -I {pcm_dir_path}/lang_library/cplusplus/ac-library \
                -Wall -D_GLIBCXX_DEBUG -fuse-ld=gold
             """
 
   debug = """g++ {srcpath} -o {outpath} \
             -std=c++17 \
             -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG -fuse-ld=gold \
+            -I {pcm_dir_path}/lang_library/cplusplus/ac-library \
             -g
             """
 
   clang = """clang++ {srcpath} -o {outpath} \
           -std=c++17 \
+          -I {pcm_dir_path}/lang_library/cplusplus/ac-library \
           -DPCM -Wall -D_GLIBCXX_DEBUG -fuse-ld=lld
           """
 

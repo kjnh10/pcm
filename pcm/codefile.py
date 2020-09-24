@@ -212,22 +212,6 @@ class CodeFile(object):
         return command
 
     def submit(self, config, language):
-        code_string = ""
-        if self.extension == "cpp":
-            tmp_expanded_code_file = f'{self.path.parent}/.last_submit_code'
-            oj_bundle_commands = ['oj-bundle', str(self.path), '>', tmp_expanded_code_file]
-            proc = subprocess.Popen(' '.join(oj_bundle_commands), shell=True, stderr=subprocess.PIPE)
-            outs, errs = proc.communicate()
-            if proc.returncode:
-                click.secho("oj-bundle error")
-                print(errs)
-                exit()
-            with open(tmp_expanded_code_file, "r") as f:
-                code_string = f.read()
-        else:
-            with open(self.path, "r") as f:
-                code_string = f.read()
-
         contest_site = self.oj_problem_class.get_service().get_name()
 
         if language == 'auto-detect':
@@ -252,6 +236,7 @@ class CodeFile(object):
                 print(config.pref['submit']['language'][contest_site])
                 return
 
+        code_string = self.bundle(include_acl = (False if (contest_site == 'AtCoder' and lang_id == '4101') else True))
         with oj_utils.with_cookiejar(oj_utils.get_default_session()) as session:
             try:
                 res = self.oj_problem_class.submit_code(code_string, language_id=lang_id, session=session)
@@ -261,6 +246,34 @@ class CodeFile(object):
                 exit()
             else:
                 print(res)
+
+    def bundle(self, include_acl = True):
+        if self.extension == "cpp":
+            tmp_expanded_code_file = f'{self.path.parent}/.last_submit_code'
+            oj_bundle_commands = []
+            if include_acl:
+                print('expanding ac-library because the language you are specifying does not have acl env')
+                acl_dir_path = f'{os.path.dirname(__file__)}//lang_library/cplusplus/ac-library'
+                proc = subprocess.run(' '.join(['python', f'{acl_dir_path}/expander.py', str(self.path), '--lib', acl_dir_path]), shell=True)
+                if proc.returncode:
+                    click.secho("expander.py error")
+                    print(errs)
+                    exit()
+                oj_bundle_commands = ['oj-bundle', str(self.path.parent / 'combined.cpp'), '>', tmp_expanded_code_file]
+            else:
+                oj_bundle_commands = ['oj-bundle', str(self.path), '>', tmp_expanded_code_file]
+
+            proc = subprocess.Popen(' '.join(oj_bundle_commands), shell=True, stderr=subprocess.PIPE)
+            outs, errs = proc.communicate()
+            if proc.returncode:
+                click.secho("oj-bundle error")
+                print(errs)
+                exit()
+            with open(tmp_expanded_code_file, "r") as f:
+                return f.read()
+        else:
+            with open(self.path, "r") as f:
+                return f.read()
 
     def __str__(self):
         return str(self.path)

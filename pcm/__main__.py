@@ -297,10 +297,17 @@ def compile(config, code_filename, compile_command_configname):
 # compile: bundle {{{
 @cli.command()
 @click.argument('code_filename', type=str, default='')
+@click.option('--include_acl', '-acl/-nacl', type=bool, default=False)
 @click.option('--clipboard', '-c/-nc', type=bool, default=True)
 @pass_config
-def bd(config, code_filename, clipboard):
-    command = ['oj-bundle', str(CodeFile(code_filename).path)]
+def bd(config, code_filename, include_acl, clipboard):
+    if include_acl:
+        acl_dir_path = f'{os.path.dirname(__file__)}//lang_library/cplusplus/ac-library'
+        subprocess.run(' '.join(['python', '{acl_dir_path}/expander.py', str(CodeFile(code_filename).path), '--lib', acl_dir_path]), shell=True)
+        command = ['oj-bundle', str(CodeFile(code_filename).path.parent / 'combined.cpp')]
+    else:
+        command = ['oj-bundle', str(CodeFile(code_filename).path)]
+
     if clipboard:
         command += ['|', 'xsel', '--clipboard', '--input']
     subprocess.run(' '.join(command), shell=True)

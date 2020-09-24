@@ -72,6 +72,8 @@ pcm sb solve.py  # submit your code after testing. you can't submit if tests fai
 # pcm sb -nt     # wihtout test.
 # pcm sb -l py3  # you can specify language. see /pcm/config.toml for other language you can use.
 
+when you submit your code having #include <atcoder/...> but service and language is not for ac-library, your code will be expanded using expander.py from ac-library.
+
 cd ../abc001/B  # continue to next problem..
 .
 .
@@ -153,13 +155,13 @@ Or you can also specify any direcotry you like as you will see below.
 ## Customization
 
 you can customeize your setting by putting `~/.config/pcm/config.toml`.
+you can refer the default setting file which is in '{your-pcm-installed-path}/pcm/config.toml'
 
 ```toml
 template_dir = '~/.config/pcm/template'  # if this directory does not exist or not specified, default template directory will be used
-
-contest_root_dir = '~/Desktop/procon-work/{service_name}'  # root dir for pcm pp
+contest_root_dir = '~/Desktop/procon-work/{service_name}'
 # contest_root_dir = '.'
-problem_root_dir = '~/Desktop/procon-work/{service_name}/{contest_id}'  # root dir for pcm ppp
+problem_root_dir = '~/Desktop/procon-work/{service_name}/{contest_id}'
 # problem_root_dir = '.'
 
 [prepare]
@@ -168,28 +170,34 @@ problem_root_dir = '~/Desktop/procon-work/{service_name}/{contest_id}'  # root d
 
 [ppp]
   [ppp.custom_hook_command]
-  after = 'code "{dirname}" -g {dirname}/codes/solve.cpp:6 {dirname}/test/gen.py -r'  # open working direcotry by vscode after ppp
+  # after = 'code "{dirname}" -g {dirname}/codes/solve.cpp:6 {dirname}/test/gen.py -r'
   # after = 'nvim {dirname} -c "args **/solve.cpp" -c "tab all" -c ""'
 
 [submit]
   [submit.default_lang.AtCoder]
-  cpp = '3003' # C++14 (GCC 5.4.1)
-  py = '3510'  # pypy
+  cpp = 'gcc_acl'
+  py = 'pypy'
 
   [submit.default_lang.Codeforces]
-  cpp = '50'  # GNU G++14 6.4.0
-  py = '41'   # pypy if you prefer python3, use '31'
+  cpp = 'gcc'
+  py = 'pypy'
+
+  [submit.default_lang.yukicoder]
+  cpp = 'cpp17'
+  py  = 'pypy3'
+
 
   [submit.language.AtCoder]
-  gcc = '3003'
-  clang = '3004'
-  py = '3023'
-  py3 = '3023'
-  pypy = '3510'
+  gcc = '4003'       # C++17 (GCC 9.2.1)
+  gcc_acl = '4101'   # GCC 9.2.1 with AC Library v1.1
+  clang = '4004'     # C++17 (Glang 10.0.0)
+  clang_acl = '4102' # Clang 10.0.0 with AC Library v1.1
+  py = '4006'        # python 3.8.2
+  pypy = '4047'      # pypy3
 
   [submit.language.Codeforces]
-  gcc = '50'
-  clang = '52'
+  gcc = '54'         # GNU G++17 7.3.0
+  clang = '52'       # Clang++17 Diagnostics
   py = '31'
   py3 = '31'
   pypy = '41'
@@ -197,39 +205,39 @@ problem_root_dir = '~/Desktop/procon-work/{service_name}/{contest_id}'  # root d
 [test]
   timeout_sec=2
   max_memory=256
+  limit_height_max_output=200
+  limit_width_max_output=45
 
   [test.compile_command]
-  configname = 'standard_14'  # specify the profile used by default for tt and sb
+  configname = 'standard_17'  # specify the profile used by default for tt and sb
 
   [test.compile_command.cpp]  # for tt command, you can change the compile command by --cc option. like 'pcm tt -c 1 --cc v5'
-  standard_14 = """g++-9 {srcpath} -o {outpath} \
-               -std=c++14 \
-               -include bits/stdc++.h \
-               -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG -fuse-ld=gold
+  standard_17 = """g++ {srcpath} -o {outpath} \
+               -std=c++17 \
+               -I {pcm_dir_path}/lang_library/cplusplus/ac-library \
+               -Wall -D_GLIBCXX_DEBUG -fuse-ld=gold
             """
 
   debug = """g++ {srcpath} -o {outpath} \
-            -std=c++14 \
-             -include bits/stdc++.h \
+            -std=c++17 \
             -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG -fuse-ld=gold \
+            -I {pcm_dir_path}/lang_library/cplusplus/ac-library \
             -g
             """
 
-  v5 = """g++ {srcpath} -o {outpath} \
-          -std=c++14 \
-          -include bits/stdc++.h \
-          -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG
-          """
-
-  fast = """g++ {srcpath} -o {outpath} \
-          -std=c++14 \
-          -include bits/stdc++.h \
-          """
-
   clang = """clang++ {srcpath} -o {outpath} \
-          -stdlib=libc++ \
-          -DPCM -Wall
+          -std=c++17 \
+          -I {pcm_dir_path}/lang_library/cplusplus/ac-library \
+          -DPCM -Wall -D_GLIBCXX_DEBUG -fuse-ld=lld
           """
+
+  atcoder = """g++-9 {srcpath} -o {outpath} \
+                 -std=gnu++17 -Wall -Wextra -O2 -march=native -mtune=native -DEVAL\
+                 -I/opt/boost/gcc/include -L/opt/boost/gcc/lib \
+                 -I {pcm_dir_path}/lang_library/cplusplus/ac-library \
+            """
+
+  simple = "g++ {srcpath} -o {outpath} -std=c++14"
 ```
 
 ## Contribution

@@ -1,7 +1,7 @@
 template_dir = '~/.config/pcm/template'  # if this directory does not exist or not specified, default template directory will be used
-contest_root_dir = '~/Desktop/procon-work/{service_name}'
+contest_root_dir = '~/procon-work/{service_name}'
 # contest_root_dir = '.'
-problem_root_dir = '~/Desktop/procon-work/{service_name}/{contest_id}'
+problem_root_dir = '~/procon-work/{service_name}/{contest_id}'
 # problem_root_dir = '.'
 
 [prepare]

@@ -24,7 +24,7 @@ This is just my own wrapper of [kmyk/online-judge-tools](https://github.com/kmyk
 You need python 3.6 later (tested for Linux and Windows.)
 
 ```bash
-pip install pcm # That's it.Done.
+pip install pcm
 
 # if you want to develop
 git clone https://github.com/kjnh10/pcm.git
@@ -35,18 +35,18 @@ pip install --editable ./
 ## Usage Sample
 
 ```bash
-cd your/workdirectory
-
 # prepare your work space. (only for Atcoder and codeforces)
 pcm pp https://atcoder.jp/contests/abc001
 # pcm pp http://codeforces.com/contest/1138
+# By default, the work space is prepared at ~/procon-work/
+# if you set [prepare.custom_hook_command], the command will be triggerd.
 # you can shortcut for abc, arc, agc like below.
 # pcm pp abc001
 # to join a contest on realtime, you need to login 'oj login https://atcoder.jp' or 'oj login https://codeforces.com' beforehand.
 
 # edir your A/solve.py or A/solve.cpp with your favorite editor
 
-cd abc001/A # you need to be in abc001/A or abc001/A/codes to test and submit codes for problem A.
+cd ~/procon-work/abc001/A # you need to be in ~/procon-work/abc001/A or ~/procon-work/abc001/A/codes to test and submit codes for problem A.
 
 # test your code with downloaded cases and handmade cases.
 pcm tt <filename>          # test filename for all sample cases. <filename> (like solve.cpp) will be searched under current directory recursively.
@@ -86,7 +86,7 @@ you can also specify single problem with ppp command
 pcm ppp https://atcoder.jp/contests/caddi2018/tasks/caddi2018_a -n A
 ```
 
-or you can start browser integration mode. (using ![competitive-companion](https://github.com/jmerle/competitive-companion)
+or you can start browser integration mode. (using ![competitive-companion](https://github.com/jmerle/competitive-companion))
 ```bash
 # you have to install node beforehand
 cd <pcm installed dirctory>/pcm/pcm/cc_server
@@ -103,19 +103,16 @@ pcm ss  # start server for competitive companion
 ``` bash
 
 tree  # at abc001/
-.
-├── A
-│   ├── bin
+├── abc001_1
 │   ├── codes
-│   │   ├── lib
-│   │   │   ├── dump.hpp
-│   │   │   └── prettyprint.hpp
-│   │   ├── naive.cpp
-│   │   ├── naive.py
 │   │   ├── solve.cpp
 │   │   └── solve.py
 │   ├── test
+│   │   ├── c1.in  # for custom test
+│   │   ├── c1.out
 │   │   ├── gen.py
+│   │   ├── judge.cpp
+│   │   ├── judge.py
 │   │   ├── sample-1.in
 │   │   ├── sample-1.out
 │   │   ├── sample-2.in
@@ -123,18 +120,16 @@ tree  # at abc001/
 │   │   ├── sample-3.in
 │   │   └── sample-3.out
 │   └── 積雪深差
-├── B
-│   ├── bin
+├── abc001_2
 │   ├── codes
-│   │   ├── lib
-│   │   │   ├── dump.hpp
-│   │   │   └── prettyprint.hpp
-│   │   ├── naive.cpp
-│   │   ├── naive.py
 │   │   ├── solve.cpp
 │   │   └── solve.py
 │   ├── test
+│   │   ├── c1.in
+│   │   ├── c1.out
 │   │   ├── gen.py
+│   │   ├── judge.cpp
+│   │   ├── judge.py
 │   │   ├── sample-1.in
 │   │   ├── sample-1.out
 │   │   ├── sample-2.in
@@ -142,9 +137,9 @@ tree  # at abc001/
 │   │   ├── sample-3.in
 │   │   └── sample-3.out
 │   └── 視程の通報
-├── C
+├── abc001_3
 ├     ....
-└── D
+└── abc001_4
 ```
 
 'codes' direcotry is copied from `pcm/pcm/template/codes`.  
@@ -159,9 +154,9 @@ you can refer the default setting file which is in '{your-pcm-installed-path}/pc
 
 ```toml
 template_dir = '~/.config/pcm/template'  # if this directory does not exist or not specified, default template directory will be used
-contest_root_dir = '~/Desktop/procon-work/{service_name}'
+contest_root_dir = '~/procon-work/{service_name}'
 # contest_root_dir = '.'
-problem_root_dir = '~/Desktop/procon-work/{service_name}/{contest_id}'
+problem_root_dir = '~/procon-work/{service_name}/{contest_id}'
 # problem_root_dir = '.'
 
 [prepare]

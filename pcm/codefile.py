@@ -254,7 +254,8 @@ class CodeFile(object):
             if include_acl:
                 print('expanding ac-library because the language you are specifying does not have acl env')
                 acl_dir_path = f'{os.path.dirname(__file__)}//lang_library/cplusplus/ac-library'
-                proc = subprocess.run(' '.join(['python', f'{acl_dir_path}/expander.py', str(self.path), '--lib', acl_dir_path]), shell=True)
+                proc = subprocess.Popen(' '.join(['python', f'{acl_dir_path}/expander.py', str(self.path), '--lib', acl_dir_path]), shell=True, stderr=subprocess.PIPE)
+                outs, errs = proc.communicate()
                 if proc.returncode:
                     click.secho("expander.py error")
                     print(errs)

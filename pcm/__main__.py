@@ -303,7 +303,7 @@ def compile(config, code_filename, compile_command_configname):
 def bd(config, code_filename, include_acl, clipboard):
     if include_acl:
         acl_dir_path = f'{os.path.dirname(__file__)}//lang_library/cplusplus/ac-library'
-        subprocess.run(' '.join(['python', '{acl_dir_path}/expander.py', str(CodeFile(code_filename).path), '--lib', acl_dir_path]), shell=True)
+        subprocess.run(' '.join(['python', f'{acl_dir_path}/expander.py', str(CodeFile(code_filename).path), '--lib', acl_dir_path]), shell=True)
         command = ['oj-bundle', str(CodeFile(code_filename).path.parent / 'combined.cpp')]
     else:
         command = ['oj-bundle', str(CodeFile(code_filename).path)]

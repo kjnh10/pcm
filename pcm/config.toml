@@ -15,7 +15,7 @@ problem_root_dir = '~/procon-work/{service_name}/{contest_id}'
 
 [submit]
   [submit.default_lang.AtCoder]
-  cpp = 'gcc_acl'
+  cpp = 'gcc'
   py = 'pypy'
 
   [submit.default_lang.Codeforces]
@@ -29,9 +29,7 @@ problem_root_dir = '~/procon-work/{service_name}/{contest_id}'
 
   [submit.language.AtCoder]
   gcc = '4003'       # C++17 (GCC 9.2.1)
-  gcc_acl = '4101'   # GCC 9.2.1 with AC Library v1.1
   clang = '4004'     # C++17 (Glang 10.0.0)
-  clang_acl = '4102' # Clang 10.0.0 with AC Library v1.1
   py = '4006'        # python 3.8.2
   pypy = '4047'      # pypy3
 

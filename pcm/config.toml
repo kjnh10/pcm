@@ -44,7 +44,7 @@ problem_root_dir = '~/procon-work/{service_name}/{contest_id}'
   timeout_sec=2
   max_memory=256
   limit_height_max_output=200
-  limit_width_max_output=45
+  limit_width_max_output=200
 
   [test.compile_command]
   configname = 'standard_17'  # specify the profile used by default for tt and sb

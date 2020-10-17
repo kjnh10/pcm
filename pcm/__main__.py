@@ -917,8 +917,9 @@ def viz(config, directed, in_index_base, out_index_base):
 
     for i in range(m):
         u, v = map(int, input().split())
-        u -= 1
-        v -= 1
+        if in_index_base == 1:
+            u -= 1
+            v -= 1
         G.edge(str(u), str(v), cost='1')
 
     output_filepath = os.path.expanduser('~/Dropbox/graph')

@@ -294,6 +294,39 @@ def compile(config, code_filename, compile_command_configname):
     CodeFile(code_filename).compile(config)
 #}}}
 
+# compile: inspect {{{
+@cli.command()
+@click.argument('code_filename', type=str, default='')
+@pass_config
+def inspect(config, code_filename):
+    code_file = CodeFile(code_filename)
+    if code_file.extension == 'cpp':
+        with open(code_file.path, "r") as f:
+            lines = f.read()
+            if (lines.find("printf") != -1 and lines.find("cout") != -1):
+                click.secho("printf and cout both exist.", fg='yellow')
+
+            if (lines.find("set") != -1 and lines.find("lb") != -1):
+                click.secho("set and lower_bound exist", fg='yellow')
+            if (lines.find("multiset") != -1 and lines.find("lb") != -1):
+                click.secho("set and lower_bound exist", fg='yellow')
+            if (lines.find("set") != -1 and lines.find("lower_bound") != -1):
+                click.secho("set and lower_bound exist", fg='yellow')
+            if (lines.find("multiset") != -1 and lines.find("lower_bound") != -1):
+                click.secho("set and lower_bound exist", fg='yellow')
+            if (lines.find("set") != -1 and lines.find("ub") != -1):
+                click.secho("set and upper_bound exist", fg='yellow')
+            if (lines.find("multiset") != -1 and lines.find("ub") != -1):
+                click.secho("set and upper_bound exist", fg='yellow')
+            if (lines.find("set") != -1 and lines.find("upper_bound") != -1):
+                click.secho("set and upper_bound exist", fg='yellow')
+            if (lines.find("multiset") != -1 and lines.find("upper_bound") != -1):
+                click.secho("set and upper_bound exist", fg='yellow')
+    else:
+        print("For now, inspection supports only c++")
+
+#}}}
+
 # compile: bundle {{{
 @cli.command()
 @click.argument('code_filename', type=str, default='')

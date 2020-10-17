@@ -565,7 +565,7 @@ def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile
     with open(infile, 'r') as f:
         print('*'*7 + ' input ' + '*'*7)
         lines  = f.read().split('\n')
-        smart_print(lines, limit_of_lines=10)
+        smart_print(lines, limit_of_lines=30)
 
     # print expected
     expfile_exist = True

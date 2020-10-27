@@ -462,7 +462,10 @@ def tt(  # {{{
                     click.secho(f"{infile.name} not found.", fg='yellow')
                     return 1
 
-            _test_case(solve_codefile, case, infile, expfile)
+            run_result = _test_case(solve_codefile, case, infile, expfile)
+            print('[exec time]: {:.3f}'.format(run_result.exec_time), '[sec]')
+            print('[used memory]: {:.3f}'.format(run_result.used_memory), '[MB]')
+            print('')
     else:
         # random test
         solve_codefile = CodeFile(code_filename, exclude_filename_pattern=([case, by] if by else [case]))
@@ -558,10 +561,11 @@ def _test_all_case(codefile: CodeFile) -> bool: # {{{
     if (ac_cnt == case_cnt):
         click.secho(f'{ac_cnt}/{case_cnt} cases passed', fg='green')
     elif (ac_cnt + noexp_cnt == case_cnt):
-        click.secho(f'{ac_cnt}/{case_cnt} cases passed', fg='yellow')
-        click.secho(f'{noexp_cnt}/{case_cnt} cases have no expected answer', fg='yellow')
+        click.secho(f'{ac_cnt}/{case_cnt - noexp_cnt} cases passed', fg='green')
+        click.secho(f'{noexp_cnt} cases have no expected answer', fg='yellow')
     else:
-        click.secho(f'{ac_cnt}/{case_cnt} cases passed', fg='red')
+        click.secho(f'{ac_cnt}/{case_cnt - noexp_cnt} cases passed', fg='red')
+        click.secho(f'{noexp_cnt} cases have no expected answer', fg='yellow')
 
     print('[max exec time]: {:.3f}'.format(max(exec_times)), '[sec]')
     print('[max used memory]: {:.3f}'.format(max(used_memories)), '[MB]')
@@ -573,8 +577,6 @@ def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile
     # run program
     click.secho('-'*10 + case_name + '-'*10, fg='blue')
     run_result = codefile.run(config, infile)
-    print(f"exec time: {run_result.exec_time} [sec]")
-    print(f"memory usage: {run_result.used_memory} [MB]")
 
     def smart_print(strs, func=print, limit_of_lines=config.pref['test']['limit_height_max_output'], limit_of_width=config.pref['test']['limit_width_max_output']):
         n = len(strs)

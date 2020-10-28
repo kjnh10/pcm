@@ -13,6 +13,7 @@ import time
 import urllib
 import re
 import tempfile
+import pyperclip
 import hashlib
 from colorama import init, Fore, Back, Style
 from typing import TYPE_CHECKING, List, Optional, Type
@@ -333,20 +334,15 @@ def inspect(config, code_filename):
 # compile: bundle {{{
 @cli.command()
 @click.argument('code_filename', type=str, default='')
-@click.option('--include_acl', '-acl/-nacl', type=bool, default=False)
+@click.option('--expand_acl', '-acl/-nacl', type=bool, default=False)
 @click.option('--clipboard', '-c/-nc', type=bool, default=True)
 @pass_config
-def bd(config, code_filename, include_acl, clipboard):
-    if include_acl:
-        acl_dir_path = f'{os.path.dirname(__file__)}//lang_library/cplusplus/ac-library'
-        subprocess.run(' '.join(['python', f'{acl_dir_path}/expander.py', str(CodeFile(code_filename).path), '--lib', acl_dir_path]), shell=True)
-        command = ['oj-bundle', str(CodeFile(code_filename).path.parent / 'combined.cpp')]
-    else:
-        command = ['oj-bundle', str(CodeFile(code_filename).path)]
-
+def bd(config, code_filename, expand_acl, clipboard):
+    code_file = CodeFile(code_filename)
+    bundled_code : str = code_file.bundle(expand_acl=expand_acl)
     if clipboard:
-        command += ['|', 'xsel', '--clipboard', '--input']
-    subprocess.run(' '.join(command), shell=True)
+        pyperclip.copy(bundled_code)
+    print(bundled_code)
 #}}}
 
 # compile: precompile {{{

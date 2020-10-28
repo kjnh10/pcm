@@ -18,6 +18,7 @@ setup(
             'online-judge-verify-helper',
             'toml',
             'pyside2',
+            'pyperclip',
             ],
     entry_points={
         'console_scripts': ['pcm=pcm.__main__:cli', 'pcm-cc=pcm.cc_server.__main__:main']

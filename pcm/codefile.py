@@ -4,6 +4,7 @@ import subprocess
 import sys
 import pickle
 import os
+import re
 import contextlib
 from typing import TYPE_CHECKING, List, Optional, Type, Generator, Tuple, Any
 from .interactive_runner import SubprocessThread
@@ -253,14 +254,25 @@ class CodeFile(object):
             oj_bundle_commands = []
             if expand_acl:
                 print('expanding ac-library because the language you are specifying does not have acl env')
-                acl_dir_path = f'{os.path.dirname(__file__)}//lang_library/cplusplus/ac-library'
-                proc = subprocess.Popen(' '.join(['python', f'{acl_dir_path}/expander.py', str(self.path), '--lib', acl_dir_path]), shell=True, stderr=subprocess.PIPE)
-                outs, errs = proc.communicate()
-                if proc.returncode:
-                    click.secho("expander.py error")
-                    print(errs)
-                    exit()
-                oj_bundle_commands = ['oj-bundle', str(self.path.parent / 'combined.cpp'), '>', bundled_code_file]
+
+                exist_include_acl = False
+                with open(self.path, mode='r') as f:
+                    lines = f.read()
+                    if re.search(r'^#include .atcoder/.*', lines):
+                        exist_include_acl = True
+
+                if exist_include_acl:
+                    acl_dir_path = f'{os.path.dirname(__file__)}//lang_library/cplusplus/ac-library'
+                    proc = subprocess.Popen(' '.join(['python', f'{acl_dir_path}/expander.py', str(self.path), '--lib', acl_dir_path]), shell=True, stderr=subprocess.PIPE)
+                    outs, errs = proc.communicate()
+                    if proc.returncode:
+                        click.secho("expander.py error")
+                        print(errs)
+                        exit()
+                    oj_bundle_commands = ['oj-bundle', str(self.path.parent / 'combined.cpp'), '>', bundled_code_file]
+                else:
+                    # expander.pyは遅いので#include <atcoder/*>が含まれていない限り実行しない。
+                    oj_bundle_commands = ['oj-bundle', str(self.path), '>', bundled_code_file]
             else:
                 oj_bundle_commands = ['oj-bundle', str(self.path), '>', bundled_code_file]
 

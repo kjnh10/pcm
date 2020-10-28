@@ -4,6 +4,8 @@ contest_root_dir = '~/procon-work/{service_name}'
 problem_root_dir = '~/procon-work/{service_name}/{contest_id}'
 # problem_root_dir = '.'
 
+cpp_include_paths = ['{pcm_dir_path}/lang_library/cplusplus/ac-library']
+
 [prepare]
   [prepare.custom_hook_command]
   # after = 'nvim {dirname} -c "args **/solve.cpp" -c "tab all" -c ""'
@@ -52,27 +54,27 @@ problem_root_dir = '~/procon-work/{service_name}/{contest_id}'
   [test.compile_command.cpp]  # for tt command, you can change the compile command by --cc option. like 'pcm tt -c 1 --cc v5'
   standard_17 = """g++ {srcpath} -o {outpath} \
                -std=c++17 \
-               -I {pcm_dir_path}/lang_library/cplusplus/ac-library \
+               {cpp_include_paths} \
                -Wall -D_GLIBCXX_DEBUG -fuse-ld=gold
             """
 
   debug = """g++ {srcpath} -o {outpath} \
             -std=c++17 \
             -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG -fuse-ld=gold \
-            -I {pcm_dir_path}/lang_library/cplusplus/ac-library \
+            {cpp_include_paths} \
             -g
             """
 
   clang = """clang++ {srcpath} -o {outpath} \
           -std=c++17 \
-          -I {pcm_dir_path}/lang_library/cplusplus/ac-library \
+          {cpp_include_paths} \
           -DPCM -Wall -D_GLIBCXX_DEBUG -fuse-ld=lld
           """
 
   atcoder = """g++-9 {srcpath} -o {outpath} \
                  -std=gnu++17 -Wall -Wextra -O2 -march=native -mtune=native -DEVAL\
                  -I/opt/boost/gcc/include -L/opt/boost/gcc/lib \
-                 -I {pcm_dir_path}/lang_library/cplusplus/ac-library \
+                 {cpp_include_paths} \
             """
 
   simple = "g++ {srcpath} -o {outpath} -std=c++14"

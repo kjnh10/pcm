@@ -339,7 +339,7 @@ def inspect(config, code_filename):
 @pass_config
 def bd(config, code_filename, expand_acl, clipboard):
     code_file = CodeFile(code_filename)
-    bundled_code : str = code_file.bundle(expand_acl=expand_acl)
+    bundled_code : str = code_file.bundle(config, expand_acl=expand_acl)
     if clipboard:
         pyperclip.copy(bundled_code)
     print(bundled_code)
@@ -364,12 +364,15 @@ def _precompile(config, cnfname, extension, force):
     print('-----------------------------------------------------------------')
 
     try:
-        command_str = config.pref['test']['compile_command'][extension][cnfname].format(
-            srcpath= "____",
-            outpath= "____", 
-            config_dir_path='~/.config/pcm',
-            pcm_dir_path=os.path.dirname(__file__),
-        )
+        def format(s : str):
+            return s.format(
+                    srcpath= "____",
+                    outpath= "____", 
+                    config_dir_path='~/.config/pcm',
+                    pcm_dir_path=os.path.dirname(__file__),
+                    cpp_include_paths=' '.join(map(lambda path: f'-I {path}', config.pref['cpp_include_paths'])),
+                    )
+        command_str = format(format(config.pref['test']['compile_command'][extension][cnfname]))
         command = command_str.split()
         command_hash = hashlib.md5(command_str.encode()).hexdigest()
         include_idx = command.index('-include')
@@ -379,12 +382,16 @@ def _precompile(config, cnfname, extension, force):
             click.secho(f'precompile:[{cnfname}] skipped since the string of [{cnfname}] has not changed.\n', fg='green')
             return 0
 
-        make_precompiled_header_command = config.pref['test']['compile_command'][extension][cnfname].format(
-            srcpath=str(header_filepath),
-            outpath=str(outpath),
-            config_dir_path='~/.config/pcm',
-            pcm_dir_path=os.path.dirname(__file__),
-        ).split()
+        def format(s : str):
+            return s.format(
+                    srcpath=str(header_filepath),
+                    outpath=str(outpath),
+                    config_dir_path='~/.config/pcm',
+                    pcm_dir_path=os.path.dirname(__file__),
+                    cpp_include_paths=' '.join(map(lambda path: f'-I {path}', config.pref['cpp_include_paths'])),
+                    )
+
+        make_precompiled_header_command = format(format(config.pref['test']['compile_command'][extension][cnfname])).split()
         del make_precompiled_header_command[include_idx:include_idx+2]
         outpath.parent.mkdir(parents=True, exist_ok=True)
         for p in outpath.parent.glob(f'{cnfname}.ver-*'):

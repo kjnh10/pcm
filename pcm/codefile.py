@@ -75,13 +75,16 @@ class CodeFile(object):
             click.secho(f'compile skipped since {self.path} is older than {exefile.name}')
         else:
             start = time.time()
-            command = config.pref['test']['compile_command'][self.extension][cnfname].format(
-                srcpath=str(self.path),
-                outpath=str(exefile),
-                code_dir_path=str(self.path.parent),
-                config_dir_path='~/.config/pcm',
-                pcm_dir_path=os.path.dirname(__file__),
-            ).split()
+            def format(s : str):
+                return s.format(
+                    srcpath=str(self.path),
+                    outpath=str(exefile),
+                    code_dir_path=str(self.path.parent),
+                    config_dir_path='~/.config/pcm',
+                    pcm_dir_path=os.path.dirname(__file__),
+                    cpp_include_paths=' '.join(map(lambda path: f'-I {path}', config.pref['cpp_include_paths'])),
+                )
+            command = format(format(config.pref['test']['compile_command'][self.extension][cnfname])).split()
             proc = subprocess.Popen(
                     command,
                     stdout=subprocess.PIPE,
@@ -254,10 +257,12 @@ class CodeFile(object):
             else:
                 print(res)
 
-    def bundle(self, expand_acl=True) -> str:
+    def bundle(self, config, expand_acl=True) -> str:
         if self.extension == "cpp":
             bundled_code_file = f'{self.path.parent}/.bundled-{self.path.stem}'
-            oj_bundle_commands = []
+            oj_bundle_commands = ['oj-bundle']
+            cpp_include_paths = list((' '.join(map(lambda path: f'-I {path.format(pcm_dir_path=os.path.dirname(__file__))}', config.pref['cpp_include_paths']))).split())
+            oj_bundle_commands += cpp_include_paths
             if expand_acl:
                 print('expanding ac-library because the language you are specifying does not have acl env')
 
@@ -275,13 +280,14 @@ class CodeFile(object):
                         click.secho("expander.py error")
                         print(errs)
                         exit()
-                    oj_bundle_commands = ['oj-bundle', str(self.path.parent / 'combined.cpp'), '>', bundled_code_file]
+                    oj_bundle_commands += [str(self.path.parent / 'combined.cpp'), '>', bundled_code_file]
                 else:
                     # expander.pyは遅いので#include <atcoder/*>が含まれていない限り実行しない。
-                    oj_bundle_commands = ['oj-bundle', str(self.path), '>', bundled_code_file]
+                    oj_bundle_commands += [str(self.path), '>', bundled_code_file]
             else:
-                oj_bundle_commands = ['oj-bundle', str(self.path), '>', bundled_code_file]
+                oj_bundle_commands += [str(self.path), '>', bundled_code_file]
 
+            print(' '.join(oj_bundle_commands))
             proc = subprocess.Popen(' '.join(oj_bundle_commands), shell=True, stderr=subprocess.PIPE)
             outs, errs = proc.communicate()
             if proc.returncode:

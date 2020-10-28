@@ -287,7 +287,6 @@ class CodeFile(object):
             else:
                 oj_bundle_commands += [str(self.path), '>', bundled_code_file]
 
-            print(' '.join(oj_bundle_commands))
             proc = subprocess.Popen(' '.join(oj_bundle_commands), shell=True, stderr=subprocess.PIPE)
             outs, errs = proc.communicate()
             if proc.returncode:

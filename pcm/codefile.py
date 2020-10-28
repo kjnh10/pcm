@@ -111,9 +111,15 @@ class CodeFile(object):
         command = self._get_command_string_to_run(exefile, args=args)
 
         def popen():
+            stdin = None
+            if infile == 'stdin':
+                stdin = subprocess.PIPE
+            elif infile:
+                stdin = open(infile, "r")
+
             return subprocess.Popen(
                 command,
-                stdin=open(infile, "r") if infile else None,
+                stdin=stdin,
                 stdout=open(outfile, "w") if outfile else subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 # shell=True,  # for windows

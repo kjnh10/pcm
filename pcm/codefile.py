@@ -49,11 +49,11 @@ class CodeFile(object):
         self.path = get_last_modified_file(match_filename_pattern, exclude_filename_pattern, search_root)
         self.code_dir = self.path.parent
 
-        if (self.code_dir/'test').exists():  # online-judge-tools style
+        if (self.code_dir / 'test').exists():  # online-judge-tools style
             self.prob_dir = self.code_dir
             self.test_dir = self.code_dir / 'test'
             self.bin_dir = self.code_dir / '.bin'
-        else:                                # default template style
+        else:  # default template style
             self.prob_dir = self.code_dir.parent
             self.test_dir = self.prob_dir / 'test'
             self.bin_dir = self.prob_dir / '.bin'
@@ -62,7 +62,7 @@ class CodeFile(object):
         self.extension = self.path.suffix[1:]  # like 'py', 'cpp'....
         self.oj_problem_class = None
         try:
-            with open(self.prob_dir/'.problem_info.pickle', mode='rb') as f:
+            with open(self.prob_dir / '.problem_info.pickle', mode='rb') as f:
                 self.oj_problem_class = pickle.load(f)
         except Exception as e:
             pass
@@ -77,7 +77,8 @@ class CodeFile(object):
             click.secho(f'compile skipped since {self.path} is older than {exefile.name}')
         else:
             start = time.time()
-            def format(s : str):
+
+            def format(s: str):
                 return s.format(
                     srcpath=str(self.path),
                     outpath=str(exefile),
@@ -86,11 +87,12 @@ class CodeFile(object):
                     pcm_dir_path=os.path.dirname(__file__),
                     cpp_include_paths=' '.join(map(lambda path: f'-I {path}', config.pref['cpp_include_paths'])),
                 )
+
             command = format(format(config.pref['test']['compile_command'][self.extension][cnfname])).split()
             proc = subprocess.Popen(
-                    command,
-                    stdout=subprocess.PIPE,
-                    )
+                command,
+                stdout=subprocess.PIPE,
+            )
             outs, errs = proc.communicate()
             if proc.returncode:
                 click.secho("compile error\n", fg='red')
@@ -103,14 +105,14 @@ class CodeFile(object):
             print("compile took:{0}".format(time.time() - start) + "[sec]")
         return exefile
 
-    def run(self, config, infile: Path = None, outfile: Path = None) -> RunResult:  
+    def run(self, config, infile: Path = None, outfile: Path = None) -> RunResult:
         if self.extension not in config.pref['test']['compile_command']:  # for script language
             return self._run_exe(config, self.path, infile, outfile)
         else:
             exefile = self.compile(config)
             return self._run_exe(config, exefile, infile, outfile)
 
-    def _run_exe(self, config, exefile: Path, infile: Path = None, outfile: Path = None, args: List = []) -> RunResult: 
+    def _run_exe(self, config, exefile: Path, infile: Path = None, outfile: Path = None, args: List = []) -> RunResult:
         # gen.pyもこれで実行される。
         res = RunResult()
         command = self._get_command_string_to_run(exefile, args=args)
@@ -129,6 +131,7 @@ class CodeFile(object):
                 stderr=subprocess.PIPE,
                 # shell=True,  # for windows
             )
+
         proc = popen()
 
         start = time.time()
@@ -147,10 +150,10 @@ class CodeFile(object):
                 # 別プロセスで起動した方がとりやすそうなのでexec.pyでもう一度runし直している。
                 executer = "exec.py" if os.name == "posix" else "exec_windows.py"
                 proc_mem = subprocess.Popen(
-                        ["python", f"{os.path.dirname(__file__)}/{executer}", str(exefile), str(infile)],
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.DEVNULL,
-                        )
+                    ["python", f"{os.path.dirname(__file__)}/{executer}", str(exefile), str(infile)],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.DEVNULL,
+                )
                 stdout_mem, stderr_mem = proc_mem.communicate()
                 res.used_memory = float((stdout_mem.decode('utf-8').replace('\n', '')))
             except Exception as e:
@@ -173,18 +176,18 @@ class CodeFile(object):
             t_judge = SubprocessThread(
                 judge_args,
                 stderr_pipe=stderr_file,
-                )
+            )
             t_sol = SubprocessThread(
                 sol_args,
                 stdin_pipe=t_judge.p.stdout,
                 stdout_pipe=t_judge.p.stdin,
                 stderr_pipe=stderr_file,
-                )
+            )
             t_case = SubprocessThread(
                 ['cat', str(infile)],
                 stdout_pipe=t_judge.p.stdin,
                 stderr_pipe=stderr_file,
-                )
+            )
 
             t_case.start()
             time.sleep(0.2)
@@ -248,7 +251,7 @@ class CodeFile(object):
                 print(config.pref['submit']['language'][contest_site])
                 return
 
-        code_string = self.bundle(config, expand_acl = (False if (contest_site == 'AtCoder' and lang_id in ['4003', '4004']) else True))
+        code_string = self.bundle(config, expand_acl=(False if (contest_site == 'AtCoder' and lang_id in ['4003', '4004']) else True))
         with oj_utils.with_cookiejar(oj_utils.get_default_session()) as session:
             try:
                 res = self.oj_problem_class.submit_code(code_string, language_id=lang_id, session=session)

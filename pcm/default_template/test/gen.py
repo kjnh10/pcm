@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, List, Optional, Type
 import string
 import math
 
+
 class UnionFind():
     def __init__(self, n):
         self.n = n
@@ -51,17 +52,20 @@ class UnionFind():
     def __str__(self):
         return '\n'.join('{}: {}'.format(r, self.members(r)) for r in self.roots())
 
+
 class rperm(object):
-    def __init__(self, n:int):
-        self.data = sample(list(range(1, n+1)), k=n)
+    def __init__(self, n: int):
+        self.data = sample(list(range(1, n + 1)), k=n)
+
     def __str__(self):
         return ' '.join(map(str, self.data))
+
 
 class rseq(object):
     def __init__(self, n: int, l: int, r: int, distinct=False):
         self.data = []
         used = set()
-        if (n>r-l+1) and distinct:
+        if (n > r - l + 1) and distinct:
             raise Exception(print("n>r-l+1 and distinct=True is not impossible"))
 
         while len(self.data) < n:
@@ -75,21 +79,22 @@ class rseq(object):
     def __str__(self):
         return ' '.join(map(str, self.data))
 
-def rstr(length: int, chars: List=['a', 'b', 'c', 'd', 'e']):
-# def rstr(length: int, chars: List=string.ascii_lowercase):
+
+def rstr(length: int, chars: List = ['a', 'b', 'c', 'd', 'e']):
+    # def rstr(length: int, chars: List=string.ascii_lowercase):
     res = ""
     for i in range(length):
         res += choice(chars)
     return res
 
-def rprime(l: int = 2, r: int = 1000000007): # [l, r]
+
+def rprime(l: int = 2, r: int = 1000000007):  # [l, r]
     def is_prime(x):
         if (x == 1): return False
-        for i in range(2, int(math.sqrt(x))+1):
+        for i in range(2, int(math.sqrt(x)) + 1):
             if x % i == 0:
                 return False
         return True
-
 
     cnt = 0
     while True:
@@ -97,18 +102,19 @@ def rprime(l: int = 2, r: int = 1000000007): # [l, r]
         if (is_prime(res)):
             return res
         cnt += 1
-        if cnt>=1000:
+        if cnt >= 1000:
             assert False
+
 
 class rtree(object):
     def __init__(self, n: int, root: int = 0):
         assert root < n
         self.edges = []
         self.n = n
-        s = set([x for x in range(n) if x!=root])
+        s = set([x for x in range(n) if x != root])
         joined = [root]
         self.edges = []
-        for _ in range(n-1):
+        for _ in range(n - 1):
             a = sample(s, 1)[0]
             b = choice(joined)
             self.edges.append((b, a))  # この向きにするとgraphvizの表示が木らしくなる。
@@ -124,17 +130,18 @@ class rtree(object):
             res.append(f"{edge[0]+one_index} {edge[1]+one_index}")
         return '\n'.join(res)
 
+
 class rgraph(object):  # undirected
-    def __init__(self, n:int, lb:int=1, ub:int=float('inf'), tree_ok=True):
+    def __init__(self, n: int, lb: int = 1, ub: int = float('inf'), tree_ok=True):
         self.n = n
         if ub == float('inf'):
-            ub = n*(n-1)/2
+            ub = n * (n - 1) / 2
 
         while True:
             if tree_ok:  # tree graph
                 # 10%くらいは木が生成されるように
                 r = rint(1, 10)
-                if (r<=2):
+                if (r <= 2):
                     self.edges = rtree(n).edges
                     return
 
@@ -142,12 +149,12 @@ class rgraph(object):  # undirected
 
             uf = UnionFind(n)
             self.edges = set()
-            while(uf.group_count()>1 or len(self.edges)<lb):
-                u = rint(0, n-1)
-                v = rint(0, n-1)
-                if (u==v): continue
+            while (uf.group_count() > 1 or len(self.edges) < lb):
+                u = rint(0, n - 1)
+                v = rint(0, n - 1)
+                if (u == v): continue
 
-                if (u>v): u,v=v,u
+                if (u > v): u, v = v, u
                 self.edges.add((u, v))
                 uf.union(u, v)
             self.edges = list(self.edges)
@@ -161,6 +168,7 @@ class rgraph(object):  # undirected
         for edge in self.edges:
             res.append(f"{edge[0]+one_index} {edge[1]+one_index}")
         return '\n'.join(res)
+
 
 # write down here
 # ---------------------------------------------
@@ -176,7 +184,8 @@ def generator():  # you should implement as generator
         generate_random_case()
         yield
 
-def generate_random_case(): # single case
+
+def generate_random_case():  # single case
     a = rint(2, 10)
     b = rint(2, 10)
     print(a, b)

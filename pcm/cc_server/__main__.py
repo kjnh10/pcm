@@ -41,7 +41,7 @@ class TrayWidget(QSystemTrayIcon):
 
     # "Qtちゃん"メニューでメッセージ表示
     def Message(self):
-        self.showMessage("pcm-cc", "waiting for request on port:8080", QIcon('QtChan.png'), 5000 );
+        self.showMessage("pcm-cc", "waiting for request on port:8080", QIcon('QtChan.png'), 5000)
 
     # "Quit"にて、タスクトレイアイコンアプリを閉じる
     def Quit(self):

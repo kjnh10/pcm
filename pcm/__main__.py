@@ -13,9 +13,9 @@ import time
 import urllib
 import re
 import tempfile
-import pyperclip # type: ignore
+import pyperclip  # type: ignore
 import hashlib
-from colorama import init, Fore, Back, Style # type: ignore
+from colorama import init, Fore, Back, Style  # type: ignore
 from typing import TYPE_CHECKING, List, Optional, Type
 
 # pylint: disable=unused-import,ungrouped-imports
@@ -37,30 +37,36 @@ script_path = Path(os.path.abspath(os.path.dirname(__file__)))  # script path}}}
 from .codefile import CodeFile, RunResult, JudgeResult
 from .case_generator import CaseGenerator, CaseGenerateError
 
+
 # set click
-class Config(object):# {{{
+class Config(object):  # {{{
     def __init__(self):
         self.verbose = False
 
+
 pass_config = click.make_pass_decorator(Config, ensure=True)
+
+
 @click.group()
 @click.option('--verbose', is_flag=True)
 @click.option('--home-directory', type=click.Path())
 @pass_config
 def cli(config, verbose, home_directory):
-    # read config from setting file 
+    # read config from setting file
     default_config_path = Path(os.path.dirname(__file__)) / 'config.toml'
     tmp_config = toml.load(open(default_config_path))
 
     user_config_path = Path.home() / '.config/pcm/config.toml'
     if os.path.exists(user_config_path):
         user_config = toml.load(open(user_config_path))
+
         def merge(current, new):
             for key, value in new.items():
-                if (type(value)==dict):
+                if (type(value) == dict):
                     merge(current[key], new[key])
                 else:
                     current[key] = value
+
         merge(tmp_config, user_config)
     else:
         pass
@@ -76,7 +82,10 @@ def cli(config, verbose, home_directory):
     if home_directory is None:
         home_directory = '.'
     config.home_directory = home_directory
+
+
 # }}}
+
 
 # sub command
 # prepare problem: login {{{
@@ -85,7 +94,10 @@ def cli(config, verbose, home_directory):
 @pass_config
 def login(config, url):
     subprocess.run(f'oj login {url}', shell=True)
+
+
 # }}}
+
 
 # prepare contest: pp {{{
 @cli.command()
@@ -138,7 +150,10 @@ def pp(config, contest_id_or_url, current_dir, work_dir_name, force):
     except Exception as e:
         if config.verbose:
             print(e)
+
+
 # }}}
+
 
 # prepare problem: ppp {{{
 @cli.command()
@@ -195,12 +210,16 @@ def _prepare_problem(config, task_url, prob_name='', force=False, from_pp=False)
     if task_url:
         _download_sample(task_url, problem_dir)
         if problem_title:
-            with open(problem_dir / problem_title,"w"):pass
+            with open(problem_dir / problem_title, "w"):
+                pass
     return problem_dir
+
+
 # }}}
 
+
 @pass_config
-def get_work_directory(config, problem: onlinejudge.type.Problem, from_pp) -> Path:# {{{
+def get_work_directory(config, problem: onlinejudge.type.Problem, from_pp) -> Path:  # {{{
     # prepare params
     service = problem.get_service()
 
@@ -231,14 +250,18 @@ def get_work_directory(config, problem: onlinejudge.type.Problem, from_pp) -> Pa
         return problem_directory.resolve()
     else:
         contest_directory = Path(config.pref['contest_root_dir'].format(**params)).expanduser() / str(contest_id) / str(problem_id)
-        return contest_directory.resolve()# }}}
+        return contest_directory.resolve()  # }}}
+
 
 # start server for competitive companion: ss {{{
 @cli.command()
 @pass_config
 def ss(config):
     subprocess.run(f"node {script_path / 'cc_server/index.js'}", shell=True)
+
+
 # }}}
+
 
 # prepare problem: dl {{{
 @cli.command()
@@ -256,7 +279,7 @@ def dl(config, task_url):
 def _download_sample(task_url, problem_dir):
     to_restore = Path('.').resolve()
 
-    os.chdir(problem_dir) # prob_dirにいることが仮定されている
+    os.chdir(problem_dir)  # prob_dirにいることが仮定されている
     subprocess.run(f"rm test/sample*", shell=True)
     problem = onlinejudge.dispatch.problem_from_url(task_url)
     if not problem:
@@ -275,7 +298,9 @@ def _download_sample(task_url, problem_dir):
         pickle.dump(problem, f)
     os.chdir(to_restore)
 
+
 # }}}
+
 
 # compile: compile {{{
 @cli.command()
@@ -286,7 +311,10 @@ def compile(config, code_filename, compile_command_configname):
     if compile_command_configname:
         config.pref['test']['compile_command']['configname'] = compile_command_configname
     CodeFile(code_filename).compile(config)
+
+
 #}}}
+
 
 # compile: inspect {{{
 @cli.command()
@@ -322,7 +350,9 @@ def inspect(config, code_filename):
     else:
         print("For now, inspection supports only c++")
 
+
 #}}}
+
 
 # compile: bundle {{{
 @cli.command()
@@ -332,11 +362,14 @@ def inspect(config, code_filename):
 @pass_config
 def bd(config, code_filename, expand_acl, clipboard):
     code_file = CodeFile(code_filename)
-    bundled_code : str = code_file.bundle(config, expand_acl=expand_acl)
+    bundled_code: str = code_file.bundle(config, expand_acl=expand_acl)
     if clipboard:
         pyperclip.copy(bundled_code)
     print(bundled_code)
+
+
 #}}}
+
 
 # compile: precompile {{{
 @cli.command()
@@ -351,45 +384,48 @@ def precompile(config, extension, compile_command_configname, force):
         for confname in config.pref['test']['compile_command'][extension].keys():
             _precompile(config, confname, extension, force)
 
+
 def _precompile(config, cnfname, extension, force):
     click.secho(f'precompile started for {cnfname} for {extension}......', fg='yellow')
     print('-----------------------------------------------------------------')
 
     try:
-        def format(s : str):
+
+        def format(s: str):
             return s.format(
-                    srcpath= "____",
-                    outpath= "____", 
-                    config_dir_path='~/.config/pcm',
-                    pcm_dir_path=os.path.dirname(__file__),
-                    cpp_include_paths=' '.join(map(lambda path: f'-I {path}', config.pref['cpp_include_paths'])),
-                    )
+                srcpath="____",
+                outpath="____",
+                config_dir_path='~/.config/pcm',
+                pcm_dir_path=os.path.dirname(__file__),
+                cpp_include_paths=' '.join(map(lambda path: f'-I {path}', config.pref['cpp_include_paths'])),
+            )
+
         command_str = format(format(config.pref['test']['compile_command'][extension][cnfname]))
         command = command_str.split()
         command_hash = hashlib.md5(command_str.encode()).hexdigest()
         include_idx = command.index('-include')
-        header_filepath = Path(command[include_idx+1]).expanduser();
+        header_filepath = Path(command[include_idx + 1]).expanduser()
         outpath = Path(str(header_filepath) + f'.gch/{cnfname}.ver-{command_hash}')
         if outpath.exists() and (not force):
             click.secho(f'precompile:[{cnfname}] skipped since the string of [{cnfname}] has not changed.\n', fg='green')
             return 0
 
-        def format(s : str):
+        def format(s: str):
             return s.format(
-                    srcpath=str(header_filepath),
-                    outpath=str(outpath),
-                    config_dir_path='~/.config/pcm',
-                    pcm_dir_path=os.path.dirname(__file__),
-                    cpp_include_paths=' '.join(map(lambda path: f'-I {path}', config.pref['cpp_include_paths'])),
-                    )
+                srcpath=str(header_filepath),
+                outpath=str(outpath),
+                config_dir_path='~/.config/pcm',
+                pcm_dir_path=os.path.dirname(__file__),
+                cpp_include_paths=' '.join(map(lambda path: f'-I {path}', config.pref['cpp_include_paths'])),
+            )
 
         make_precompiled_header_command = format(format(config.pref['test']['compile_command'][extension][cnfname])).split()
-        del make_precompiled_header_command[include_idx:include_idx+2]
+        del make_precompiled_header_command[include_idx:include_idx + 2]
         outpath.parent.mkdir(parents=True, exist_ok=True)
         for p in outpath.parent.glob(f'{cnfname}.ver-*'):
             p.unlink()
 
-        print(make_precompiled_header_command) # sudo -x c++-headerは不要そう
+        print(make_precompiled_header_command)  # sudo -x c++-headerは不要そう
         proc = subprocess.run(make_precompiled_header_command)
     except Exception as e:
         click.secho(f'precompile:[{cnfname}] failed.', fg='red')
@@ -399,7 +435,10 @@ def _precompile(config, cnfname, extension, force):
 
     print('')
     return 0
+
+
 #}}}
+
 
 # test: tt {{{
 @cli.command()
@@ -415,15 +454,14 @@ def _precompile(config, cnfname, extension, force):
 def tt(  # {{{
         config,
         code_filename: str,
-        compile_command_configname:
-        str,
+        compile_command_configname: str,
         case: str,
         timeout: float,
         by: str,
         loop: bool,
         limit_height_max_output: int,
         limit_width_max_output: int,
-        ):
+):
     if (timeout != -1):
         config.pref['test']['timeout_sec'] = timeout
     if compile_command_configname:
@@ -491,7 +529,7 @@ def tt(  # {{{
         finished_count = 0
         while True:
             try:
-                case_generator.generate_case(target=test_dir/'r.in')
+                case_generator.generate_case(target=test_dir / 'r.in')
             except StopIteration:
                 click.secho(f'all {finished_count} cases specified by {case_generator.codefile.path.name} finished.', fg='green')
                 break
@@ -524,18 +562,21 @@ def tt(  # {{{
                         last_num = L[-1].replace('r', '').replace('.in', '')
                         num_to_save = (0 if last_num == "" else int(last_num)) + 1
 
-                    shutil.copyfile(infile, test_dir/f'r{num_to_save}.in')
+                    shutil.copyfile(infile, test_dir / f'r{num_to_save}.in')
                     print(f'input of this case saved to r{num_to_save}.in')
                     if (expfile.exists()):
-                        shutil.copyfile(expfile, test_dir/f'r{num_to_save}.out')
+                        shutil.copyfile(expfile, test_dir / f'r{num_to_save}.out')
                         print(f'expected of this case saved to r{num_to_save}.out')
                 return 1
 
             finished_count += 1
             if (not loop): return 0
+
+
 # }}}
 
-def _test_all_case(config, codefile: CodeFile) -> bool: # {{{
+
+def _test_all_case(config, codefile: CodeFile) -> bool:  # {{{
     files = os.listdir(codefile.test_dir)
     files.sort()
     res = True
@@ -552,7 +593,7 @@ def _test_all_case(config, codefile: CodeFile) -> bool: # {{{
         expfile = codefile.test_dir / f"{case}.out"  # 拡張子をexpにしたいが。。
 
         with open(infile, mode='r') as f:
-            if (f.readline()==''):  # infileが空の場合は無視。個別のテストケースでは実行したい場合もあるのでこちらにのみチェックをいれる。
+            if (f.readline() == ''):  # infileが空の場合は無視。個別のテストケースでは実行したい場合もあるのでこちらにのみチェックをいれる。
                 continue
 
         case_cnt += 1
@@ -577,24 +618,28 @@ def _test_all_case(config, codefile: CodeFile) -> bool: # {{{
     print('[max exec time]: {:.3f}'.format(max(exec_times)), '[sec]')
     print('[max used memory]: {:.3f}'.format(max(used_memories)), '[MB]')
     return res
+
+
 # }}}
 
-def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile: Path) -> RunResult: # {{{
+
+def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile: Path) -> RunResult:  # {{{
     # run program
-    click.secho('-'*10 + case_name + '-'*10, fg='blue')
+    click.secho('-' * 10 + case_name + '-' * 10, fg='blue')
     run_result = codefile.run(config, infile)
 
     def smart_print(strs, func=print, limit_of_lines=config.pref['test']['limit_height_max_output'], limit_of_width=config.pref['test']['limit_width_max_output']):
         n = len(strs)
         x = limit_of_lines
         y = limit_of_width
+
         def print_line(line):
-            if len(line) <= 2*y:
+            if len(line) <= 2 * y:
                 func(line)
             else:
-                func(line[:y] + ' ~~~ ' + line[len(line)-y:len(line)])
+                func(line[:y] + ' ~~~ ' + line[len(line) - y:len(line)])
 
-        if n <= 2*x:
+        if n <= 2 * x:
             for line in lines:
                 print_line(line)
         else:
@@ -602,42 +647,44 @@ def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile
                 print_line(lines[i])
             print_line("~~~")
             print_line("~~~")
-            for i in range(n-x, n):
+            for i in range(n - x, n):
                 print_line(lines[i])
 
     # print input
     with open(infile, 'r') as f:
-        print('*'*7 + ' input ' + '*'*7)
-        lines  = f.read().split('\n')
+        print('*' * 7 + ' input ' + '*' * 7)
+        lines = f.read().split('\n')
         smart_print(lines, limit_of_lines=30)
 
     # print expected
     expfile_exist = True
     try:
         with open(expfile, 'r') as f:
-            print('*'*7 + ' expected ' + '*'*7)
+            print('*' * 7 + ' expected ' + '*' * 7)
             exp_str = f.read()
-            lines  = exp_str.split('\n')
+            lines = exp_str.split('\n')
             smart_print(lines)
             exp = exp_str.split('\n')
     except FileNotFoundError:
-        print('*'*7 + ' expected ' + '*'*7)
+        print('*' * 7 + ' expected ' + '*' * 7)
         click.secho(f"expected file:[{expfile.name}] not found\n", fg='yellow')
         exp = ['']
         expfile_exist = False
 
     # print result
-    print('*'*7 + ' stdout ' + '*'*7)
-    lines  = run_result.stdout.split('\n')
+    print('*' * 7 + ' stdout ' + '*' * 7)
+    lines = run_result.stdout.split('\n')
     smart_print(lines)
     stdout = run_result.stdout.split('\n')
 
     # print stderr message
-    print('*'*7 + ' stderr ' + '*'*7)
+    print('*' * 7 + ' stderr ' + '*' * 7)
     lines = run_result.stderr.split('\n')
+
     def print_stderr(line):
         line = line.replace(str(codefile.code_dir), "")
         click.secho(line, fg='yellow')
+
     smart_print(lines, func=print_stderr)
 
     for line in run_result.stderr.split('\n'):
@@ -653,10 +700,7 @@ def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile
         return run_result
 
     if run_result.returncode != 0:
-        SIGMAP = dict(
-            (int(k), v) for v, k in reversed(sorted(signal.__dict__.items()))
-            if v.startswith('SIG') and not v.startswith('SIG_')
-        )
+        SIGMAP = dict((int(k), v) for v, k in reversed(sorted(signal.__dict__.items())) if v.startswith('SIG') and not v.startswith('SIG_'))
         click.secho(f'--RE--', fg='red')
         click.secho(f':{SIGMAP[abs(run_result.returncode)]}' if abs(run_result.returncode) in SIGMAP.keys() else str(abs(run_result.returncode)), fg='red')
         print('\n')
@@ -669,8 +713,10 @@ def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile
         return run_result
 
     # 最後の空白行は無視する。
-    while stdout and stdout[-1] == '': stdout.pop()
-    while exp and exp[-1] == '': exp.pop()
+    while stdout and stdout[-1] == '':
+        stdout.pop()
+    while exp and exp[-1] == '':
+        exp.pop()
 
     if not expfile_exist:
         click.secho('--NOEXP--\n', fg='yellow')
@@ -694,9 +740,12 @@ def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile
             click.secho('--AC--\n', fg='green')
             run_result.judge = JudgeResult.AC
     return run_result
+
+
 # }}}
 
 # }}}
+
 
 # test-reactive: tr {{{
 @cli.command()
@@ -714,7 +763,7 @@ def tr(config, code_filename: str, compile_command_configname: str, case: str, t
         config.pref['test']['compile_command']['configname'] = compile_command_configname
 
     try:
-        solve_codefile = CodeFile(code_filename, exclude_filename_pattern = [by if by else None])
+        solve_codefile = CodeFile(code_filename, exclude_filename_pattern=[by if by else None])
     except FileNotFoundError:
         click.secho(f'solve code file not found by {code_filename}', fg='yellow')
         return 1
@@ -751,7 +800,7 @@ def tr(config, code_filename: str, compile_command_configname: str, case: str, t
         finished_count = 0
         while True:
             try:
-                case_generator.generate_case(target=test_dir/'r.in')
+                case_generator.generate_case(target=test_dir / 'r.in')
             except StopIteration:
                 click.secho(f'all {finished_count} cases specified by {case_generator.codefile.path.name} finished.', fg='green')
                 break
@@ -770,7 +819,7 @@ def tr(config, code_filename: str, compile_command_configname: str, case: str, t
                         last_num = L[-1].replace('r', '').replace('.in', '')
                         num_to_save = (0 if last_num == "" else int(last_num)) + 1
 
-                    shutil.copyfile(infile, test_dir/f'r{num_to_save}.in')
+                    shutil.copyfile(infile, test_dir / f'r{num_to_save}.in')
                     print(f'input of this case saved to r{num_to_save}.in')
                 return 1
 
@@ -778,20 +827,23 @@ def tr(config, code_filename: str, compile_command_configname: str, case: str, t
             if (not loop): return 0
 
     return 0
+
+
 # }}}
 
-def _test_interactive_case(config, codefile: CodeFile, judgefile: CodeFile, infile: Path, case_name: str) -> RunResult: # {{{
+
+def _test_interactive_case(config, codefile: CodeFile, judgefile: CodeFile, infile: Path, case_name: str) -> RunResult:  # {{{
     # run program
-    click.secho('-'*10 + case_name + '-'*10, fg='blue')
+    click.secho('-' * 10 + case_name + '-' * 10, fg='blue')
     run_result = codefile.run_interactive(config, judgefile, infile)
 
     # print input
     with open(infile, 'r') as f:
-        print('*'*7 + ' input ' + '*'*7)
+        print('*' * 7 + ' input ' + '*' * 7)
         print(f.read())
 
     with open(run_result.stderr_filepath, 'r') as f:
-        print('*'*7 + ' stderr ' + '*'*7)
+        print('*' * 7 + ' stderr ' + '*' * 7)
         for line in f.read().split('\n'):
             if re.search(r'.*\[.*judge.*\].*', line):
                 click.secho(line, fg='yellow')
@@ -808,9 +860,12 @@ def _test_interactive_case(config, codefile: CodeFile, judgefile: CodeFile, infi
     print({f"judge_thread.error_message: {run_result.judge_thread.error_message}"})
     print({f"solution_thread.error_message: {run_result.solution_thread.error_message}"})
     return run_result
+
+
 # }}}
 
 # }}}
+
 
 # debug: db {{{
 @cli.command()
@@ -819,7 +874,7 @@ def _test_interactive_case(config, codefile: CodeFile, judgefile: CodeFile, infi
 @click.option('--case', '-c', type=str, default='')
 @click.option('--timeout', '-t', type=float, default=-1)
 @pass_config
-def db(config, code_filename: str, compile_command_configname: str, case: str, timeout: float):  
+def db(config, code_filename: str, compile_command_configname: str, case: str, timeout: float):
     if (timeout != -1):
         config.pref['test']['timeout_sec'] = timeout
     config.pref['test']['compile_command']['configname'] = compile_command_configname
@@ -893,13 +948,17 @@ def db(config, code_filename: str, compile_command_configname: str, case: str, t
     stdout = stdout.replace(str(solve_codefile.path.parent), '')
     start = False
     for line in stdout.split('\n'):
-        if start: print(re.sub(f'({solve_codefile.path.name}:\d*)', Fore.YELLOW + r'\1' + Style.RESET_ALL, line))
-        if re.match(r'Type .* to search for commands related to .*.', line): start = True
+        if start:
+            print(re.sub(f'({solve_codefile.path.name}:\d*)', Fore.YELLOW + r'\1' + Style.RESET_ALL, line))
+        if re.match(r'Type .* to search for commands related to .*.', line):
+            start = True
 
     print('----------------------stderr------------------------------------')
     print(re.sub(f'({solve_codefile.path.name}:\d*)', Fore.YELLOW + r'\1' + Style.RESET_ALL, proc.stderr.decode('utf8')))
-    
-# }}} 
+
+
+# }}}
+
 
 # submit: sb {{{
 @cli.command()
@@ -920,7 +979,10 @@ def sb(config, code_filename, language, pretest):
 
     if (not pretest) or (click.confirm('Are you sure to submit?')):  # pretestの場合は最終確認をする。
         codefile.submit(config, language)
+
+
 #}}}
+
 
 # get answers: ga {{{
 @cli.command()
@@ -941,7 +1003,10 @@ def ga(config, code_filename, limit_count):
         count += 1
         if (count >= limit_count):
             break
+
+
 # }}}
+
 
 # get answers: viz {{{
 @cli.command()
@@ -950,7 +1015,7 @@ def ga(config, code_filename, limit_count):
 @click.option('--out-index-base', '-o', type=int, default=0)
 @pass_config
 def viz(config, directed, in_index_base, out_index_base):
-    from graphviz import Digraph, Graph # type: ignore
+    from graphviz import Digraph, Graph  # type: ignore
 
     firstline = input().split()
     G = None
@@ -959,7 +1024,7 @@ def viz(config, directed, in_index_base, out_index_base):
         # this is tree
         G = Graph()
         n = int(firstline[0])
-        m = n-1
+        m = n - 1
     else:
         n, m = map(int, firstline)
         if directed:
@@ -979,7 +1044,8 @@ def viz(config, directed, in_index_base, out_index_base):
 
     output_filepath = os.path.expanduser('~/Dropbox/graph')
     G.render(output_filepath, view=True)
-# }}}
 
+
+# }}}
 
 # vim:set foldmethod=marker:

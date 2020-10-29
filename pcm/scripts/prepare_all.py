@@ -8,6 +8,7 @@ import shutil
 # work_dir = "/home/vagrant/go/src/github.com/kjnh10/pcw/work/atcoder"
 work_dir = "/home/koji0708/Dropbox/01_projects/2018/pcw/work/atcoder/agc"
 
+
 def get_all(type, start, end):
     for num in range(start, end):
         os.chdir(work_dir)
@@ -25,7 +26,7 @@ def get_all(type, start, end):
             ["pcm", "pp", f"https://{type}{snum}.contest.atcoder.jp"],
             stderr=subprocess.STDOUT,
             check=True,
-            )
+        )
         # prepare([f"https://{type}{snum}.contest.atcoder.jp"])  # sys.exit()の使用の影響でループが止まる。
 
         os.chdir(work_dir + f"/{type}{snum}")
@@ -34,10 +35,11 @@ def get_all(type, start, end):
                 ["pcm", "ga"],
                 stderr=subprocess.STDOUT,
                 check=True,
-                )
+            )
         except:
             print("getting answers failed")
     print("finish")
+
 
 if __name__ == '__main__':
     # get_all('abc', 14, 42)

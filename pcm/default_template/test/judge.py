@@ -24,7 +24,7 @@ def judge_case(x):
     dump(f'start judge for {x=}')
     try:
         num = 22
-        while(num):
+        while (num):
             num -= 1
             query = list(input().split())
             v = int(query[1])
@@ -32,7 +32,7 @@ def judge_case(x):
                 tell(gcd(v, x))
 
             if (query[0] == "!"):
-                if (abs(v-x) <= 7 or (v <= 2*x and x <= 2*v)):
+                if (abs(v - x) <= 7 or (v <= 2 * x and x <= 2 * v)):
                     dump(f"AC: {x=}, {v=}")
                     return 0
                 else:
@@ -67,7 +67,6 @@ def main():  # multi case type
 #     x = int(input())
 #     judge_case(x)
 #     sys.exit(jr.AC)
-
 
 if __name__ == "__main__":
     # main()

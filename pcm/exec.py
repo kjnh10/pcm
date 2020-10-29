@@ -5,10 +5,10 @@ import resource
 # compileの子プロセスなども本体の方では走る可能性があるのでこちらで単独で実行する事でsolution codeのstaticを取得する。
 
 command = sys.argv[1]
-command = ['python', command] if '.py' in command else command
+command_list = ['python', command] if '.py' in command else [command]
 
 subprocess.run(
-        command,
+        command_list,
         stdin = open(sys.argv[2], 'r') if sys.argv[2]!='None' else None,
         stdout = subprocess.DEVNULL,
         stderr = subprocess.DEVNULL,

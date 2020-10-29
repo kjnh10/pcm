@@ -13,9 +13,9 @@ import time
 import urllib
 import re
 import tempfile
-import pyperclip
+import pyperclip # type: ignore
 import hashlib
-from colorama import init, Fore, Back, Style
+from colorama import init, Fore, Back, Style # type: ignore
 from typing import TYPE_CHECKING, List, Optional, Type
 
 # pylint: disable=unused-import,ungrouped-imports
@@ -79,13 +79,6 @@ def cli(config, verbose, home_directory):
 # }}}
 
 # sub command
-# init{{{
-@cli.command()
-@pass_config
-def init(config):
-    """This command will make current dir pcm work-space"""
-    os.makedirs('./.pcm')# }}}
-
 # prepare problem: login {{{
 @cli.command()
 @click.argument('url', type=str)
@@ -353,12 +346,11 @@ def bd(config, code_filename, expand_acl, clipboard):
 @pass_config
 def precompile(config, extension, compile_command_configname, force):
     if compile_command_configname:  # precompile for default profile
-        _precompile(config.pref['test']['compile_command']['configname'], extension, force)
+        _precompile(config, config.pref['test']['compile_command']['configname'], extension, force)
     else:
         for confname in config.pref['test']['compile_command'][extension].keys():
-            _precompile(confname, extension, force)
+            _precompile(config, confname, extension, force)
 
-@pass_config
 def _precompile(config, cnfname, extension, force):
     click.secho(f'precompile started for {cnfname} for {extension}......', fg='yellow')
     print('-----------------------------------------------------------------')
@@ -445,7 +437,7 @@ def tt(  # {{{
         solve_codefile = CodeFile(code_filename)
         test_dir = solve_codefile.test_dir
         if case == '':  # test all case
-            _test_all_case(solve_codefile)
+            _test_all_case(config, solve_codefile)
         else:
             if case == 'dry':  # execute code when there is no test case file
                 infile = Path(tempfile.NamedTemporaryFile().name)
@@ -477,7 +469,7 @@ def tt(  # {{{
                     click.secho(f"{infile.name} not found.", fg='yellow')
                     return 1
 
-            run_result = _test_case(solve_codefile, case, infile, expfile)
+            run_result = _test_case(config, solve_codefile, case, infile, expfile)
             print('[exec time]: {:.3f}'.format(run_result.exec_time), '[sec]')
             print('[used memory]: {:.3f}'.format(run_result.used_memory), '[MB]')
             print('')
@@ -521,7 +513,7 @@ def tt(  # {{{
                     else:
                         f.write(run_result.stdout)
 
-            run_result = _test_case(solve_codefile, f'random-{code_filename}', infile, expfile)
+            run_result = _test_case(config, solve_codefile, f'random-{code_filename}', infile, expfile)
             okresult = [JudgeResult.AC, JudgeResult.TLENAIVE, JudgeResult.NOEXP]
             if not (run_result.judge in okresult):
                 if by or loop:  # compareもloopも行わない場合は単に生成して試したいだけの場合が多いので保存しない。
@@ -543,7 +535,7 @@ def tt(  # {{{
             if (not loop): return 0
 # }}}
 
-def _test_all_case(codefile: CodeFile) -> bool: # {{{
+def _test_all_case(config, codefile: CodeFile) -> bool: # {{{
     files = os.listdir(codefile.test_dir)
     files.sort()
     res = True
@@ -564,7 +556,7 @@ def _test_all_case(codefile: CodeFile) -> bool: # {{{
                 continue
 
         case_cnt += 1
-        run_result = _test_case(codefile, case, infile, expfile)
+        run_result = _test_case(config, codefile, case, infile, expfile)
         exec_times.append(run_result.exec_time)
         used_memories.append(run_result.used_memory)
         if run_result.judge == JudgeResult.AC:
@@ -587,7 +579,6 @@ def _test_all_case(codefile: CodeFile) -> bool: # {{{
     return res
 # }}}
 
-@pass_config
 def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile: Path) -> RunResult: # {{{
     # run program
     click.secho('-'*10 + case_name + '-'*10, fg='blue')
@@ -686,7 +677,7 @@ def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile
         run_result.judge = JudgeResult.NOEXP
     elif len(exp) == 0:
         click.secho('--WA--\n', fg='red')
-        run_result.judge = 'WA'
+        run_result.judge = JudgeResult.WA
     elif re.search('TLE.*naive.*', exp[0]):
         click.secho('TLENAIVE\n', fg='yellow')
         run_result.judge = JudgeResult.TLENAIVE
@@ -753,7 +744,7 @@ def tr(config, code_filename: str, compile_command_configname: str, case: str, t
                     click.secho(f"{infile.name} not found.", fg='yellow')
                     return 1
 
-            _test_interactive_case(solve_codefile, judge_codefile, infile, case)
+            _test_interactive_case(config, solve_codefile, judge_codefile, infile, case)
     else:
         # random test
         case_generator = CaseGenerator(CodeFile(case, search_root=solve_codefile.prob_dir), config)
@@ -769,7 +760,7 @@ def tr(config, code_filename: str, compile_command_configname: str, case: str, t
                 exit()
 
             infile = test_dir / f"r.in"
-            run_result = _test_interactive_case(solve_codefile, judge_codefile, infile, f'random-{code_filename}')
+            run_result = _test_interactive_case(config, solve_codefile, judge_codefile, infile, f'random-{code_filename}')
             if run_result.judge != JudgeResult.AC:
                 if loop:  # loopを行わない場合は単に生成して試したいだけの場合が多いので保存しない。
                     num_to_save = 1
@@ -789,7 +780,6 @@ def tr(config, code_filename: str, compile_command_configname: str, case: str, t
     return 0
 # }}}
 
-@pass_config
 def _test_interactive_case(config, codefile: CodeFile, judgefile: CodeFile, infile: Path, case_name: str) -> RunResult: # {{{
     # run program
     click.secho('-'*10 + case_name + '-'*10, fg='blue')
@@ -960,7 +950,7 @@ def ga(config, code_filename, limit_count):
 @click.option('--out-index-base', '-o', type=int, default=0)
 @pass_config
 def viz(config, directed, in_index_base, out_index_base):
-    from graphviz import Digraph, Graph
+    from graphviz import Digraph, Graph # type: ignore
 
     firstline = input().split()
     G = None

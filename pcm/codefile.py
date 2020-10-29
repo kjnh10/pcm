@@ -38,6 +38,8 @@ class RunResult(object):
         self.exec_time: float = -1
         self.used_memory: float = -1
         self.judge: JudgeResult = JudgeResult.YET  # set by 'pcm tt'
+        self.judge_thread: SubprocessThread = None
+        self.solution_thread: SubprocessThread = None
 
 
 class CodeFile(object):
@@ -129,15 +131,15 @@ class CodeFile(object):
             )
         proc = popen()
 
+        start = time.time()
         try:
-            start = time.time()
             outs, errs = proc.communicate(timeout=config.pref['test']['timeout_sec'])
             res.exec_time = time.time() - start
             res.TLE_flag = False
         except subprocess.TimeoutExpired:
             proc.kill()
             outs, errs = proc.communicate()
-            res.exe_time = float('inf')
+            res.exec_time = time.time() - start
             res.TLE_flag = True
         else:
             try:
@@ -155,7 +157,7 @@ class CodeFile(object):
                 pass
 
         res.returncode = proc.returncode
-        res.stdout = None if outfile else outs.decode('utf-8')
+        res.stdout = '' if outfile else outs.decode('utf-8')
         res.stderr = errs.decode('utf-8')
         return res
 

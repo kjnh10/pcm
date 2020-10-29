@@ -1,11 +1,14 @@
 from pathlib import Path
 import sys
+import os
 from importlib import import_module
-import click
 from .codefile import CodeFile
+from contextlib import redirect_stdout
+
 
 class CaseGenerateError(Exception):
     pass
+
 
 class CaseGenerator(object):
     def __init__(self, codefile: CodeFile, config):
@@ -14,17 +17,13 @@ class CaseGenerator(object):
         self.config = config
         if codefile.extension == 'py':
             sys.path.append(str(codefile.path.parent))
-            store = sys.stdout
-            sys.stdout = None  # importの際にold format(gen scriptがベタがき)形式だった場合の対応
             try:
-                user_gen_script = import_module(codefile.path.stem)
+                with redirect_stdout(open(os.devnull, 'w')):  # importの際にold format(gen scriptがベタがき)形式だった場合の対応
+                    user_gen_script = import_module(codefile.path.stem)
             except Exception:
-                sys.stdout = store
                 return
-
-            sys.stdout = store
             try:
-                self.generator = user_gen_script.generator()
+                self.generator = user_gen_script.generator()  # type: ignore
             except AttributeError:
                 pass
 

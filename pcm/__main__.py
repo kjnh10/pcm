@@ -450,7 +450,7 @@ def tt(  # {{{
             if case == 'dry':  # execute code when there is no test case file
                 infile = Path(tempfile.NamedTemporaryFile().name)
                 expfile = Path(tempfile.NamedTemporaryFile().name)
-            elif case == 'stdin':  # execute code when there is no test case file
+            elif case == 'stdin':
                 infile = Path(tempfile.NamedTemporaryFile().name)
                 print("input your test case. hit only enter to finish")
                 infile_contents = []
@@ -460,10 +460,8 @@ def tt(  # {{{
                         infile_contents.append(line + '\n')
                     else:
                         break
-
                 with open(infile, mode='w') as f:
                     f.writelines(infile_contents)
-
                 expfile = Path(tempfile.NamedTemporaryFile().name)
             elif case in set(map(str, range(1, 101))):
                 case = f'sample-{case}'
@@ -848,9 +846,21 @@ def db(config, code_filename: str, compile_command_configname: str, case: str, t
         exit()
 
     if case == 'dry':  # execute code when there is no test case file
-        tmpfileobject = tempfile.NamedTemporaryFile()
-        infile = Path(tmpfileobject.name)
-        expfile = Path(tmpfileobject.name)
+        infile = Path(tempfile.NamedTemporaryFile().name)
+        expfile = Path(tempfile.NamedTemporaryFile().name)
+    elif case == 'stdin':
+        infile = Path(tempfile.NamedTemporaryFile().name)
+        print("input your test case. hit only enter to finish")
+        infile_contents = []
+        while True:
+            line = input()
+            if line:
+                infile_contents.append(line + '\n')
+            else:
+                break
+        with open(infile, mode='w') as f:
+            f.writelines(infile_contents)
+        expfile = Path(tempfile.NamedTemporaryFile().name)
     elif case in set(map(str, range(1, 101))):
         case = f'sample-{case}'
         infile = test_dir / f"{case}.in"

@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import sys
 import os
-from pathlib import Path
 import re
+import sys
+from pathlib import Path
 
 
 def set_stdin(test_case):

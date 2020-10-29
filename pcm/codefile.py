@@ -1,17 +1,22 @@
-from pathlib import Path
-import time
+import contextlib
+import os
+import pickle
+import re
 import subprocess
 import sys
-import pickle
-import os
-import re
-import contextlib
-from typing import TYPE_CHECKING, List, Optional, Type, Generator, Tuple, Any
-from .interactive_runner import SubprocessThread
-import click
-import onlinejudge._implementation.utils as oj_utils
-from .utils import get_last_modified_file
+import time
 from enum import IntEnum
+from pathlib import Path
+from typing import *
+
+import click
+
+import onlinejudge._implementation.utils as oj_utils
+from onlinejudge.type import Problem
+
+from .config import Config
+from .interactive_runner import SubprocessThread
+from .utils import get_last_modified_file
 
 
 class JudgeResult(IntEnum):
@@ -43,7 +48,7 @@ class RunResult(object):
 
 
 class CodeFile(object):
-    def __init__(self, match_filename_pattern=['*.cpp', '*.py'], exclude_filename_pattern=[], search_root: Path = Path('.')):
+    def __init__(self, match_filename_pattern: Union[List[str], str] = ['*.cpp', '*.py'], exclude_filename_pattern: Union[List[str], str] = [], search_root: Path = Path('.')) -> None:
         if (match_filename_pattern == ''):
             match_filename_pattern = ['*.cpp', '*.py']
         self.path = get_last_modified_file(match_filename_pattern, exclude_filename_pattern, search_root)
@@ -60,7 +65,7 @@ class CodeFile(object):
 
         self.task_alphabet = self.prob_dir.name
         self.extension = self.path.suffix[1:]  # like 'py', 'cpp'....
-        self.oj_problem_class = None
+        self.oj_problem_class: Problem
         try:
             with open(self.prob_dir / '.problem_info.pickle', mode='rb') as f:
                 self.oj_problem_class = pickle.load(f)
@@ -68,7 +73,7 @@ class CodeFile(object):
             pass
             # print('failed to load problem_info.pickle')
 
-    def compile(self, config, force=False) -> Path:
+    def compile(self, config: Config, force: bool = False) -> Path:
         click.secho('compile start.....', blink=True)
         cnfname = config.pref['test']['compile_command']['configname']
         exefile = self.bin_dir / f'{self.path.name}_{cnfname}.out'
@@ -105,14 +110,14 @@ class CodeFile(object):
             print("compile took:{0}".format(time.time() - start) + "[sec]")
         return exefile
 
-    def run(self, config, infile: Path = None, outfile: Path = None) -> RunResult:
+    def run(self, config: Config, infile: Path = None, outfile: Path = None) -> RunResult:
         if self.extension not in config.pref['test']['compile_command']:  # for script language
             return self._run_exe(config, self.path, infile, outfile)
         else:
             exefile = self.compile(config)
             return self._run_exe(config, exefile, infile, outfile)
 
-    def _run_exe(self, config, exefile: Path, infile: Path = None, outfile: Path = None, args: List = []) -> RunResult:
+    def _run_exe(self, config: Config, exefile: Path, infile: Path = None, outfile: Path = None, args: List[str] = []) -> RunResult:
         # gen.pyもこれで実行される。
         res = RunResult()
         command = self._get_command_string_to_run(exefile, args=args)
@@ -164,7 +169,7 @@ class CodeFile(object):
         res.stderr = errs.decode('utf-8')
         return res
 
-    def run_interactive(self, config, judgefile, infile: Path):
+    def run_interactive(self, config: Config, judgefile: 'CodeFile', infile: Path) -> RunResult:
         res = RunResult()
         res.stderr_filepath = self.code_dir / '.stderr.log'
         solution_exefile = self.to_exefile(config)
@@ -211,14 +216,14 @@ class CodeFile(object):
 
             return res
 
-    def to_exefile(self, config):
+    def to_exefile(self, config: Config) -> Path:
         if self.extension not in config.pref['test']['compile_command']:  # for script language
             return self.path
         else:
             return self.compile(config)
 
-    def _get_command_string_to_run(self, exefile: Path, args: List = []):
-        command = []
+    def _get_command_string_to_run(self, exefile: Path, args: List[str] = []) -> List[str]:
+        command: List[str] = []
         if (exefile.suffix == '.py'):
             command.append('python')
         command.append(str(exefile))
@@ -226,7 +231,7 @@ class CodeFile(object):
             command.append(arg)
         return command
 
-    def submit(self, config, language):
+    def submit(self, config: Config, language: str) -> None:
         contest_site = self.oj_problem_class.get_service().get_name()
 
         if language == 'auto-detect':
@@ -251,7 +256,7 @@ class CodeFile(object):
                 print(config.pref['submit']['language'][contest_site])
                 return
 
-        code_string = self.bundle(config, expand_acl=(False if (contest_site == 'AtCoder' and lang_id in ['4003', '4004']) else True))
+        code_string = self.bundle(config, expand_acl=(False if (contest_site == 'AtCoder' and lang_id in ['4003', '4004']) else True)).encode()
         with oj_utils.with_cookiejar(oj_utils.get_default_session()) as session:
             try:
                 res = self.oj_problem_class.submit_code(code_string, language_id=lang_id, session=session)
@@ -262,7 +267,7 @@ class CodeFile(object):
             else:
                 print(res)
 
-    def bundle(self, config, expand_acl=True) -> str:
+    def bundle(self, config: Config, expand_acl: bool = True) -> str:
         if self.extension == "cpp":
             bundled_code_file = f'{self.path.parent}/.bundled-{self.path.stem}'
             oj_bundle_commands = ['oj-bundle']
@@ -304,5 +309,5 @@ class CodeFile(object):
             with open(self.path, "r") as f:
                 return f.read()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.path)

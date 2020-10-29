@@ -1,5 +1,6 @@
 import sys
 from math import gcd
+
 from pcm.codefile import JudgeResult as jr
 
 

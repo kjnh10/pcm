@@ -1,23 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys  # {{{
-import os
-import time
-import re
-from pydoc import help
-import string
-import math
-from operator import itemgetter
-from collections import Counter
-from collections import deque
-from collections import defaultdict as dd
-import fractions
-from heapq import heappop, heappush, heapify
 import array
-from bisect import bisect_left, bisect_right, insort_left, insort_right
-from copy import deepcopy as dcopy
+import fractions
 import itertools
+import math
+import os
+import re
+import string
+import sys  # {{{
+import time
+from bisect import bisect_left, bisect_right, insort_left, insort_right
+from collections import Counter
+from collections import defaultdict as dd
+from collections import deque
+from copy import deepcopy as dcopy
+from heapq import heapify, heappop, heappush
+from inspect import currentframe
+from operator import itemgetter
+from pydoc import help
+
 # }}}
 
 # pre-defined{{{
@@ -60,7 +62,6 @@ def DP3(N, M, L, first):
     return [[[first] * L for n in range(M)] for _ in range(N)]
 
 
-from inspect import currentframe
 # }}}
 
 

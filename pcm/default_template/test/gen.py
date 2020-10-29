@@ -1,8 +1,9 @@
-from random import choice, sample, choices
-from random import randint as rint
-from typing import TYPE_CHECKING, List, Optional, Type
-import string
 import math
+import string
+from random import choice, choices
+from random import randint as rint
+from random import sample
+from typing import TYPE_CHECKING, List, Optional, Type
 
 
 class UnionFind():

@@ -1,4 +1,6 @@
-import sys, subprocess, threading
+import subprocess
+import sys
+import threading
 
 
 class SubprocessThread(threading.Thread):

@@ -1,48 +1,38 @@
-import click  # {{{
-import os, sys
-import shutil
-from pathlib import Path
-import requests
 import fnmatch
+import hashlib
+import os
 import pickle
-import subprocess
+import re
+import shutil
 import signal
+import subprocess
+import sys
+import tempfile
 import textwrap
-import toml
 import time
 import urllib
-import re
-import tempfile
-import pyperclip  # type: ignore
-import hashlib
-from colorama import init, Fore, Back, Style  # type: ignore
-from typing import TYPE_CHECKING, List, Optional, Type
+from pathlib import Path
+from typing import *
 
-# pylint: disable=unused-import,ungrouped-imports
-try:
-    import onlinejudge._implementation.utils as oj_utils
-    import onlinejudge.service.atcoder
-    import onlinejudge.dispatch
-except ModuleNotFoundError:
-    import json
-    print(json.dumps({
-        "status": "error",
-        "messages": ["Due to a known bug, the online-judge-tools is not yet properly installed. Please re-run $ pip3 install --force-reinstall online-judge-api-client"],
-        "result": None,
-    }))
-    raise SystemExit(1)
-# pylint: enable=unused-import,ungrouped-importsrom bs4 import BeautifulSoup
+import click  # {{{
+import pyperclip  # type: ignore
+import requests
+import toml
+from colorama import Back, Fore, Style, init  # type: ignore
+
+import onlinejudge._implementation.utils as oj_utils
+import onlinejudge.dispatch
+import onlinejudge.service.atcoder
+from onlinejudge.service.atcoder import AtCoderProblem
+from onlinejudge.type import Problem
+
+from .case_generator import CaseGenerateError, CaseGenerator
+from .codefile import CodeFile, JudgeResult, RunResult
+from .config import Config
 
 script_path = Path(os.path.abspath(os.path.dirname(__file__)))  # script path}}}
-from .codefile import CodeFile, RunResult, JudgeResult
-from .case_generator import CaseGenerator, CaseGenerateError
-
 
 # set click
-class Config(object):  # {{{
-    def __init__(self):
-        self.verbose = False
-
 
 pass_config = click.make_pass_decorator(Config, ensure=True)
 
@@ -51,7 +41,7 @@ pass_config = click.make_pass_decorator(Config, ensure=True)
 @click.option('--verbose', is_flag=True)
 @click.option('--home-directory', type=click.Path())
 @pass_config
-def cli(config, verbose, home_directory):
+def cli(config: Config, verbose: bool, home_directory):
     # read config from setting file
     default_config_path = Path(os.path.dirname(__file__)) / 'config.toml'
     tmp_config = toml.load(open(default_config_path))
@@ -81,7 +71,7 @@ def cli(config, verbose, home_directory):
     config.verbose = verbose
     if home_directory is None:
         home_directory = '.'
-    config.home_directory = home_directory
+    config.home_directory = Path(home_directory)
 
 
 # }}}
@@ -92,7 +82,7 @@ def cli(config, verbose, home_directory):
 @cli.command()
 @click.argument('url', type=str)
 @pass_config
-def login(config, url):
+def login(config: Config, url: str):
     subprocess.run(f'oj login {url}', shell=True)
 
 
@@ -106,7 +96,7 @@ def login(config, url):
 @click.option('-n', '--work_dir_name', type=str, default='')
 @click.option('--force/--no-force', "-f/-nf", default=False)
 @pass_config
-def pp(config, contest_id_or_url, current_dir, work_dir_name, force):
+def pp(config: Config, contest_id_or_url: str, current_dir: bool, work_dir_name: str, force: bool):
     contest_url = ""
     if contest_id_or_url[:3] in ("abc", "arc", "agc"):
         contest_url = f"https://atcoder.jp/contests/{contest_id_or_url}"
@@ -118,13 +108,13 @@ def pp(config, contest_id_or_url, current_dir, work_dir_name, force):
         click.secho(f"{contest_id_or_url} is not valid.", fg='yellow')
         return 0
 
-    problems = []
+    problems: Sequence[Problem]
     with oj_utils.with_cookiejar(oj_utils.get_default_session()) as session:
         problems = contest.list_problems(session=session)
 
     if current_dir:
         config.pref['contest_root_dir'] = '.'
-    work_dir = get_work_directory(problems[0], from_pp=True).parent
+    work_dir = get_work_directory(config, problems[0], from_pp=True).parent
     if work_dir_name:
         work_dir.name = work_dir_name
 
@@ -141,7 +131,7 @@ def pp(config, contest_id_or_url, current_dir, work_dir_name, force):
 
     if not already_exist:
         for problem in problems:
-            _prepare_problem(problem.get_url(), from_pp=True)
+            _prepare_problem(config, problem.get_url(), from_pp=True)
 
     try:
         cstr = config.pref['prepare']['custom_hook_command']['after'].format(dirname=work_dir.resolve())
@@ -163,13 +153,13 @@ def pp(config, contest_id_or_url, current_dir, work_dir_name, force):
 @click.option('--force/--no-force', "-f/-nf", default=False)
 @click.option('--execute_hook/--no-execute_hook', default=True)
 @pass_config
-def ppp(config, task_url, current_dir, prob_name, force, execute_hook):
+def ppp(config: Config, task_url: str, current_dir: bool, prob_name: str, force: bool, execute_hook: bool) -> None:
     if current_dir:
         config.pref['problem_root_dir'] = '.'
-    work_dir = _prepare_problem(task_url, prob_name, force)
+    work_dir = _prepare_problem(config, task_url, prob_name, force)
 
     # execute custom_hook_command
-    if not execute_hook: return 0
+    if not execute_hook: return
     try:
         cstr = config.pref['ppp']['custom_hook_command']['after'].format(dirname=work_dir.resolve())
         print(cstr)
@@ -180,12 +170,13 @@ def ppp(config, task_url, current_dir, prob_name, force, execute_hook):
 
 
 @pass_config
-def _prepare_problem(config, task_url, prob_name='', force=False, from_pp=False):
-    problem_dir = None
-    problem_title = None
+def _prepare_problem(config: Config, task_url: str, prob_name: str = '', force: bool = False, from_pp: bool = False) -> Path:
+    problem_dir: Path
+    problem_title: str
     if task_url != '':
-        problem = onlinejudge.dispatch.problem_from_url(task_url)
-        problem_dir = get_work_directory(problem, from_pp=from_pp)
+        problem: Problem = cast(Problem, onlinejudge.dispatch.problem_from_url(task_url))
+        assert problem != None
+        problem_dir = get_work_directory(config, problem, from_pp=from_pp)
         try:
             problem_data = problem.download_data()
             problem_title = problem_data.name
@@ -218,8 +209,7 @@ def _prepare_problem(config, task_url, prob_name='', force=False, from_pp=False)
 # }}}
 
 
-@pass_config
-def get_work_directory(config, problem: onlinejudge.type.Problem, from_pp) -> Path:  # {{{
+def get_work_directory(config: Config, problem: Problem, from_pp: bool) -> Path:  # {{{
     # prepare params
     service = problem.get_service()
 
@@ -256,7 +246,7 @@ def get_work_directory(config, problem: onlinejudge.type.Problem, from_pp) -> Pa
 # start server for competitive companion: ss {{{
 @cli.command()
 @pass_config
-def ss(config):
+def ss(config: Config):
     subprocess.run(f"node {script_path / 'cc_server/index.js'}", shell=True)
 
 
@@ -267,7 +257,7 @@ def ss(config):
 @cli.command()
 @click.argument('task_url', type=str)
 @pass_config
-def dl(config, task_url):
+def dl(config: Config, task_url: str):
     try:
         solve_codefile = CodeFile("")
     except FileNotFoundError as e:
@@ -276,7 +266,7 @@ def dl(config, task_url):
     _download_sample(task_url, solve_codefile.prob_dir)
 
 
-def _download_sample(task_url, problem_dir):
+def _download_sample(task_url: str, problem_dir: Path):
     to_restore = Path('.').resolve()
 
     os.chdir(problem_dir)  # prob_dirにいることが仮定されている
@@ -307,7 +297,7 @@ def _download_sample(task_url, problem_dir):
 @click.argument('code_filename', type=str, default='')
 @click.option('--compile_command_configname', '-cc', type=str, default='')
 @pass_config
-def compile(config, code_filename, compile_command_configname):
+def compile(config: Config, code_filename: str, compile_command_configname: str):
     if compile_command_configname:
         config.pref['test']['compile_command']['configname'] = compile_command_configname
     CodeFile(code_filename).compile(config)
@@ -320,7 +310,7 @@ def compile(config, code_filename, compile_command_configname):
 @cli.command()
 @click.argument('code_filename', type=str, default='')
 @pass_config
-def inspect(config, code_filename):
+def inspect(config: Config, code_filename: str):
     code_file = CodeFile(code_filename)
 
     if code_file.extension == 'cpp':
@@ -360,7 +350,7 @@ def inspect(config, code_filename):
 @click.option('--expand_acl', '-acl/-nacl', type=bool, default=False)
 @click.option('--clipboard', '-c/-nc', type=bool, default=True)
 @pass_config
-def bd(config, code_filename, expand_acl, clipboard):
+def bd(config: Config, code_filename: str, expand_acl: bool, clipboard: bool):
     code_file = CodeFile(code_filename)
     bundled_code: str = code_file.bundle(config, expand_acl=expand_acl)
     if clipboard:
@@ -377,7 +367,7 @@ def bd(config, code_filename, expand_acl, clipboard):
 @click.option('--compile_command_configname', '-cc', type=str, default='')
 @click.option('--force/--no-force', "-f/-nf", default=False)
 @pass_config
-def precompile(config, extension, compile_command_configname, force):
+def precompile(config: Config, extension: str, compile_command_configname: str, force: bool):
     if compile_command_configname:  # precompile for default profile
         _precompile(config, config.pref['test']['compile_command']['configname'], extension, force)
     else:
@@ -385,7 +375,7 @@ def precompile(config, extension, compile_command_configname, force):
             _precompile(config, confname, extension, force)
 
 
-def _precompile(config, cnfname, extension, force):
+def _precompile(config: Config, cnfname: str, extension: str, force: bool):
     click.secho(f'precompile started for {cnfname} for {extension}......', fg='yellow')
     print('-----------------------------------------------------------------')
 
@@ -452,7 +442,7 @@ def _precompile(config, cnfname, extension, force):
 @click.option('--limit_width_max_output', '-lw', type=int, default=0)
 @pass_config
 def tt(  # {{{
-        config,
+        config: Config,
         code_filename: str,
         compile_command_configname: str,
         case: str,
@@ -576,7 +566,7 @@ def tt(  # {{{
 # }}}
 
 
-def _test_all_case(config, codefile: CodeFile) -> bool:  # {{{
+def _test_all_case(config: Config, codefile: CodeFile) -> bool:  # {{{
     files = os.listdir(codefile.test_dir)
     files.sort()
     res = True
@@ -623,7 +613,7 @@ def _test_all_case(config, codefile: CodeFile) -> bool:  # {{{
 # }}}
 
 
-def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile: Path) -> RunResult:  # {{{
+def _test_case(config: Config, codefile: CodeFile, case_name: str, infile: Path, expfile: Path) -> RunResult:  # {{{
     # run program
     click.secho('-' * 10 + case_name + '-' * 10, fg='blue')
     run_result = codefile.run(config, infile)
@@ -756,14 +746,14 @@ def _test_case(config, codefile: CodeFile, case_name: str, infile: Path, expfile
 @click.option('--by', '-b', type=str, default='judge.py')
 @click.option('--loop/--noloop', '-l/-nl', default=False)
 @pass_config
-def tr(config, code_filename: str, compile_command_configname: str, case: str, timeout: float, by: str, loop: bool):  # {{{
+def tr(config: Config, code_filename: str, compile_command_configname: str, case: str, timeout: float, by: str, loop: bool):  # {{{
     if (timeout != -1):
         config.pref['test']['timeout_sec'] = timeout
     if compile_command_configname:
         config.pref['test']['compile_command']['configname'] = compile_command_configname
 
     try:
-        solve_codefile = CodeFile(code_filename, exclude_filename_pattern=[by if by else None])
+        solve_codefile = CodeFile(code_filename, exclude_filename_pattern=[by] if by else [])
     except FileNotFoundError:
         click.secho(f'solve code file not found by {code_filename}', fg='yellow')
         return 1
@@ -832,7 +822,7 @@ def tr(config, code_filename: str, compile_command_configname: str, case: str, t
 # }}}
 
 
-def _test_interactive_case(config, codefile: CodeFile, judgefile: CodeFile, infile: Path, case_name: str) -> RunResult:  # {{{
+def _test_interactive_case(config: Config, codefile: CodeFile, judgefile: CodeFile, infile: Path, case_name: str) -> RunResult:  # {{{
     # run program
     click.secho('-' * 10 + case_name + '-' * 10, fg='blue')
     run_result = codefile.run_interactive(config, judgefile, infile)
@@ -874,7 +864,7 @@ def _test_interactive_case(config, codefile: CodeFile, judgefile: CodeFile, infi
 @click.option('--case', '-c', type=str, default='')
 @click.option('--timeout', '-t', type=float, default=-1)
 @pass_config
-def db(config, code_filename: str, compile_command_configname: str, case: str, timeout: float):
+def db(config: Config, code_filename: str, compile_command_configname: str, case: str, timeout: float):
     if (timeout != -1):
         config.pref['test']['timeout_sec'] = timeout
     config.pref['test']['compile_command']['configname'] = compile_command_configname
@@ -966,14 +956,14 @@ def db(config, code_filename: str, compile_command_configname: str, case: str, t
 @click.option('--language', '-l', default='auto-detect')
 @click.option('--pretest/--no-pretest', '-t/-nt', default=True)
 @pass_config
-def sb(config, code_filename, language, pretest):
+def sb(config: Config, code_filename: str, language: str, pretest: bool):
     if (not pretest) and (not click.confirm('Are you sure to submit?')):  # no-pretestの場合は遅延を避けるため最初に質問する。
         return
     codefile = CodeFile(code_filename)
 
     if pretest:
         click.secho("pretest started\n", fg='green')
-        if not _test_all_case(codefile):
+        if not _test_all_case(config, codefile):
             click.secho("pretest not passed and exit", fg="red")
             return
 
@@ -989,12 +979,14 @@ def sb(config, code_filename, language, pretest):
 @pass_config
 @click.argument('code_filename', type=str, default='')
 @click.option('--limit_count', '-c', type=int, default=5)
-def ga(config, code_filename, limit_count):
+def ga(config: Config, code_filename: str, limit_count: int):
     solve_codefile = CodeFile(code_filename)
     service = solve_codefile.oj_problem_class.get_service().get_name()
     lang_id = config.pref['submit']['default_lang'][service][solve_codefile.extension]
     count = 0
-    for submission in solve_codefile.oj_problem_class.iterate_submissions_where(status='AC', order='created', language_id=lang_id):
+    problem_class: AtCoderProblem = cast(AtCoderProblem, solve_codefile.oj_problem_class)
+    assert isinstance(problem_class, AtCoderProblem)
+    for submission in problem_class.iterate_submissions_where(status='AC', order='created', language_id=lang_id):
         submission_data = submission.download_data()
         with open(solve_codefile.code_dir / f"ans.{submission_data.user_id}.{solve_codefile.extension}", mode='wb') as f:
             f.write(submission_data.source_code)
@@ -1014,7 +1006,7 @@ def ga(config, code_filename, limit_count):
 @click.option('--in_index_base', '-i', type=int, default=1)
 @click.option('--out-index-base', '-o', type=int, default=0)
 @pass_config
-def viz(config, directed, in_index_base, out_index_base):
+def viz(config: Config, directed: bool, in_index_base: int, out_index_base: int):
     from graphviz import Digraph, Graph  # type: ignore
 
     firstline = input().split()

@@ -1,6 +1,7 @@
+import resource
 import subprocess
 import sys
-import resource
+
 # resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrssは最初に実行したプロセスの情報しかとれないようなので
 # compileの子プロセスなども本体の方では走る可能性があるのでこちらで単独で実行する事でsolution codeのstaticを取得する。
 

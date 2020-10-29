@@ -1,9 +1,10 @@
-from pathlib import Path
-import sys
 import os
-from importlib import import_module
-from .codefile import CodeFile
+import sys
 from contextlib import redirect_stdout
+from importlib import import_module
+from pathlib import Path
+
+from .codefile import CodeFile
 
 
 class CaseGenerateError(Exception):

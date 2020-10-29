@@ -1,11 +1,12 @@
 import os
-import sys
 import shutil
-import subprocess
 import socket
+import subprocess
+import sys
 from pathlib import Path
-from PySide2.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QMessageBox
+
 from PySide2.QtGui import QIcon
+from PySide2.QtWidgets import QApplication, QMenu, QMessageBox, QSystemTrayIcon
 
 script_path = Path(os.path.abspath(os.path.dirname(__file__)))
 

@@ -37,7 +37,7 @@ script_path = Path(os.path.abspath(os.path.dirname(__file__)))  # script path}}}
 pass_config = click.make_pass_decorator(Config, ensure=True)
 
 
-@click.group()
+@click.group() # {{{
 @click.option('--verbose', is_flag=True)
 @click.option('--home-directory', type=click.Path())
 @pass_config
@@ -169,7 +169,6 @@ def ppp(config: Config, task_url: str, current_dir: bool, prob_name: str, force:
             print(e)
 
 
-@pass_config
 def _prepare_problem(config: Config, task_url: str, prob_name: str = '', force: bool = False, from_pp: bool = False) -> Path:
     problem_dir: Path
     problem_title: str

@@ -14,10 +14,10 @@ import click
 import onlinejudge._implementation.utils as oj_utils
 from onlinejudge.type import Problem
 
-from .config import Config
-from .interactive_runner import SubprocessThread
-from .utils import get_last_modified_file
-from .utils import get_python_command_string
+from pcm.config import Config
+from pcm.interactive_runner import SubprocessThread
+from pcm.utils import get_last_modified_file
+from pcm.utils import get_python_command_string
 
 
 class JudgeResult(IntEnum):

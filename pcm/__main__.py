@@ -26,9 +26,9 @@ import onlinejudge.service.atcoder
 from onlinejudge.service.atcoder import AtCoderProblem
 from onlinejudge.type import Problem
 
-from .case_generator import CaseGenerateError, CaseGenerator
-from .codefile import CodeFile, JudgeResult, RunResult
-from .config import Config
+from pcm.case_generator import CaseGenerateError, CaseGenerator
+from pcm.codefile import CodeFile, JudgeResult, RunResult
+from pcm.config import Config
 
 script_path = Path(os.path.abspath(os.path.dirname(__file__)))  # script path}}}
 

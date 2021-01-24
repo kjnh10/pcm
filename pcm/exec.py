@@ -2,12 +2,13 @@ import resource
 import subprocess
 import sys
 import platform
+from .utils import get_python_command_string
 
 # resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrssは最初に実行したプロセスの情報しかとれないようなので
 # compileの子プロセスなども本体の方では走る可能性があるのでこちらで単独で実行する事でsolution codeのstaticを取得する。
 
 command = sys.argv[1]
-command_list = ['python3', command] if '.py' in command else [command]
+command_list = [get_python_command_string(), command] if '.py' in command else [command]
 
 subprocess.run(
     command_list,

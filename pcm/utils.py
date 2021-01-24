@@ -4,6 +4,7 @@ import os
 import re
 import sys
 from pathlib import Path
+import platform
 
 
 def set_stdin(test_case):
@@ -34,3 +35,15 @@ def get_last_modified_file(match_filename_pattern=[], exclude_filename_pattern=[
         return codefile.resolve()
     else:
         raise FileNotFoundError("no valid code file found")
+
+
+def get_python_command_string() -> str:
+    python = ""
+    if platform.system() == 'Linux':
+        python = 'python3'
+    elif platform.system() == 'Darwin':
+        python = 'python3'
+    else:
+        python = 'python'  # for windows
+    return python
+

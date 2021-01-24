@@ -17,6 +17,7 @@ from onlinejudge.type import Problem
 from .config import Config
 from .interactive_runner import SubprocessThread
 from .utils import get_last_modified_file
+from .utils import get_python_command_string
 
 
 class JudgeResult(IntEnum):
@@ -155,7 +156,7 @@ class CodeFile(object):
                 # 別プロセスで起動した方がとりやすそうなのでexec.pyでもう一度runし直している。
                 executer = "exec.py" if os.name == "posix" else "exec_windows.py"
                 proc_mem = subprocess.Popen(
-                    ["python3", f"{os.path.dirname(__file__)}/{executer}", str(exefile), str(infile)],
+                    [get_python_command_string(), f"{os.path.dirname(__file__)}/{executer}", str(exefile), str(infile)],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.DEVNULL,
                 )
@@ -225,7 +226,7 @@ class CodeFile(object):
     def _get_command_string_to_run(self, exefile: Path, args: List[str] = []) -> List[str]:
         command: List[str] = []
         if (exefile.suffix == '.py'):
-            command.append('python3')
+            command.append(get_python_command_string())
         command.append(str(exefile))
         for arg in args:
             command.append(arg)
@@ -284,7 +285,7 @@ class CodeFile(object):
 
                 if exist_include_acl:
                     acl_dir_path = f'{os.path.dirname(__file__)}//lang_library/cplusplus/ac-library'
-                    proc = subprocess.Popen(' '.join(['python3', f'{acl_dir_path}/expander.py', str(self.path), '--lib', acl_dir_path]), shell=True, stderr=subprocess.PIPE)
+                    proc = subprocess.Popen(' '.join([get_python_command_string(), f'{acl_dir_path}/expander.py', str(self.path), '--lib', acl_dir_path]), shell=True, stderr=subprocess.PIPE)
                     outs, errs = proc.communicate()
                     if proc.returncode:
                         click.secho("expander.py error")

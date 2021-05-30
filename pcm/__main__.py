@@ -926,6 +926,7 @@ def db(config: Config, code_filename: str, compile_command_configname: str, case
         except Exception as e:
             print("No stack")
 
+        gdb.execute('set confirm off')
         gdb.execute('quit')
         """
         f.write(textwrap.dedent(contents))

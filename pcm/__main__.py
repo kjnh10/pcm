@@ -944,7 +944,10 @@ def db(config: Config, code_filename: str, compile_command_configname: str, case
             start = True
 
     print('----------------------stderr------------------------------------')
-    print(re.sub(f'({solve_codefile.path.name}:\d*)', Fore.YELLOW + r'\1' + Style.RESET_ALL, proc.stderr.decode('utf8')))
+    stderr = proc.stderr.decode('utf8')
+    stderr = re.sub(f'({solve_codefile.path.name}:\d*)', Fore.YELLOW + r'\1' + Style.RESET_ALL, stderr)
+    stderr = re.sub('(Error)', Fore.RED + r'\1' + Style.RESET_ALL, stderr)
+    print(stderr)
 
 
 # }}}

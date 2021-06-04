@@ -179,7 +179,7 @@ def _prepare_problem(config: Config, task_url: str, prob_name: str = '', force: 
         try:
             problem_data = problem.download_data()
             problem_title = problem_data.name
-        except as e:
+        except Exception as e:
             print(e)
     else:
         problem_dir = Path('./prob').resolve()

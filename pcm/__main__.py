@@ -38,6 +38,7 @@ pass_config = click.make_pass_decorator(Config, ensure=True)
 
 
 @click.group() # {{{
+@click.version_option()
 @click.option('--verbose', is_flag=True)
 @click.option('--home-directory', type=click.Path())
 @pass_config

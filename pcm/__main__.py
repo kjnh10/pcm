@@ -171,7 +171,7 @@ def ppp(config: Config, task_url: str, current_dir: bool, prob_name: str, force:
 
 def _prepare_problem(config: Config, task_url: str, prob_name: str = '', force: bool = False, from_pp: bool = False) -> Path:
     problem_dir: Path
-    problem_title: str
+    problem_title: str = ' '
     if task_url != '':
         problem: Problem = cast(Problem, onlinejudge.dispatch.problem_from_url(task_url))
         assert problem != None
@@ -179,8 +179,9 @@ def _prepare_problem(config: Config, task_url: str, prob_name: str = '', force: 
         try:
             problem_data = problem.download_data()
             problem_title = problem_data.name
-        except:
-            pass
+        except Exception as e:
+            print("couldn't get problem title:")
+            print(e)
     else:
         problem_dir = Path('./prob').resolve()
 

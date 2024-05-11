@@ -257,7 +257,7 @@ class CodeFile(object):
                 print(config.pref['submit']['language'][contest_site])
                 return
 
-        code_string = self.bundle(config, expand_acl=(False if (contest_site == 'AtCoder' and lang_id in ['4003', '4004']) else True)).encode()
+        code_string = self.bundle(config, expand_acl=(False if (contest_site == 'AtCoder' and lang_id in ['5028', '5031']) else True)).encode()
         with oj_utils.with_cookiejar(oj_utils.get_default_session()) as session:
             try:
                 res = self.oj_problem_class.submit_code(code_string, language_id=lang_id, session=session)

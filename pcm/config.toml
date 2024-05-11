@@ -30,10 +30,10 @@ cpp_include_paths = ['{pcm_dir_path}/lang_library/cplusplus/ac-library']
 
 
   [submit.language.AtCoder]
-  gcc = '4003'       # C++17 (GCC 9.2.1)
-  clang = '4004'     # C++17 (Glang 10.0.0)
-  py = '4006'        # python 3.8.2
-  pypy = '4047'      # pypy3
+  gcc = '5028'       # C++23 (GCC 12.2)
+  clang = '5031'     # C++23 (Glang 16.0.6)
+  py = '5055'        # python (3.11.4)
+  pypy = '5078'      # pypy (3.10-v7.3.12)
 
   [submit.language.Codeforces]
   gcc = '54'         # GNU G++17 7.3.0
@@ -58,20 +58,13 @@ cpp_include_paths = ['{pcm_dir_path}/lang_library/cplusplus/ac-library']
                -Wall -D_GLIBCXX_DEBUG -fuse-ld=gold
             """
 
-  debug = """g++ {srcpath} -o {outpath} \
-            -std=c++17 \
-            -DPCM -Wall -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG -fuse-ld=gold \
-            {cpp_include_paths} \
-            -g
-            """
-
   clang = """clang++ {srcpath} -o {outpath} \
           -std=c++17 \
           {cpp_include_paths} \
           -DPCM -Wall -D_GLIBCXX_DEBUG -fuse-ld=lld
           """
 
-  atcoder = """g++-9 {srcpath} -o {outpath} \
+  atcoder = """g++ {srcpath} -o {outpath} \
                  -std=gnu++17 -Wall -Wextra -O2 -march=native -mtune=native -DEVAL\
                  -I/opt/boost/gcc/include -L/opt/boost/gcc/lib \
                  {cpp_include_paths} \
